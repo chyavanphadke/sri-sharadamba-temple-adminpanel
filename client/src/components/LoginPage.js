@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Grid, TextField, Button, Typography, Box, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, CardActions } from '@mui/material';
+import { Container, Grid, TextField, Button, Typography, Box, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent } from '@mui/material';
 import { styled } from '@mui/system';
 
 const CurvedImage = styled('img')({
