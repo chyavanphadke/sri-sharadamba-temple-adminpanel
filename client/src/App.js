@@ -7,14 +7,15 @@ const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const handleLogin = () => {
+        localStorage.setItem('username', 'admin');
         setIsAuthenticated(true);
     };
 
     return (
         <Router>
             <Routes>
-                <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />} />
-                <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/" />} />
+                <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard/home" /> : <LoginPage onLogin={handleLogin} />} />
+                <Route path="/dashboard/*" element={isAuthenticated ? <Dashboard /> : <Navigate to="/" />} />
             </Routes>
         </Router>
     );
