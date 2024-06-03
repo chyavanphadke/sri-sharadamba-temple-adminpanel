@@ -98,16 +98,16 @@ const Home = () => {
       <Content style={{ padding: '0 50px' }}>
         <div className="site-layout-content">
           <h2>Home Page</h2>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
             <Search
               placeholder="Search contacts"
               onSearch={handleSearch}
-              style={{ width: 400, height: 50, marginRight: 16 }} // Double the width and height
+              style={{ width: 400, marginRight: 16, height: 40 }} // Set height to match button
             />
-            <Button type="primary" onClick={handleAddContact} style={{ height: 50 }}>Add Contact</Button>
-            <div style={{ marginTop: 16 }}>
-              <p>Total Contacts in the Database: {totalContacts}</p>
-            </div>
+            <Button type="primary" onClick={handleAddContact} style={{ height: 40 }}>Add Contact</Button> {/* Set height to match search bar */}
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <p>Total Contacts in the Database: {totalContacts}</p>
           </div>
           <Table columns={columns} dataSource={contacts} loading={loading} rowKey="id" pagination={{ pageSize: 10 }} />
         </div>

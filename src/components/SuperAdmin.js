@@ -1,15 +1,13 @@
 // src/components/SuperAdmin.js
 import React, { useEffect, useState } from 'react';
-import { Layout, Table, Button, Input, message } from 'antd';
+import { Layout, Table, Button, message } from 'antd';
 import axios from 'axios';
 
 const { Content } = Layout;
-const { Search } = Input;
 
 const SuperAdmin = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -19,7 +17,8 @@ const SuperAdmin = () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5000/users');
-      setUsers(response.data);
+      const sortedUsers = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setUsers(sortedUsers);
     } catch (error) {
       message.error('Failed to load users');
     } finally {
@@ -27,65 +26,36 @@ const SuperAdmin = () => {
     }
   };
 
-  const handleApproveUser = async (id) => {
+  const handleAction = async (id, action) => {
     try {
-      await axios.put(`http://localhost:5000/users/${id}/approve`);
-      message.success('User approved');
+      if (action === 'approve') {
+        await axios.put(`http://localhost:5000/users/${id}/approve`);
+        message.success('User approved');
+      } else if (action === 'delete') {
+        await axios.delete(`http://localhost:5000/users/${id}`);
+        message.success('User deleted');
+      } else {
+        await axios.put(`http://localhost:5000/users/${id}/level`, { level: action });
+        message.success(`User level updated to ${action}`);
+      }
       fetchUsers();
     } catch (error) {
-      message.error('Failed to approve user');
+      message.error(`Failed to ${action} user`);
     }
   };
-
-  const handleChangeUserLevel = async (id, level) => {
-    try {
-      await axios.put(`http://localhost:5000/users/${id}/level`, { level });
-      message.success('User level updated');
-      fetchUsers();
-    } catch (error) {
-      message.error('Failed to update user level');
-    }
-  };
-
-  const handleDeleteUser = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/users/${id}`);
-      message.success('User deleted');
-      fetchUsers();
-    } catch (error) {
-      message.error('Failed to delete user');
-    }
-  };
-
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-  };
-
-  const filteredUsers = users.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const columns = [
     { title: 'Username', dataIndex: 'username', key: 'username' },
     { title: 'Level', dataIndex: 'level', key: 'level' },
+    { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => (text ? 'Yes' : 'No') },
     {
-      title: 'Approved', dataIndex: 'approved', key: 'approved',
-      render: (text, record) => (
-        record.approved ? 'Yes' : 'No'
-      )
-    },
-    {
-      title: 'Actions', key: 'actions',
-      render: (text, record) => (
+      title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          {!record.approved && (
-            <Button onClick={() => handleApproveUser(record.id)}>Approve</Button>
-          )}
-          {record.approved && (
-            <Button onClick={() => handleDeleteUser(record.id)} danger style={{ marginLeft: 8 }}>Delete</Button>
-          )}
-          <Button onClick={() => handleChangeUserLevel(record.id, 'Admin')} style={{ marginLeft: 8 }}>Make Admin</Button>
-          <Button onClick={() => handleChangeUserLevel(record.id, 'Super Admin')} style={{ marginLeft: 8 }}>Make Super Admin</Button>
+          <Button onClick={() => handleAction(record.id, 'approve')} disabled={record.approved} style={{ marginRight: 8 }}>Approve</Button>
+          <Button onClick={() => handleAction(record.id, 'delete')} danger style={{ marginRight: 8 }}>Delete</Button>
+          <Button onClick={() => handleAction(record.id, 'User')} style={{ marginRight: 8 }}>Make User</Button>
+          <Button onClick={() => handleAction(record.id, 'Admin')} style={{ marginRight: 8 }}>Make Admin</Button>
+          <Button onClick={() => handleAction(record.id, 'Super Admin')}>Make Super Admin</Button>
         </>
       )
     }
@@ -96,15 +66,7 @@ const SuperAdmin = () => {
       <Content style={{ padding: '0 50px' }}>
         <div className="site-layout-content">
           <h2>Super Admin Page</h2>
-          <div style={{ marginBottom: 16 }}>
-            <Search
-              placeholder="Search users"
-              onSearch={handleSearch}
-              onChange={(e) => handleSearch(e.target.value)}
-              style={{ width: 200, marginRight: 16 }}
-            />
-          </div>
-          <Table columns={columns} dataSource={filteredUsers} loading={loading} rowKey="id" />
+          <Table columns={columns} dataSource={users} loading={loading} rowKey="id" pagination={{ pageSize: 10 }} />
         </div>
       </Content>
     </Layout>
