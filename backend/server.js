@@ -161,11 +161,11 @@ app.delete('/contacts/:id', async (req, res) => {
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
-  const existingSuperUser = await User.findOne({ where: { username: 'majal' } });
+  const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
   if (!existingSuperUser) {
-    const hashedPassword = await bcrypt.hash('majal1', 10);
+    const hashedPassword = await bcrypt.hash('maya@111', 10);
     await User.create({
-      username: 'majal',
+      username: 'admin',
       password: hashedPassword,
       level: 'Super Admin',
       approved: true,
