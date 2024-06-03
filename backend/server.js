@@ -178,3 +178,55 @@ sequelize.sync().then(async () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
+
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    await user.destroy();
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ message: 'Error deleting user', error: err.message });
+  }
+});
+
+app.post('/contacts', async (req, res) => {
+  const { first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob } = req.body;
+  try {
+    await Contact.create({ first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob });
+    res.status(201).json({ message: 'Contact created successfully' });
+  } catch (err) {
+    console.error('Error creating contact:', err);
+    res.status(500).json({ message: 'Error creating contact', error: err.message });
+  }
+});
+
+app.put('/contacts/:id', async (req, res) => {
+  const { first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob } = req.body;
+  try {
+    const contact = await Contact.findByPk(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ message: 'Contact not found' });
+    }
+    contact.first_name = first_name;
+    contact.last_name = last_name;
+    contact.phone_number = phone_number;
+    contact.alternate_phone_number = alternate_phone_number;
+    contact.address = address;
+    contact.city = city;
+    contact.state = state;
+    contact.zip_code = zip_code;
+    contact.email = email;
+    contact.gothra = gothra;
+    contact.star = star;
+    contact.dob = dob;
+    await contact.save();
+    res.status(200).json({ message: 'Contact updated successfully' });
+  } catch (err) {
+    console.error('Error updating contact:', err);
+    res.status(500).json({ message: 'Error updating contact', error: err.message });
+  }
+});

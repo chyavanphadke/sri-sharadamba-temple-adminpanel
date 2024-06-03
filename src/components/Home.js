@@ -1,6 +1,6 @@
 // src/components/Home.js
 import React, { useEffect, useState } from 'react';
-import { Layout, Input, Button, Table, Modal, Form, message } from 'antd';
+import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker } from 'antd';
 import axios from 'axios';
 
 const { Content } = Layout;
@@ -118,17 +118,74 @@ const Home = () => {
         footer={null}
       >
         <Form
-          initialValues={currentContact || { first_name: '', last_name: '', phone_number: '' }}
+          initialValues={currentContact || { first_name: '', last_name: '', phone_number: '', alternate_phone_number: '', address: '', city: '', state: '', zip_code: '', email: '', gothra: '', star: '', dob: null }}
           onFinish={handleOk}
         >
-          <Form.Item name="first_name" rules={[{ required: true, message: 'Please input the first name!' }]}>
-            <Input placeholder="First Name" />
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="first_name" rules={[{ required: true, message: 'Please input the first name!' }]}>
+                <Input placeholder="First Name" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="last_name" rules={[{ required: true, message: 'Please input the last name!' }]}>
+                <Input placeholder="Last Name" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="phone_number" rules={[{ required: true, message: 'Please input the phone number!' }]}>
+                <Input placeholder="Phone Number" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="alternate_phone_number">
+                <Input placeholder="Alternate Phone Number" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="address">
+                <Input placeholder="Address" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="city">
+                <Input placeholder="City" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="state">
+                <Input placeholder="State" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="zip_code">
+                <Input placeholder="Zip Code" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="email">
+            <Input placeholder="Email" />
           </Form.Item>
-          <Form.Item name="last_name" rules={[{ required: true, message: 'Please input the last name!' }]}>
-            <Input placeholder="Last Name" />
-          </Form.Item>
-          <Form.Item name="phone_number" rules={[{ required: true, message: 'Please input the phone number!' }]}>
-            <Input placeholder="Phone Number" />
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="gothra">
+                <Input placeholder="Gothra" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="star">
+                <Input placeholder="Star" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="dob">
+            <DatePicker style={{ width: '100%' }} placeholder="Date of Birth" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
