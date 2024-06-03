@@ -11,7 +11,8 @@ import Home from './Home';
 import SuperAdmin from './SuperAdmin';
 import Reports from './Reports';
 import Settings from './Settings';
-import { jwtDecode } from 'jwt-decode'; // Use named import
+import { jwtDecode } from 'jwt-decode'; // Correct the import statement
+import './Dashboard.css'; // Import the CSS file
 
 const { Header, Content, Sider } = Layout;
 
@@ -73,7 +74,7 @@ const Dashboard = () => {
         </Menu>
       </Header>
       <Layout>
-        <Sider width={200} className="site-layout-background" collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+        <Sider className="custom-sider" width={200} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
           <Menu
             mode="inline"
             defaultSelectedKeys={['1']}

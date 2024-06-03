@@ -35,17 +35,27 @@ const Login = () => {
           <div className="login-container">
             <div className="login-image" />
             <Form name="login_form" className="login-form" onFinish={onFinish}>
-              <Form.Item name="username" rules={[{ required: true, message: 'Please input your Username!' }]}>
+              <Form.Item
+                name="username"
+                label="Username"
+                rules={[{ required: true, message: 'Please input your Username!' }]}
+              >
                 <Input placeholder="Username" />
               </Form.Item>
-              <Form.Item name="password" rules={[{ required: true, message: 'Please input your Password!' }]}>
+              <Form.Item
+                name="password"
+                label="Password"
+                rules={[{ required: true, message: 'Please input your Password!' }]}
+              >
                 <Input type="password" placeholder="Password" />
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" className="login-form-button">
                   Log In
                 </Button>
-                <Button type="link" href="/signup">
+              </Form.Item>
+              <Form.Item>
+                <Button type="link" href="/signup" className="signup-form-button">
                   Sign Up
                 </Button>
               </Form.Item>

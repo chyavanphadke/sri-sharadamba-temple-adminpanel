@@ -1,0 +1,15 @@
+/* src/components/Dashboard.css */
+
+.custom-sider {
+    background-color: #001529; /* Change to your desired color */
+  }
+  
+  .header {
+    background: #001529; /* Keep the header color consistent with the sidebar */
+    padding: 0;
+  }
+  
+  .site-layout-background {
+    background: #fff;
+  }
+  

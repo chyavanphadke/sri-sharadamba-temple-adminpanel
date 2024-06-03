@@ -29,6 +29,20 @@
   width: 100%;
 }
 
+.signup-form-button {
+  background-color: #40bfff;
+  color: white;
+  width: 25%;
+  margin-left: auto;
+  text-align: center;
+  border-radius: 5px;
+}
+
+.signup-form-button:hover {
+  background-color: #40a9ff;
+  color: white;
+}
+
 .login-image {
   background: url('../images/sharadamba_backroung.jpg') no-repeat center center;
   background-size: cover;
