@@ -29,6 +29,8 @@ npm install react-router-dom
 
 npm install antd axios react-router-dom
 
+npm install jwt-decode
+
 npm start
 
 
