@@ -3,9 +3,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
+import './Home.css'; // Import CSS file for styling
 
 const { Content } = Layout;
-const { Search } = Input;
 
 const Home = () => {
   const [contacts, setContacts] = useState([]);
@@ -13,6 +13,7 @@ const Home = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [totalContacts, setTotalContacts] = useState(0);
   const [currentContact, setCurrentContact] = useState(null);
+  const [form] = Form.useForm(); // Initialize the form
 
   useEffect(() => {
     fetchContacts();
@@ -22,8 +23,9 @@ const Home = () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5000/contacts');
-      setContacts(response.data);
-      setTotalContacts(response.data.length);
+      const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setContacts(sortedContacts);
+      setTotalContacts(sortedContacts.length);
     } catch (error) {
       message.error('Failed to load contacts');
     } finally {
@@ -33,11 +35,13 @@ const Home = () => {
 
   const handleAddContact = () => {
     setCurrentContact(null);
+    form.resetFields(); // Reset form fields
     setIsModalVisible(true);
   };
 
   const handleEditContact = (contact) => {
     setCurrentContact(contact);
+    form.setFieldsValue(contact); // Set form values for editing
     setIsModalVisible(true);
   };
 
@@ -57,14 +61,28 @@ const Home = () => {
         await axios.put(`http://localhost:5000/contacts/${currentContact.id}`, values);
         message.success('Contact updated');
       } else {
-        await axios.post('http://localhost:5000/contacts', values);
-        message.success('Contact added');
+        const response = await axios.post('http://localhost:5000/contacts', values);
+        if (response.data.error) {
+          message.error(response.data.error);
+        } else {
+          message.success('Contact added');
+        }
       }
       fetchContacts();
       setIsModalVisible(false);
+      form.resetFields(); // Reset form fields after successful submission
     } catch (error) {
-      message.error('Failed to save contact');
+      if (error.response && error.response.data && error.response.data.error) {
+        message.error(error.response.data.error);
+      } else {
+        message.error('Failed to save contact');
+      }
     }
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields(); // Reset form fields when modal is closed
   };
 
   const columns = [
@@ -87,7 +105,8 @@ const Home = () => {
       setLoading(true);
       try {
         const response = await axios.get(`http://localhost:5000/contacts?search=${value}`);
-        setContacts(response.data);
+        const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        setContacts(sortedContacts);
       } catch (error) {
         message.error('Failed to search contacts');
       } finally {
@@ -118,16 +137,24 @@ const Home = () => {
           <div style={{ marginTop: 16 }}>
             <p>Total Contacts in the Database: {totalContacts}</p>
           </div>
-          <Table columns={columns} dataSource={contacts} loading={loading} rowKey="id" pagination={{ pageSize: 10 }} />
+          <Table
+            columns={columns}
+            dataSource={contacts}
+            loading={loading}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+            className="custom-table" // Add custom class for styling
+          />
         </div>
       </Content>
       <Modal
         title={currentContact ? "Edit Contact" : "Add Contact"}
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={handleCancel}
         footer={null}
       >
         <Form
+          form={form}
           initialValues={currentContact || { first_name: '', last_name: '', phone_number: '', alternate_phone_number: '', address: '', city: '', state: '', zip_code: '', email: '', gothra: '', star: '', dob: null }}
           onFinish={handleOk}
         >
@@ -179,7 +206,7 @@ const Home = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="email">
+          <Form.Item name="email" rules={[{ required: true, message: 'Please input the email!' }]}>
             <Input placeholder="Email" style={{ height: 50 }} />
           </Form.Item>
           <Row gutter={16}>

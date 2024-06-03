@@ -156,7 +156,7 @@ app.get('/contacts', async (req, res) => {
       ? { [Op.or]: [{ first_name: { [Op.like]: `%${search}%` } }, { last_name: { [Op.like]: `%${search}%` } }] }
       : {};
 
-    const contacts = await Contact.findAll({ where: whereClause });
+    const contacts = await Contact.findAll({ where: whereClause, order: [['updatedAt', 'DESC']] });
     res.status(200).json(contacts);
   } catch (err) {
     console.error('Error fetching contacts:', err);
@@ -165,13 +165,16 @@ app.get('/contacts', async (req, res) => {
 });
 
 app.post('/contacts', async (req, res) => {
-  const { first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob } = req.body;
+  const { email, ...otherFields } = req.body;
   try {
-    await Contact.create({ first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob });
-    res.status(201).json({ message: 'Contact created successfully' });
-  } catch (err) {
-    console.error('Error creating contact:', err);
-    res.status(500).json({ message: 'Error creating contact', error: err.message });
+    const existingContact = await Contact.findOne({ where: { email } });
+    if (existingContact) {
+      return res.status(400).json({ error: 'The email is already registered' });
+    }
+    const contact = await Contact.create({ email, ...otherFields });
+    res.status(201).json(contact);
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding contact' });
   }
 });
 
