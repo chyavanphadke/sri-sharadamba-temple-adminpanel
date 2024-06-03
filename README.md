@@ -22,8 +22,11 @@ Here are the architectural plans:
 
 # Frontend:
 npm install
+
 npm install antd @ant-design/icons
+
 npm install react-router-dom
+
 npm install antd axios react-router-dom
 
 npm start
@@ -31,8 +34,11 @@ npm start
 
 # Backend:
 npm install
+
 npm install express body-parser sqlite3
+
 npm install cors
+
 npm install express body-parser bcrypt jsonwebtoken mongoose cors
 
 node server.js
