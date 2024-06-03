@@ -17,3 +17,17 @@ Here are the architectural plans:
   <img src="Arch/Old_images/20240530_194559.jpg" width="200" />
   <img src="Arch/Old_images/20240530_194721.jpg" width="200" />
 </p>
+
+## Installation:
+
+# Frontend:
+npm install antd @ant-design/icons
+npm install react-router-dom
+
+npm start
+
+
+# Backend:
+npm install express body-parser sqlite3
+
+node server.js
