@@ -1,21 +1,37 @@
 // src/components/Dashboard.js
-import React, { useState } from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Breadcrumb, Button } from 'antd';
 import {
   UserOutlined,
   LaptopOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
-import { Route, Routes, Link, Navigate } from 'react-router-dom';
+import { Route, Routes, Link, useNavigate, Navigate } from 'react-router-dom';
 import Home from './Home';
 import SuperAdmin from './SuperAdmin';
 import Reports from './Reports';
 import Settings from './Settings';
+import { jwtDecode } from 'jwt-decode'; // Use named import
 
 const { Header, Content, Sider } = Layout;
 
 const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [username, setUsername] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setUsername(decodedToken.username);
+    }
+  }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
 
   const menuItems = [
     { key: '1', icon: <UserOutlined />, label: <Link to="/dashboard/home">Home</Link> },
@@ -34,8 +50,12 @@ const Dashboard = () => {
       <Header className="header">
         <div className="logo" />
         <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
-          <Menu.Item key="1">Welcome, [Username]</Menu.Item>
-          <Menu.Item key="2" style={{ marginLeft: 'auto' }}>Sign out</Menu.Item>
+          <Menu.Item key="1">Welcome, {username}</Menu.Item>
+          <Menu.Item key="2" style={{ marginLeft: 'auto' }}>
+            <Button type="link" onClick={handleSignOut} style={{ color: 'white' }}>
+              Sign out
+            </Button>
+          </Menu.Item>
         </Menu>
       </Header>
       <Layout>
