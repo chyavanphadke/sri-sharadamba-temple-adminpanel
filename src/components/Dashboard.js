@@ -6,7 +6,7 @@ import {
   LaptopOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
-import { Route, Routes, Link, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Home from './Home';
 import SuperAdmin from './SuperAdmin';
 import Reports from './Reports';
@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [username, setUsername] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -40,10 +41,23 @@ const Dashboard = () => {
     { key: '4', icon: <NotificationOutlined />, label: <Link to="/dashboard/settings">Settings</Link> },
   ];
 
-  const breadcrumbItems = [
-    { title: 'Dashboard' },
-    { title: 'Home' },
-  ];
+  const getBreadcrumbItems = () => {
+    const pathSnippets = location.pathname.split('/').filter(i => i);
+    const breadcrumbNameMap = {
+      '/dashboard': 'Dashboard',
+      '/dashboard/home': 'Home',
+      '/dashboard/super-admin': 'Super Admin',
+      '/dashboard/reports': 'Reports',
+      '/dashboard/settings': 'Settings',
+    };
+    const breadcrumbItems = pathSnippets.map((_, index) => {
+      const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
+      return {
+        title: breadcrumbNameMap[url],
+      };
+    });
+    return breadcrumbItems;
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -69,7 +83,7 @@ const Dashboard = () => {
           />
         </Sider>
         <Layout style={{ padding: '0 24px 24px' }}>
-          <Breadcrumb style={{ margin: '16px 0' }} items={breadcrumbItems} />
+          <Breadcrumb style={{ margin: '16px 0' }} items={getBreadcrumbItems()} />
           <Content
             className="site-layout-background"
             style={{
