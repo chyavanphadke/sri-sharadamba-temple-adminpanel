@@ -1,7 +1,8 @@
 // src/components/Settings.js
 import React from 'react';
-import { Layout, Form, Input, Button, message } from 'antd';
+import { Form, Input, Button, Layout, message } from 'antd';
 import axios from 'axios';
+import './Settings.css'; // Import CSS file for styling
 
 const { Content } = Layout;
 
@@ -9,17 +10,15 @@ const Settings = () => {
   const onFinish = async (values) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'http://localhost:5000/change-password',
-        values,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      message.success(response.data.message);
+      await axios.post('http://localhost:5000/change-password', values, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      message.success('Password changed successfully');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Failed to change password');
+        message.error('Error changing password');
       }
     }
   };
@@ -28,22 +27,22 @@ const Settings = () => {
     <Layout>
       <Content style={{ padding: '0 50px' }}>
         <div className="site-layout-content">
-          <h2>Settings Page</h2>
-          <Form name="change_password" onFinish={onFinish}>
+          <h2>Change Password</h2>
+          <Form name="change_password" className="change-password-form" onFinish={onFinish}>
             <Form.Item
               name="currentPassword"
               rules={[{ required: true, message: 'Please input your current password!' }]}
             >
-              <Input.Password placeholder="Current Password" />
+              <Input.Password placeholder="Current Password" className="password-field" />
             </Form.Item>
             <Form.Item
               name="newPassword"
               rules={[{ required: true, message: 'Please input your new password!' }]}
             >
-              <Input.Password placeholder="New Password" />
+              <Input.Password placeholder="New Password" className="password-field" />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" className="change-password-button">
                 Change Password
               </Button>
             </Form.Item>
