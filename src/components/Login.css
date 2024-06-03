@@ -5,21 +5,15 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
+  background: #f0f2f5;
 }
 
-.login-image {
-  background: url('../images/sharadamba_backroung.jpg') no-repeat center center;
-  background-size: cover;
-  width: 300px;
-  height: 450px;
+.login-card {
+  width: 900px; /* Increase the card width */
+  padding: 40px; /* Add padding inside the card */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
-}
-
-.login-form {
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .login-container {
@@ -27,6 +21,19 @@
   align-items: center;
 }
 
-.login-form-container {
-  padding: 20px;
+.login-form {
+  width: 100%;
+}
+
+.login-form-button {
+  width: 100%;
+}
+
+.login-image {
+  background: url('../images/sharadamba_backroung.jpg') no-repeat center center;
+  background-size: cover;
+  border-radius: 10px;
+  width: 800px;  /* Adjust the width to make the image bigger */
+  height: 550px; /* Adjust the height to make the image bigger */
+  margin-right: 40px;
 }
