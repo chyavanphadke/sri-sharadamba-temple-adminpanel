@@ -31,6 +31,8 @@ npm install antd axios react-router-dom
 
 npm install jwt-decode
 
+npm install lodash
+
 npm start
 
 

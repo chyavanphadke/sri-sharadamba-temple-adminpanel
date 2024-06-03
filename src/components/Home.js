@@ -1,7 +1,8 @@
 // src/components/Home.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker } from 'antd';
 import axios from 'axios';
+import _ from 'lodash';
 
 const { Content } = Layout;
 const { Search } = Input;
@@ -81,16 +82,24 @@ const Home = () => {
     }
   ];
 
-  const handleSearch = async (value) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`http://localhost:5000/contacts?search=${value}`);
-      setContacts(response.data);
-    } catch (error) {
-      message.error('Failed to search contacts');
-    } finally {
-      setLoading(false);
+  const debounceSearch = useCallback(_.debounce(async (value) => {
+    if (value.length >= 3) {
+      setLoading(true);
+      try {
+        const response = await axios.get(`http://localhost:5000/contacts?search=${value}`);
+        setContacts(response.data);
+      } catch (error) {
+        message.error('Failed to search contacts');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      fetchContacts();
     }
+  }, 300), []);
+
+  const handleSearchChange = (e) => {
+    debounceSearch(e.target.value);
   };
 
   return (
@@ -99,9 +108,9 @@ const Home = () => {
         <div className="site-layout-content">
           <h2>Home Page</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-            <Search
+            <Input
               placeholder="Search contacts"
-              onSearch={handleSearch}
+              onChange={handleSearchChange}
               style={{ width: 400, marginRight: 16, height: 40 }} // Set height to match button
             />
             <Button type="primary" onClick={handleAddContact} style={{ height: 40 }}>Add Contact</Button> {/* Set height to match search bar */}
