@@ -33,6 +33,9 @@ const Login = () => {
             <div className="login-image" />
           </Col>
           <Col span={8}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <h2>Welcome to Sharada Temple, Milpitas</h2>
+            </div>
             <Form name="login_form" className="login-form" onFinish={onFinish}>
               <Form.Item name="username" rules={[{ required: true, message: 'Please input your Username!' }]}>
                 <Input placeholder="Username" />
