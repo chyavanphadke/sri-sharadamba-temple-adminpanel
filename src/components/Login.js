@@ -1,6 +1,6 @@
 // src/components/Login.js
 import React from 'react';
-import { Form, Input, Button, Row, Col, Layout, message } from 'antd';
+import { Form, Input, Button, Layout, message } from 'antd'; // Removed Row and Col
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import axios from 'axios';
@@ -28,11 +28,9 @@ const Login = () => {
   return (
     <Layout>
       <Content className="login-content">
-        <Row justify="center" align="middle" style={{ height: '100vh' }}>
-          <Col span={8}>
-            <div className="login-image" />
-          </Col>
-          <Col span={8}>
+        <div className="login-container">
+          <div className="login-image" style={{ width: '300px', height: '450px' }} />
+          <div className="login-form-container">
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <h2>Welcome to Sharada Temple, Milpitas</h2>
             </div>
@@ -52,8 +50,8 @@ const Login = () => {
                 </Button>
               </Form.Item>
             </Form>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </Content>
     </Layout>
   );

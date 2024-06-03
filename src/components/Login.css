@@ -1,19 +1,32 @@
+/* src/components/Login.css */
+
 .login-content {
-  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
 }
 
 .login-image {
-  width: 100%;
-  height: 300px;
-  background: url('../images/sharadamba_backroung.jpg') center center / cover no-repeat;
+  background: url('../images/sharadamba_backroung.jpg') no-repeat center center;
+  background-size: cover;
+  width: 300px;
+  height: 450px;
   border-radius: 10px;
 }
 
 .login-form {
-  max-width: 300px;
-  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.login-form-button {
-  width: 100%;
+.login-container {
+  display: flex;
+  align-items: center;
+}
+
+.login-form-container {
+  padding: 20px;
 }
