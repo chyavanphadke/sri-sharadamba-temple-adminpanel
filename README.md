@@ -45,4 +45,6 @@ npm install cors
 
 npm install express body-parser bcrypt jsonwebtoken mongoose cors
 
+npm install mysql2
+
 node server.js

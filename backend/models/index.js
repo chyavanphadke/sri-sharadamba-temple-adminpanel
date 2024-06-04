@@ -34,48 +34,110 @@ const User = sequelize.define('User', {
 
 // Define Contact model
 const Contact = sequelize.define('Contact', {
-  first_name: {
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  FirstName: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  last_name: {
+  LastName: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  phone_number: {
+  Phone: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  alternate_phone_number: {
+  AltPhone: {
     type: DataTypes.STRING,
   },
-  address: {
+  Address: {
     type: DataTypes.STRING,
   },
-  city: {
+  City: {
     type: DataTypes.STRING,
   },
-  state: {
+  State: {
     type: DataTypes.STRING,
   },
-  zip_code: {
+  Zip: {
     type: DataTypes.STRING,
   },
-  email: {
+  Email: {
     type: DataTypes.STRING,
   },
-  gothra: {
+  Gotra: {
     type: DataTypes.STRING,
   },
-  star: {
+  Star: {
     type: DataTypes.STRING,
   },
-  rashi: {
+  Rashi: {
     type: DataTypes.STRING,
   },
-  dob: {
+  DOB: {
     type: DataTypes.DATE,
+  },
+  CreatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  },
+  LastModified: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
   }
+}, {
+  timestamps: false
+});
+
+// Define Family model
+const Family = sequelize.define('Family', {
+  FamilyMemberId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Contact,
+      key: 'DevoteeId'
+    }
+  },
+  FirstName: {
+    type: DataTypes.STRING,
+  },
+  LastName: {
+    type: DataTypes.STRING,
+  },
+  RelationShip: {
+    type: DataTypes.STRING,
+  },
+  Gotra: {
+    type: DataTypes.STRING,
+  },
+  Star: {
+    type: DataTypes.STRING,
+  },
+  Balagokulam: {
+    type: DataTypes.STRING,
+  },
+  DOB: {
+    type: DataTypes.DATE,
+  },
+  CreatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  },
+  LastModified: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  }
+}, {
+  timestamps: false
 });
 
 // Sync the models with the database
@@ -90,5 +152,6 @@ sequelize.sync()
 module.exports = {
   sequelize,
   User,
-  Contact
+  Contact,
+  Family
 };

@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Contact } = require('./models');
+const { sequelize, User, Contact, Family } = require('./models');
 const { Op } = require('sequelize');
 
 const app = express();
@@ -153,10 +153,10 @@ app.get('/contacts', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = search
-      ? { [Op.or]: [{ first_name: { [Op.like]: `%${search}%` } }, { last_name: { [Op.like]: `%${search}%` } }] }
+      ? { [Op.or]: [{ FirstName: { [Op.like]: `%${search}%` } }, { LastName: { [Op.like]: `%${search}%` } }] }
       : {};
 
-    const contacts = await Contact.findAll({ where: whereClause, order: [['updatedAt', 'DESC']] });
+    const contacts = await Contact.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
     res.status(200).json(contacts);
   } catch (err) {
     console.error('Error fetching contacts:', err);
@@ -164,56 +164,72 @@ app.get('/contacts', async (req, res) => {
   }
 });
 
-app.post('/contacts', async (req, res) => {
-  const { email, ...otherFields } = req.body;
+app.get('/contacts/:id/family', async (req, res) => {
   try {
-    const existingContact = await Contact.findOne({ where: { email } });
+    const families = await Family.findAll({ where: { DevoteeId: req.params.id }, order: [['LastModified', 'DESC']] });
+    res.status(200).json(families);
+  } catch (err) {
+    console.error('Error fetching family members:', err);
+    res.status(500).json({ message: 'Error fetching family members', error: err.message });
+  }
+});
+
+app.post('/contacts', async (req, res) => {
+  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
+  const transaction = await sequelize.transaction();
+  try {
+    const existingContact = await Contact.findOne({ where: { Email } });
     if (existingContact) {
       return res.status(400).json({ error: 'The email is already registered' });
     }
-    const contact = await Contact.create({ email, ...otherFields });
+    const contact = await Contact.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    for (const member of family) {
+      await Family.create({ DevoteeId: contact.DevoteeId, ...member }, { transaction });
+    }
+    await transaction.commit();
     res.status(201).json(contact);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding contact' });
+    await transaction.rollback();
+    console.error('Error adding contact:', error);
+    res.status(500).json({ message: 'Error adding contact', error: error.message });
   }
 });
 
 app.put('/contacts/:id', async (req, res) => {
-  const { first_name, last_name, phone_number, alternate_phone_number, address, city, state, zip_code, email, gothra, star, dob } = req.body;
+  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
+  const transaction = await sequelize.transaction();
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) {
       return res.status(404).json({ message: 'Contact not found' });
     }
-    contact.first_name = first_name;
-    contact.last_name = last_name;
-    contact.phone_number = phone_number;
-    contact.alternate_phone_number = alternate_phone_number;
-    contact.address = address;
-    contact.city = city;
-    contact.state = state;
-    contact.zip_code = zip_code;
-    contact.email = email;
-    contact.gothra = gothra;
-    contact.star = star;
-    contact.dob = dob;
-    await contact.save();
+    await contact.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    await Family.destroy({ where: { DevoteeId: contact.DevoteeId }, transaction });
+    for (const member of family) {
+      await Family.create({ DevoteeId: contact.DevoteeId, ...member }, { transaction });
+    }
+    await transaction.commit();
     res.status(200).json({ message: 'Contact updated successfully' });
   } catch (err) {
+    await transaction.rollback();
     console.error('Error updating contact:', err);
     res.status(500).json({ message: 'Error updating contact', error: err.message });
   }
 });
 
 app.delete('/contacts/:id', async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
     const contact = await Contact.findByPk(req.params.id);
     if (!contact) {
       return res.status(404).json({ message: 'Contact not found' });
     }
-    await contact.destroy();
+    await Family.destroy({ where: { DevoteeId: contact.DevoteeId }, transaction });
+    await contact.destroy({ transaction });
+    await transaction.commit();
     res.status(200).json({ message: 'Contact deleted successfully' });
   } catch (err) {
+    await transaction.rollback();
     console.error('Error deleting contact:', err);
     res.status(500).json({ message: 'Error deleting contact', error: err.message });
   }
