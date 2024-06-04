@@ -22,7 +22,7 @@ const Home = () => {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/contacts');
+      const response = await axios.get('http://localhost:5001/contacts');
       const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setContacts(sortedContacts);
       setTotalContacts(sortedContacts.length);
@@ -47,7 +47,7 @@ const Home = () => {
 
   const handleDeleteContact = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/contacts/${id}`);
+      await axios.delete(`http://localhost:5001/contacts/${id}`);
       message.success('Contact deleted');
       fetchContacts();
     } catch (error) {
@@ -58,10 +58,10 @@ const Home = () => {
   const handleOk = async (values) => {
     try {
       if (currentContact) {
-        await axios.put(`http://localhost:5000/contacts/${currentContact.id}`, values);
+        await axios.put(`http://localhost:5001/contacts/${currentContact.id}`, values);
         message.success('Contact updated');
       } else {
-        const response = await axios.post('http://localhost:5000/contacts', values);
+        const response = await axios.post('http://localhost:5001/contacts', values);
         if (response.data.error) {
           message.error(response.data.error);
         } else {
@@ -104,7 +104,7 @@ const Home = () => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5000/contacts?search=${value}`);
+        const response = await axios.get(`http://localhost:5001/contacts?search=${value}`);
         const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         setContacts(sortedContacts);
       } catch (error) {

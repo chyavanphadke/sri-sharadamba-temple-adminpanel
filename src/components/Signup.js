@@ -12,7 +12,7 @@ const Signup = () => {
 
   const onFinish = async (values) => {
     try {
-      await axios.post('http://localhost:5000/signup', values);
+      await axios.post('http://localhost:5001/signup', values);
       message.success('Signup successful. Waiting for Admin approval.');
       navigate('/');
     } catch (error) {

@@ -16,7 +16,7 @@ const SuperAdmin = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/users');
+      const response = await axios.get('http://localhost:5001/users');
       const sortedUsers = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setUsers(sortedUsers);
     } catch (error) {
@@ -29,13 +29,13 @@ const SuperAdmin = () => {
   const handleAction = async (id, action) => {
     try {
       if (action === 'approve') {
-        await axios.put(`http://localhost:5000/users/${id}/approve`);
+        await axios.put(`http://localhost:5001/users/${id}/approve`);
         message.success('User approved');
       } else if (action === 'delete') {
-        await axios.delete(`http://localhost:5000/users/${id}`);
+        await axios.delete(`http://localhost:5001/users/${id}`);
         message.success('User deleted');
       } else {
-        await axios.put(`http://localhost:5000/users/${id}/level`, { level: action });
+        await axios.put(`http://localhost:5001/users/${id}/level`, { level: action });
         message.success(`User level updated to ${action}`);
       }
       fetchUsers();

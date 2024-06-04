@@ -10,7 +10,7 @@ const Settings = () => {
   const onFinish = async (values) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/change-password', values, {
+      await axios.post('http://localhost:5001/change-password', values, {
         headers: { Authorization: `Bearer ${token}` },
       });
       message.success('Password changed successfully');
