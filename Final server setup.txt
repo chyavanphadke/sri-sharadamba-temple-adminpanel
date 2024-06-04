@@ -1,0 +1,39 @@
+IP's are:
+ifconfig ip : 127.0.0.1
+Frontend running on : http://10.0.0.204:3000
+Backend running on : http://0.0.0.0:5001
+Sql workbench : 127.0.0.1:3306
+
+
+
+
+
+
+Chnages made:
+
+Frontend:
+    Change all axios.put(`http://localhost:5001/   Changed to  axios.put(`http://10.0.0.204:5001/
+
+
+Backend:
+    app.listen(port, () => {   Changed to app.listen(port, '10.0.0.204', () => {
+    
+
+
+
+
+
+
+Need to check if this mac did the magic:
+
+sudo sysctl -w net.inet.ip.forwarding=1
+
+sudo nano /etc/pf.conf
+
+Add the following : rdr pass on en0 inet proto tcp from any to any port 5001 -> 127.0.0.1 port 5001
+
+Save and Exit: Press Ctrl + O to save the file, then press Enter. Press Ctrl + X to exit Nano.
+
+sudo pfctl -f /etc/pf.conf
+
+sudo pfctl -s nat
