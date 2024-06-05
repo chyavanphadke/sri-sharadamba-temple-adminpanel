@@ -8,83 +8,83 @@ import './Home.css';
 const { Content } = Layout;
 
 const Home = () => {
-  const [contacts, setContacts] = useState([]);
+  const [devotees, setDevotees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [totalContacts, setTotalContacts] = useState(0);
-  const [currentContact, setCurrentContact] = useState(null);
+  const [totalDevotees, setTotalDevotees] = useState(0);
+  const [currentDevotee, setCurrentDevotee] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', Balagokulam: '', DOB: null }]);
   const [form] = Form.useForm();
 
   useEffect(() => {
-    fetchContacts();
+    fetchDevotees();
   }, []);
 
-  const fetchContacts = async () => {
+  const fetchDevotees = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/contacts');
-      const sortedContacts = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
-      setContacts(sortedContacts);
-      setTotalContacts(sortedContacts.length);
+      const response = await axios.get('http://localhost:5001/devotees');
+      const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
+      setDevotees(sortedDevotees);
+      setTotalDevotees(sortedDevotees.length);
     } catch (error) {
-      message.error('Failed to load contacts');
+      message.error('Failed to load devotees');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddContact = () => {
-    setCurrentContact(null);
+  const handleAddDevotee = () => {
+    setCurrentDevotee(null);
     form.resetFields();
     setFamilyMembers([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', Balagokulam: '', DOB: null }]);
     setIsModalVisible(true);
   };
 
-  const handleEditContact = async (contact) => {
+  const handleEditDevotee = async (devotee) => {
     try {
-      const familyResponse = await axios.get(`http://localhost:5001/contacts/${contact.DevoteeId}/family`);
+      const familyResponse = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/family`);
       setFamilyMembers(familyResponse.data);
     } catch (error) {
       message.error('Failed to load family members');
     }
-    setCurrentContact(contact);
-    form.setFieldsValue(contact);
+    setCurrentDevotee(devotee);
+    form.setFieldsValue(devotee);
     setIsModalVisible(true);
   };
 
-  const handleDeleteContact = async (id) => {
+  const handleDeleteDevotee = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/contacts/${id}`);
-      message.success('Contact deleted');
-      fetchContacts();
+      await axios.delete(`http://localhost:5001/devotees/${id}`);
+      message.success('Devotee deleted');
+      fetchDevotees();
     } catch (error) {
-      message.error('Failed to delete contact');
+      message.error('Failed to delete devotee');
     }
   };
 
   const handleOk = async (values) => {
     try {
       const payload = { ...values, family: familyMembers };
-      if (currentContact) {
-        await axios.put(`http://localhost:5001/contacts/${currentContact.DevoteeId}`, payload);
-        message.success('Contact updated');
+      if (currentDevotee) {
+        await axios.put(`http://localhost:5001/devotees/${currentDevotee.DevoteeId}`, payload);
+        message.success('Devotee updated');
       } else {
-        const response = await axios.post('http://localhost:5001/contacts', payload);
+        const response = await axios.post('http://localhost:5001/devotees', payload);
         if (response.data.error) {
           message.error(response.data.error);
         } else {
-          message.success('Contact added');
+          message.success('Devotee added');
         }
       }
-      fetchContacts();
+      fetchDevotees();
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Failed to save contact');
+        message.error('Failed to save devotee');
       }
     }
   };
@@ -108,16 +108,16 @@ const Home = () => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/contacts?search=${value}`);
-        const sortedContacts = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
-        setContacts(sortedContacts);
+        const response = await axios.get(`http://localhost:5001/devotees?search=${value}`);
+        const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
+        setDevotees(sortedDevotees);
       } catch (error) {
-        message.error('Failed to search contacts');
+        message.error('Failed to search devotees');
       } finally {
         setLoading(false);
       }
     } else {
-      fetchContacts();
+      fetchDevotees();
     }
   }, 300), []);
 
@@ -133,8 +133,8 @@ const Home = () => {
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          <Button onClick={() => handleEditContact(record)}>Edit</Button>
-          <Button onClick={() => handleDeleteContact(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
+          <Button onClick={() => handleEditDevotee(record)}>Edit</Button>
+          <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
         </>
       )
     }
@@ -147,18 +147,18 @@ const Home = () => {
           <h2>Home Page</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
             <Input
-              placeholder="Search contacts"
+              placeholder="Search devotees"
               onChange={handleSearchChange}
               style={{ width: 400, marginRight: 16, height: 40 }}
             />
-            <Button type="primary" onClick={handleAddContact} style={{ height: 40 }}>Add Contact</Button>
+            <Button type="primary" onClick={handleAddDevotee} style={{ height: 40 }}>Add Devotee</Button>
           </div>
           <div style={{ marginTop: 16 }}>
-            <p>Total Contacts in the Database: {totalContacts}</p>
+            <p>Total Devotees in the Database: {totalDevotees}</p>
           </div>
           <Table
             columns={columns}
-            dataSource={contacts}
+            dataSource={devotees}
             loading={loading}
             rowKey="DevoteeId"
             pagination={{ pageSize: 10 }}
@@ -167,14 +167,14 @@ const Home = () => {
         </div>
       </Content>
       <Modal
-        title={currentContact ? "Edit Contact" : "Add Contact"}
+        title={currentDevotee ? "Edit Devotee" : "Add Devotee"}
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
       >
         <Form
           form={form}
-          initialValues={currentContact || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', Rashi: '', DOB: null }}
+          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', Rashi: '', DOB: null }}
           onFinish={handleOk}
         >
           <Row gutter={16}>
@@ -311,7 +311,7 @@ const Home = () => {
           </div>
           <Form.Item>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              {currentContact ? "Update" : "Add"}
+              {currentDevotee ? "Update" : "Add"}
             </Button>
           </Form.Item>
         </Form>

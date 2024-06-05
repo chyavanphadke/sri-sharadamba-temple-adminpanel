@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Contact, Family } = require('./models');
+const { sequelize, User, Devotee, Family } = require('./models');
 const { Op } = require('sequelize');
 
 const app = express();
@@ -148,23 +148,23 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
-// Contact Management Routes
-app.get('/contacts', async (req, res) => {
+// Devotee Management Routes
+app.get('/devotees', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = search
       ? { [Op.or]: [{ FirstName: { [Op.like]: `%${search}%` } }, { LastName: { [Op.like]: `%${search}%` } }] }
       : {};
 
-    const contacts = await Contact.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
-    res.status(200).json(contacts);
+    const devotees = await Devotee.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
+    res.status(200).json(devotees);
   } catch (err) {
-    console.error('Error fetching contacts:', err);
-    res.status(500).json({ message: 'Error fetching contacts', error: err.message });
+    console.error('Error fetching devotees:', err);
+    res.status(500).json({ message: 'Error fetching devotees', error: err.message });
   }
 });
 
-app.get('/contacts/:id/family', async (req, res) => {
+app.get('/devotees/:id/family', async (req, res) => {
   try {
     const families = await Family.findAll({ where: { DevoteeId: req.params.id }, order: [['LastModified', 'DESC']] });
     res.status(200).json(families);
@@ -174,64 +174,64 @@ app.get('/contacts/:id/family', async (req, res) => {
   }
 });
 
-app.post('/contacts', async (req, res) => {
+app.post('/devotees', async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
-    const existingContact = await Contact.findOne({ where: { Email } });
-    if (existingContact) {
+    const existingDevotee = await Devotee.findOne({ where: { Email } });
+    if (existingDevotee) {
       return res.status(400).json({ error: 'The email is already registered' });
     }
-    const contact = await Contact.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: contact.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
     }
     await transaction.commit();
-    res.status(201).json(contact);
+    res.status(201).json(devotee);
   } catch (error) {
     await transaction.rollback();
-    console.error('Error adding contact:', error);
-    res.status(500).json({ message: 'Error adding contact', error: error.message });
+    console.error('Error adding devotee:', error);
+    res.status(500).json({ message: 'Error adding devotee', error: error.message });
   }
 });
 
-app.put('/contacts/:id', async (req, res) => {
+app.put('/devotees/:id', async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
-    const contact = await Contact.findByPk(req.params.id);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const devotee = await Devotee.findByPk(req.params.id);
+    if (!devotee) {
+      return res.status(404).json({ message: 'Devotee not found' });
     }
-    await contact.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
-    await Family.destroy({ where: { DevoteeId: contact.DevoteeId }, transaction });
+    await devotee.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: contact.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
     }
     await transaction.commit();
-    res.status(200).json({ message: 'Contact updated successfully' });
+    res.status(200).json({ message: 'Devotee updated successfully' });
   } catch (err) {
     await transaction.rollback();
-    console.error('Error updating contact:', err);
-    res.status(500).json({ message: 'Error updating contact', error: err.message });
+    console.error('Error updating devotee:', err);
+    res.status(500).json({ message: 'Error updating devotee', error: err.message });
   }
 });
 
-app.delete('/contacts/:id', async (req, res) => {
+app.delete('/devotees/:id', async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const contact = await Contact.findByPk(req.params.id);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const devotee = await Devotee.findByPk(req.params.id);
+    if (!devotee) {
+      return res.status(404).json({ message: 'Devotee not found' });
     }
-    await Family.destroy({ where: { DevoteeId: contact.DevoteeId }, transaction });
-    await contact.destroy({ transaction });
+    await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
+    await devotee.destroy({ transaction });
     await transaction.commit();
-    res.status(200).json({ message: 'Contact deleted successfully' });
+    res.status(200).json({ message: 'Devotee deleted successfully' });
   } catch (err) {
     await transaction.rollback();
-    console.error('Error deleting contact:', err);
-    res.status(500).json({ message: 'Error deleting contact', error: err.message });
+    console.error('Error deleting devotee:', err);
+    res.status(500).json({ message: 'Error deleting devotee', error: err.message });
   }
 });
 

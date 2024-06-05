@@ -32,8 +32,8 @@ const User = sequelize.define('User', {
   }
 });
 
-// Define Contact model
-const Contact = sequelize.define('Contact', {
+// Define Devotee model
+const Devotee = sequelize.define('Devotee', {
   DevoteeId: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -76,7 +76,7 @@ const Contact = sequelize.define('Contact', {
     type: DataTypes.STRING,
   },
   Rashi: {
-    type: DataTypes.STRING,
+  type: DataTypes.STRING,
   },
   DOB: {
     type: DataTypes.DATE,
@@ -90,7 +90,8 @@ const Contact = sequelize.define('Contact', {
     defaultValue: Sequelize.NOW
   }
 }, {
-  timestamps: false
+  timestamps: false,
+  freezeTableName: true
 });
 
 // Define Family model
@@ -103,7 +104,7 @@ const Family = sequelize.define('Family', {
   DevoteeId: {
     type: DataTypes.INTEGER,
     references: {
-      model: Contact,
+      model: Devotee,
       key: 'DevoteeId'
     }
   },
@@ -137,8 +138,13 @@ const Family = sequelize.define('Family', {
     defaultValue: Sequelize.NOW
   }
 }, {
-  timestamps: false
+  timestamps: false,
+  freezeTableName: true
 });
+
+// Set associations
+Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
+Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
 
 // Sync the models with the database
 sequelize.sync()
@@ -152,6 +158,6 @@ sequelize.sync()
 module.exports = {
   sequelize,
   User,
-  Contact,
+  Devotee,
   Family
 };
