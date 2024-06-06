@@ -13,7 +13,7 @@ const Home = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [totalDevotees, setTotalDevotees] = useState(0);
   const [currentDevotee, setCurrentDevotee] = useState(null);
-  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', Balagokulam: '', DOB: null }]);
+  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const Home = () => {
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
     form.resetFields();
-    setFamilyMembers([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', Balagokulam: '', DOB: null }]);
+    setFamilyMembers([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
     setIsModalVisible(true);
   };
 
@@ -115,7 +115,7 @@ const Home = () => {
   };
 
   const addFamilyMember = () => {
-    setFamilyMembers([...familyMembers, { FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', Balagokulam: '', DOB: null }]);
+    setFamilyMembers([...familyMembers, { FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   };
 
   const debounceSearch = useCallback(_.debounce(async (value) => {
@@ -185,10 +185,11 @@ const Home = () => {
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
+        width={800} // Increased width
       >
         <Form
           form={form}
-          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', Rashi: '', DOB: null }}
+          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
           onFinish={handleOk}
         >
           <Row gutter={16}>
@@ -239,9 +240,18 @@ const Home = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="Email" rules={[{ required: true, message: 'Please input the email!' }]}>
-            <Input placeholder="Email" style={{ height: 50 }} />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="Email" rules={[{ required: true, message: 'Please input the email!' }]}>
+                <Input placeholder="Email" style={{ height: 50 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="DOB">
+                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="Gotra">
@@ -254,70 +264,64 @@ const Home = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="DOB">
-            <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-          </Form.Item>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
             {familyMembers.map((member, index) => (
-              <Row gutter={16} key={index} style={{ marginBottom: 16 }}>
-                <Col span={4}>
-                  <Input
-                    placeholder="First Name"
-                    value={member.FirstName}
-                    onChange={(e) => handleFamilyChange(index, 'FirstName', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <Input
-                    placeholder="Last Name"
-                    value={member.LastName}
-                    onChange={(e) => handleFamilyChange(index, 'LastName', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <Input
-                    placeholder="Relation"
-                    value={member.RelationShip}
-                    onChange={(e) => handleFamilyChange(index, 'RelationShip', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <Input
-                    placeholder="Gothra"
-                    value={member.Gotra}
-                    onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <Input
-                    placeholder="Star"
-                    value={member.Star}
-                    onChange={(e) => handleFamilyChange(index, 'Star', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <Input
-                    placeholder="Balagokulam"
-                    value={member.Balagokulam}
-                    onChange={(e) => handleFamilyChange(index, 'Balagokulam', e.target.value)}
-                    style={{ height: 50 }}
-                  />
-                </Col>
-                <Col span={4}>
-                  <DatePicker
-                    style={{ width: '100%', height: 50 }}
-                    placeholder="Date of Birth"
-                    value={member.DOB ? moment(member.DOB) : null}
-                    onChange={(date) => handleFamilyChange(index, 'DOB', date)}
-                  />
-                </Col>
-              </Row>
+              <div key={index} style={{ marginBottom: 16 }}>
+                <h4>Family member {index + 1}</h4>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Input
+                      placeholder="First Name"
+                      value={member.FirstName}
+                      onChange={(e) => handleFamilyChange(index, 'FirstName', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Last Name"
+                      value={member.LastName}
+                      onChange={(e) => handleFamilyChange(index, 'LastName', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Relation"
+                      value={member.RelationShip}
+                      onChange={(e) => handleFamilyChange(index, 'RelationShip', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                </Row>
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Gothra"
+                      value={member.Gotra}
+                      onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Star"
+                      value={member.Star}
+                      onChange={(e) => handleFamilyChange(index, 'Star', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <DatePicker
+                      style={{ width: '100%', height: 50 }}
+                      placeholder="Date of Birth"
+                      value={member.DOB ? moment(member.DOB) : null}
+                      onChange={(date) => handleFamilyChange(index, 'DOB', date)}
+                    />
+                  </Col>
+                </Row>
+              </div>
             ))}
             <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
               + Add Family Member
