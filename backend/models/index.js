@@ -52,51 +52,122 @@ const User = sequelize.define('User', {
   freezeTableName: true
 });
 
-// Define Contact model
-const Contact = sequelize.define('Contact', {
-  first_name: {
+// Define Devotee model
+const Devotee = sequelize.define('Devotee', {
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  FirstName: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  last_name: {
+  LastName: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  phone_number: {
+  Phone: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  alternate_phone_number: {
+  AltPhone: {
     type: DataTypes.STRING,
   },
-  address: {
+  Address: {
     type: DataTypes.STRING,
   },
-  city: {
+  City: {
     type: DataTypes.STRING,
   },
-  state: {
+  State: {
     type: DataTypes.STRING,
   },
-  zip_code: {
+  Zip: {
     type: DataTypes.STRING,
   },
-  email: {
+  Email: {
     type: DataTypes.STRING,
   },
-  gothra: {
+  Gotra: {
     type: DataTypes.STRING,
   },
-  star: {
+  Star: {
     type: DataTypes.STRING,
   },
-  rashi: {
-    type: DataTypes.STRING,
-  },
-  dob: {
+  // Todo: add if required
+  // Rashi: {
+  // type: DataTypes.STRING,
+  // },
+  DOB: {
     type: DataTypes.DATE,
+  },
+  // Todo: add if required
+  // CreatedAt: {
+  //   type: DataTypes.DATE,
+  //   defaultValue: Sequelize.NOW
+  // },
+  LastModified: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
   }
+}, {
+  timestamps: false,
+  freezeTableName: true
 });
+
+// Define Family model
+const Family = sequelize.define('Family', {
+  FamilyMemberId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Devotee,
+      key: 'DevoteeId'
+    }
+  },
+  FirstName: {
+    type: DataTypes.STRING,
+  },
+  LastName: {
+    type: DataTypes.STRING,
+  },
+  RelationShip: {
+    type: DataTypes.STRING,
+  },
+  Gotra: {
+    type: DataTypes.STRING,
+  },
+  Star: {
+    type: DataTypes.STRING,
+  },
+  Balagokulam: {
+    type: DataTypes.STRING,
+  },
+  DOB: {
+    type: DataTypes.DATE,
+  },
+  // Todo: add if required
+  // CreatedAt: {
+  //   type: DataTypes.DATE,
+  //  defaultValue: Sequelize.NOW
+  // },
+  LastModified: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
+// Set associations
+Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
+Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
 
 // Sync the models with the database
 sequelize.sync()
@@ -110,5 +181,6 @@ sequelize.sync()
 module.exports = {
   sequelize,
   User,
-  Contact
+  Devotee,
+  Family
 };

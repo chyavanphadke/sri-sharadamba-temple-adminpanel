@@ -1,125 +1,158 @@
-// src/components/Home.js
 import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
-import './Home.css'; // Import CSS file for styling
+import moment from 'moment';
+import './Home.css';
 
 const { Content } = Layout;
 
 const Home = () => {
-  const [contacts, setContacts] = useState([]);
+  const [devotees, setDevotees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [totalContacts, setTotalContacts] = useState(0);
-  const [currentContact, setCurrentContact] = useState(null);
-  const [form] = Form.useForm(); // Initialize the form
+  const [totalDevotees, setTotalDevotees] = useState(0);
+  const [currentDevotee, setCurrentDevotee] = useState(null);
+  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
+  const [form] = Form.useForm();
 
   useEffect(() => {
-    fetchContacts();
+    fetchDevotees();
   }, []);
 
-  const fetchContacts = async () => {
+  const fetchDevotees = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/contacts');
-      const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      setContacts(sortedContacts);
-      setTotalContacts(sortedContacts.length);
+      const response = await axios.get('http://localhost:5001/devotees');
+      const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
+      setDevotees(sortedDevotees);
+      setTotalDevotees(sortedDevotees.length);
     } catch (error) {
-      message.error('Failed to load contacts');
+      message.error('Failed to load devotees');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddContact = () => {
-    setCurrentContact(null);
-    form.resetFields(); // Reset form fields
+  const handleAddDevotee = () => {
+    setCurrentDevotee(null);
+    form.resetFields();
+    setFamilyMembers([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
     setIsModalVisible(true);
   };
 
-  const handleEditContact = (contact) => {
-    setCurrentContact(contact);
-    form.setFieldsValue(contact); // Set form values for editing
-    setIsModalVisible(true);
-  };
-
-  const handleDeleteContact = async (id) => {
+  const handleEditDevotee = async (devotee) => {
     try {
-      await axios.delete(`http://localhost:5001/contacts/${id}`);
-      message.success('Contact deleted');
-      fetchContacts();
+      const familyResponse = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/family`);
+      const familyMembersData = familyResponse.data.map(member => ({
+        ...member,
+        DOB: member.DOB ? moment(member.DOB) : null
+      }));
+      setFamilyMembers(familyMembersData);
     } catch (error) {
-      message.error('Failed to delete contact');
+      message.error('Failed to load family members');
+    }
+    setCurrentDevotee({
+      ...devotee,
+      DOB: devotee.DOB ? moment(devotee.DOB) : null
+    });
+    form.setFieldsValue({
+      ...devotee,
+      DOB: devotee.DOB ? moment(devotee.DOB) : null
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleDeleteDevotee = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5001/devotees/${id}`);
+      message.success('Devotee deleted');
+      fetchDevotees();
+    } catch (error) {
+      message.error('Failed to delete devotee');
     }
   };
 
   const handleOk = async (values) => {
     try {
-      if (currentContact) {
-        await axios.put(`http://localhost:5001/contacts/${currentContact.id}`, values);
-        message.success('Contact updated');
+      const payload = { ...values, family: familyMembers };
+      if (currentDevotee) {
+        await axios.put(`http://localhost:5001/devotees/${currentDevotee.DevoteeId}`, payload);
+        message.success('Devotee updated');
       } else {
-        const response = await axios.post('http://localhost:5001/contacts', values);
+        const response = await axios.post('http://localhost:5001/devotees', payload);
         if (response.data.error) {
           message.error(response.data.error);
         } else {
-          message.success('Contact added');
+          message.success('Devotee added');
         }
       }
-      fetchContacts();
+      fetchDevotees();
       setIsModalVisible(false);
-      form.resetFields(); // Reset form fields after successful submission
+      form.resetFields();
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        message.error(error.response.data.error);
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
       } else {
-        message.error('Failed to save contact');
+        message.error('Failed to save devotee');
       }
     }
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    form.resetFields(); // Reset form fields when modal is closed
+    form.resetFields();
   };
 
-  const columns = [
-    { title: 'First Name', dataIndex: 'first_name', key: 'first_name' },
-    { title: 'Last Name', dataIndex: 'last_name', key: 'last_name' },
-    { title: 'Phone Number', dataIndex: 'phone_number', key: 'phone_number' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    {
-      title: 'Actions', key: 'actions', render: (text, record) => (
-        <>
-          <Button onClick={() => handleEditContact(record)}>Edit</Button>
-          <Button onClick={() => handleDeleteContact(record.id)} danger style={{ marginLeft: 8 }}>Delete</Button>
-        </>
-      )
+  const handleFamilyChange = (index, field, value) => {
+    const newFamilyMembers = [...familyMembers];
+    if (field === 'DOB') {
+      newFamilyMembers[index][field] = value ? moment(value) : null;
+    } else {
+      newFamilyMembers[index][field] = value;
     }
-  ];
+    setFamilyMembers(newFamilyMembers);
+  };
+
+  const addFamilyMember = () => {
+    setFamilyMembers([...familyMembers, { FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
+  };
 
   const debounceSearch = useCallback(_.debounce(async (value) => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/contacts?search=${value}`);
-        const sortedContacts = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        setContacts(sortedContacts);
+        const response = await axios.get(`http://localhost:5001/devotees?search=${value}`);
+        const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
+        setDevotees(sortedDevotees);
       } catch (error) {
-        message.error('Failed to search contacts');
+        message.error('Failed to search devotees');
       } finally {
         setLoading(false);
       }
     } else {
-      fetchContacts();
+      fetchDevotees();
     }
   }, 300), []);
 
   const handleSearchChange = (e) => {
     debounceSearch(e.target.value);
   };
+
+  const columns = [
+    { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName' },
+    { title: 'Last Name', dataIndex: 'LastName', key: 'LastName' },
+    { title: 'Phone', dataIndex: 'Phone', key: 'Phone' },
+    { title: 'Email', dataIndex: 'Email', key: 'Email' },
+    {
+      title: 'Actions', key: 'actions', render: (text, record) => (
+        <>
+          <Button onClick={() => handleEditDevotee(record)}>Edit</Button>
+          <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
+        </>
+      )
+    }
+  ];
 
   return (
     <Layout>
@@ -128,105 +161,175 @@ const Home = () => {
           <h2>Home Page</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
             <Input
-              placeholder="Search contacts"
+              placeholder="Search devotees"
               onChange={handleSearchChange}
-              style={{ width: 400, marginRight: 16, height: 40 }} // Set height to match button
+              style={{ width: 400, marginRight: 16, height: 40 }}
             />
-            <Button type="primary" onClick={handleAddContact} style={{ height: 40 }}>Add Contact</Button> {/* Set height to match search bar */}
+            <Button type="primary" onClick={handleAddDevotee} style={{ height: 40 }}>Add Devotee</Button>
           </div>
           <div style={{ marginTop: 16 }}>
-            <p>Total Contacts in the Database: {totalContacts}</p>
+            <p>Total Devotees in the Database: {totalDevotees}</p>
           </div>
           <Table
             columns={columns}
-            dataSource={contacts}
+            dataSource={devotees}
             loading={loading}
-            rowKey="id"
+            rowKey="DevoteeId"
             pagination={{ pageSize: 10 }}
-            className="custom-table" // Add custom class for styling
+            className="custom-table"
           />
         </div>
       </Content>
       <Modal
-        title={currentContact ? "Edit Contact" : "Add Contact"}
+        title={currentDevotee ? "Edit Devotee" : "Add Devotee"}
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
+        width={800} // Increased width
       >
         <Form
           form={form}
-          initialValues={currentContact || { first_name: '', last_name: '', phone_number: '', alternate_phone_number: '', address: '', city: '', state: '', zip_code: '', email: '', gothra: '', star: '', dob: null }}
+          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
           onFinish={handleOk}
         >
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="first_name" rules={[{ required: true, message: 'Please input the first name!' }]}>
+              <Form.Item name="FirstName" rules={[{ required: true, message: 'Please input the first name!' }]}>
                 <Input placeholder="First Name" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="last_name" rules={[{ required: true, message: 'Please input the last name!' }]}>
+              <Form.Item name="LastName" rules={[{ required: true, message: 'Please input the last name!' }]}>
                 <Input placeholder="Last Name" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="phone_number" rules={[{ required: true, message: 'Please input the phone number!' }]}>
+              <Form.Item name="Phone" rules={[{ required: true, message: 'Please input the phone number!' }]}>
                 <Input placeholder="Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="alternate_phone_number">
+              <Form.Item name="AltPhone">
                 <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="address">
+              <Form.Item name="Address">
                 <Input placeholder="Address" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="city">
+              <Form.Item name="City">
                 <Input placeholder="City" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="state">
+              <Form.Item name="State">
                 <Input placeholder="State" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="zip_code">
+              <Form.Item name="Zip">
                 <Input placeholder="Zip Code" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="email" rules={[{ required: true, message: 'Please input the email!' }]}>
-            <Input placeholder="Email" style={{ height: 50 }} />
-          </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="gothra">
-                <Input placeholder="Gothra" style={{ height: 50 }} />
+              <Form.Item name="Email" rules={[{ required: true, message: 'Please input the email!' }]}>
+                <Input placeholder="Email" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="star">
+              <Form.Item name="DOB">
+                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="Gotra">
+                <Input placeholder="Gotra" style={{ height: 50 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="Star">
                 <Input placeholder="Star" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="dob">
-            <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-          </Form.Item>
+          <div style={{ marginTop: 16 }}>
+            <h3>Family Members</h3>
+            {familyMembers.map((member, index) => (
+              <div key={index} style={{ marginBottom: 16 }}>
+                <h4>Family member {index + 1}</h4>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Input
+                      placeholder="First Name"
+                      value={member.FirstName}
+                      onChange={(e) => handleFamilyChange(index, 'FirstName', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Last Name"
+                      value={member.LastName}
+                      onChange={(e) => handleFamilyChange(index, 'LastName', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Relation"
+                      value={member.RelationShip}
+                      onChange={(e) => handleFamilyChange(index, 'RelationShip', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                </Row>
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Gothra"
+                      value={member.Gotra}
+                      onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Input
+                      placeholder="Star"
+                      value={member.Star}
+                      onChange={(e) => handleFamilyChange(index, 'Star', e.target.value)}
+                      style={{ height: 50 }}
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <DatePicker
+                      style={{ width: '100%', height: 50 }}
+                      placeholder="Date of Birth"
+                      value={member.DOB ? moment(member.DOB) : null}
+                      onChange={(date) => handleFamilyChange(index, 'DOB', date)}
+                    />
+                  </Col>
+                </Row>
+              </div>
+            ))}
+            <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
+              + Add Family Member
+            </Button>
+          </div>
           <Form.Item>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              {currentContact ? "Update" : "Add"}
+              {currentDevotee ? "Update" : "Add"}
             </Button>
           </Form.Item>
         </Form>
