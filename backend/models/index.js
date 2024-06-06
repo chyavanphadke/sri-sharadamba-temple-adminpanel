@@ -145,6 +145,31 @@ const Family = sequelize.define('Family', {
   freezeTableName: true
 });
 
+// Define Service model
+const Service = sequelize.define('Service', {
+  ServiceId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  Service: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Rate: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  Active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -162,5 +187,6 @@ module.exports = {
   sequelize,
   User,
   Devotee,
-  Family
+  Family,
+  Service
 };

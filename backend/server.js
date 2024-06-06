@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family } = require('./models');
+const { sequelize, User, Devotee, Family, Service } = require('./models');
 const { Op } = require('sequelize');
 
 const app = express();
@@ -235,6 +235,36 @@ app.delete('/devotees/:id', async (req, res) => {
   }
 });
 
+// Service Management Routes
+app.get('/services', async (req, res) => {
+  try {
+    const services = await Service.findAll();
+    res.status(200).json(services);
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    res.status(500).json({ message: 'Error fetching services', error: err.message });
+  }
+});
+
+app.put('/services', async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const updates = req.body;
+    for (const update of updates) {
+      const service = await Service.findByPk(update.ServiceId);
+      if (service) {
+        await service.update(update, { transaction });
+      }
+    }
+    await transaction.commit();
+    res.status(200).json({ message: 'Services updated successfully' });
+  } catch (err) {
+    await transaction.rollback();
+    console.error('Error updating services:', err);
+    res.status(500).json({ message: 'Error updating services', error: err.message });
+  }
+});
+
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
   const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
@@ -249,8 +279,9 @@ sequelize.sync().then(async () => {
     });
     console.log('Super user created');
   }
-  
+
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
+
