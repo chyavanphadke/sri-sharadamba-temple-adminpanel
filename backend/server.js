@@ -175,14 +175,14 @@ app.get('/devotees/:id/family', async (req, res) => {
 });
 
 app.post('/devotees', async (req, res) => {
-  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
+  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
     const existingDevotee = await Devotee.findOne({ where: { Email } });
     if (existingDevotee) {
       return res.status(400).json({ error: 'The email is already registered' });
     }
-    const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     for (const member of family) {
       await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
     }
@@ -196,14 +196,14 @@ app.post('/devotees', async (req, res) => {
 });
 
 app.put('/devotees/:id', async (req, res) => {
-  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB, family } = req.body;
+  const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
     const devotee = await Devotee.findByPk(req.params.id);
     if (!devotee) {
       return res.status(404).json({ message: 'Devotee not found' });
     }
-    await devotee.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, Rashi, DOB }, { transaction });
+    await devotee.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     for (const member of family) {
       await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });

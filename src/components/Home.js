@@ -44,12 +44,22 @@ const Home = () => {
   const handleEditDevotee = async (devotee) => {
     try {
       const familyResponse = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/family`);
-      setFamilyMembers(familyResponse.data);
+      const familyMembersData = familyResponse.data.map(member => ({
+        ...member,
+        DOB: member.DOB ? moment(member.DOB) : null
+      }));
+      setFamilyMembers(familyMembersData);
     } catch (error) {
       message.error('Failed to load family members');
     }
-    setCurrentDevotee(devotee);
-    form.setFieldsValue(devotee);
+    setCurrentDevotee({
+      ...devotee,
+      DOB: devotee.DOB ? moment(devotee.DOB) : null
+    });
+    form.setFieldsValue({
+      ...devotee,
+      DOB: devotee.DOB ? moment(devotee.DOB) : null
+    });
     setIsModalVisible(true);
   };
 
@@ -96,7 +106,11 @@ const Home = () => {
 
   const handleFamilyChange = (index, field, value) => {
     const newFamilyMembers = [...familyMembers];
-    newFamilyMembers[index][field] = value;
+    if (field === 'DOB') {
+      newFamilyMembers[index][field] = value ? moment(value) : null;
+    } else {
+      newFamilyMembers[index][field] = value;
+    }
     setFamilyMembers(newFamilyMembers);
   };
 

@@ -75,16 +75,18 @@ const Devotee = sequelize.define('Devotee', {
   Star: {
     type: DataTypes.STRING,
   },
-  Rashi: {
-  type: DataTypes.STRING,
-  },
+  // Todo: add if required
+  // Rashi: {
+  // type: DataTypes.STRING,
+  // },
   DOB: {
     type: DataTypes.DATE,
   },
-  CreatedAt: {
-    type: DataTypes.DATE,
-    defaultValue: Sequelize.NOW
-  },
+  // Todo: add if required
+  // CreatedAt: {
+  //   type: DataTypes.DATE,
+  //   defaultValue: Sequelize.NOW
+  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
@@ -129,10 +131,11 @@ const Family = sequelize.define('Family', {
   DOB: {
     type: DataTypes.DATE,
   },
-  CreatedAt: {
-    type: DataTypes.DATE,
-    defaultValue: Sequelize.NOW
-  },
+  // Todo: add if required
+  // CreatedAt: {
+  //   type: DataTypes.DATE,
+  //  defaultValue: Sequelize.NOW
+  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
