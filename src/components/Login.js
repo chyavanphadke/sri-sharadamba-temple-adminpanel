@@ -20,7 +20,7 @@ const Login = () => {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Invalid credentials');
+        message.error('Uh oh. Something went wrong...');
       }
     }
   };

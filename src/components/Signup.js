@@ -13,8 +13,9 @@ const Signup = () => {
   const onFinish = async (values) => {
     try {
       await axios.post('http://localhost:5001/signup', values);
-      message.success('Signup successful. Waiting for Admin approval.');
-      navigate('/');
+      message.success('Signup successful. Waiting for Admin approval.', 2, () => {
+        navigate('/'); // This callback will be executed after the message duration
+      });
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
@@ -39,7 +40,21 @@ const Signup = () => {
               <Form.Item name="password" rules={[{ required: true, message: 'Please input your Password!' }]}>
                 <Input type="password" placeholder="Password" />
               </Form.Item>
-              <Form.Item name="confirmPassword" rules={[{ required: true, message: 'Please confirm your Password!' }]}>
+              <Form.Item
+                name="confirmPassword"
+                dependencies={['password']}
+                rules={[
+                  { required: true, message: 'Please confirm your Password!' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('password') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('The two passwords do not match!'));
+                    },
+                  }),
+                ]}
+              >
                 <Input type="password" placeholder="Confirm Password" />
               </Form.Item>
               <Form.Item name="reason_for_access" rules={[{ required: true, message: 'Please input your Reason for Access!' }]}>
