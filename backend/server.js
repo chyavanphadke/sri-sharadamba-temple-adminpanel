@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment } = require('./models');
 const { Op } = require('sequelize');
 
 const app = express();
@@ -29,7 +29,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Authentication Routes sign up
+// Authentication Routes
 app.post('/signup', async (req, res) => {
   const { username, password, reason_for_access } = req.body;
   try {
@@ -114,7 +114,7 @@ app.put('/user/:userid/approve', async (req, res) => {
     }
     user.approved = true;
     user.active = true;
-    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1'
+    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1';
     await user.save();
     res.status(200).json({ message: 'User approved successfully' });
   } catch (err) {
@@ -222,11 +222,12 @@ app.put('/devotees/:id', async (req, res) => {
   }
 });
 
-app.delete('/contacts/:id', async (req, res) => {
+app.delete('/devotees/:id', async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const contact = await Contact.findByPk(req.params.id);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const devotee = await Devotee.findByPk(req.params.id);
+    if (!devotee) {
+      return res.status(404).json({ message: 'Devotee not found' });
     }
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
@@ -269,6 +270,40 @@ app.put('/services', async (req, res) => {
   }
 });
 
+// ModeOfPayment Management Routes
+app.get('/payment-methods', async (req, res) => {
+  try {
+    const paymentMethods = await ModeOfPayment.findAll();
+    res.status(200).json(paymentMethods);
+  } catch (err) {
+    console.error('Error fetching payment methods:', err);
+    res.status(500).json({ message: 'Error fetching payment methods', error: err.message });
+  }
+});
+
+// Activity Management Routes
+app.post('/activities', async (req, res) => {
+  const { DevoteeId, ServiceId, PaymentMethod, Amount, CheckNumber, Comments, UserId, ServiceDate } = req.body;
+  console.log('Received request to add activity:', req.body); // Log input values
+  try {
+    await Activity.create({
+      DevoteeId,
+      ServiceId,
+      PaymentMethod,
+      Amount,
+      CheckNumber,
+      Comments,
+      UserId,
+      ActivityDate: new Date(),
+      ServiceDate
+    });
+    res.status(201).json({ message: 'Activity added successfully' });
+  } catch (error) {
+    console.error('Error adding activity:', error); // Log the error
+    res.status(500).json({ message: 'Error adding activity', error: error.message });
+  }
+});
+
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
   const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
@@ -291,4 +326,3 @@ sequelize.sync().then(async () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
-

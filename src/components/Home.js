@@ -1,23 +1,30 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker } from 'antd';
+import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
 import './Home.css';
 
 const { Content } = Layout;
+const { Option } = Select;
 
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isSevaModalVisible, setIsSevaModalVisible] = useState(false);
   const [totalDevotees, setTotalDevotees] = useState(0);
   const [currentDevotee, setCurrentDevotee] = useState(null);
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [form] = Form.useForm();
+  const [sevaForm] = Form.useForm();
+  const [services, setServices] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
 
   useEffect(() => {
     fetchDevotees();
+    fetchServices();
+    fetchPaymentMethods();
   }, []);
 
   const fetchDevotees = async () => {
@@ -31,6 +38,24 @@ const Home = () => {
       message.error('Failed to load devotees');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/services');
+      setServices(response.data);
+    } catch (error) {
+      message.error('Failed to load services');
+    }
+  };
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/payment-methods');
+      setPaymentMethods(response.data);
+    } catch (error) {
+      message.error('Failed to load payment methods');
     }
   };
 
@@ -71,6 +96,48 @@ const Home = () => {
     } catch (error) {
       message.error('Failed to delete devotee');
     }
+  };
+
+  const handleSeva = (devotee) => {
+    setCurrentDevotee(devotee);
+    sevaForm.resetFields();
+    sevaForm.setFieldsValue({
+      Name: `${devotee.FirstName} ${devotee.LastName}`,
+      AmountPaid: 0,
+    });
+    setIsSevaModalVisible(true);
+  };
+
+  const handleSevaOk = async (values) => {
+    try {
+      const service = services.find(s => s.Service === values.Service);
+      const paymentMethod = paymentMethods.find(pm => pm.MethodName === values.PaymentMethod);
+      const payload = {
+        DevoteeId: currentDevotee.DevoteeId,
+        ServiceId: service.ServiceId,
+        PaymentMethod: paymentMethod.PaymentMethodId,
+        Amount: values.AmountPaid,
+        CheckNumber: values.CheckNumber,
+        Comments: values.Comments,
+        UserId: 1, // Assuming current logged in user ID
+        ServiceDate: values.ServiceDate,
+      };
+      await axios.post('http://localhost:5001/activities', payload);
+      message.success('Seva added successfully');
+      setIsSevaModalVisible(false);
+      sevaForm.resetFields();
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Failed to add seva');
+      }
+    }
+  };
+
+  const handleSevaCancel = () => {
+    setIsSevaModalVisible(false);
+    sevaForm.resetFields();
   };
 
   const handleOk = async (values) => {
@@ -147,7 +214,8 @@ const Home = () => {
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          <Button onClick={() => handleEditDevotee(record)}>Edit</Button>
+          <Button onClick={() => handleSeva(record)}>SEVA</Button>
+          <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>
           <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
         </>
       )
@@ -330,6 +398,59 @@ const Home = () => {
           <Form.Item>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>
               {currentDevotee ? "Update" : "Add"}
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        title="Add Seva"
+        visible={isSevaModalVisible}
+        onCancel={handleSevaCancel}
+        footer={null}
+        width={800} // Increased width
+      >
+        <Form
+          form={sevaForm}
+          onFinish={handleSevaOk}
+        >
+          <Form.Item name="Name" label="Name">
+            <Input disabled />
+          </Form.Item>
+          <Form.Item name="Service" label="Service" rules={[{ required: true, message: 'Please select a service!' }]}>
+            <Select placeholder="Select a service" onChange={(value) => {
+              const service = services.find(s => s.Service === value);
+              sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
+            }}>
+              {services.map(service => (
+                <Option key={service.ServiceId} value={service.Service}>{service.Service}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="Rate" label="Rate">
+            <Input disabled />
+          </Form.Item>
+          <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="PaymentMethod" label="Payment Method" rules={[{ required: true, message: 'Please select a payment method!' }]}>
+            <Select placeholder="Select a payment method">
+              {paymentMethods.map(method => (
+                <Option key={method.PaymentMethodId} value={method.PaymentMethodId}>{method.MethodName}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="CheckNumber" label="Check Number">
+            <Input disabled={!sevaForm.getFieldValue('PaymentMethod') || sevaForm.getFieldValue('PaymentMethod') !== 'Check'} />
+          </Form.Item>
+          <Form.Item name="Comments" label="Comments">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Add Seva
             </Button>
           </Form.Item>
         </Form>

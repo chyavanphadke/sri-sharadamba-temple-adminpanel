@@ -95,18 +95,9 @@ const Devotee = sequelize.define('Devotee', {
   Star: {
     type: DataTypes.STRING,
   },
-  // Todo: add if required
-  // Rashi: {
-  // type: DataTypes.STRING,
-  // },
   DOB: {
     type: DataTypes.DATE,
   },
-  // Todo: add if required
-  // CreatedAt: {
-  //   type: DataTypes.DATE,
-  //   defaultValue: Sequelize.NOW
-  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
@@ -151,11 +142,6 @@ const Family = sequelize.define('Family', {
   DOB: {
     type: DataTypes.DATE,
   },
-  // Todo: add if required
-  // CreatedAt: {
-  //   type: DataTypes.DATE,
-  //  defaultValue: Sequelize.NOW
-  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
@@ -190,6 +176,79 @@ const Service = sequelize.define('Service', {
   freezeTableName: true
 });
 
+// Define Activity model
+const Activity = sequelize.define('Activity', {
+  ActivityId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Devotee,
+      key: 'DevoteeId'
+    }
+  },
+  ServiceId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Service,
+      key: 'ServiceId'
+    }
+  },
+  PaymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Amount: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  CheckNumber: {
+    type: DataTypes.STRING,
+  },
+  Comments: {
+    type: DataTypes.STRING,
+  },
+  UserId: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  ActivityDate: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  },
+  ServiceDate: {
+    type: DataTypes.DATE,
+  },
+  PrintDate: {
+    type: DataTypes.DATE,
+  },
+  CheckFile: {
+    type: DataTypes.STRING,
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
+// Define ModeOfPayment model
+const ModeOfPayment = sequelize.define('ModeOfPayment', {
+  PaymentMethodId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  MethodName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -208,5 +267,7 @@ module.exports = {
   User,
   Devotee,
   Family,
-  Service
+  Service,
+  Activity,
+  ModeOfPayment
 };
