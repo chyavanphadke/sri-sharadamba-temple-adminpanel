@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../../config/config.json');
-
+const { v4: uuidv4 } = require('uuid');
 const env = process.env.NODE_ENV || 'development';
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
@@ -9,6 +9,11 @@ const sequelize = new Sequelize(config[env].database, config[env].username, conf
 
 // Define User model
 const User = sequelize.define('User', {
+  userid: {
+    type: DataTypes.STRING,
+    defaultValue: () => uuidv4(), // Automatically generate UUIDs
+    primaryKey: true,
+  },
   username: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -18,7 +23,7 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  level: {
+  usertype: {
     type: DataTypes.STRING,
     defaultValue: 'User'
   },
@@ -26,10 +31,25 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  approvedBy: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null
+  },
+  active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  super_user: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   reason_for_access: {
     type: DataTypes.STRING,
     allowNull: false
   }
+}, {
+  freezeTableName: true
 });
 
 // Define Devotee model

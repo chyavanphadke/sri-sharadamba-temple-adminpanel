@@ -19,14 +19,17 @@ const authenticateToken = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.sendStatus(401);
 
-  jwt.verify(token, 'secret_key', (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
+  jwt.verify(token, 'secret_key', (err, decodedToken) => {
+    if (err) {
+      console.error('JWT verification failed:', err);
+      return res.sendStatus(403);
+    }
+    req.user = decodedToken; // Assuming your user object in the token has a 'userid' property
     next();
   });
 };
 
-// Authentication Routes
+// Authentication Routes sign up
 app.post('/signup', async (req, res) => {
   const { username, password, reason_for_access } = req.body;
   try {
@@ -63,7 +66,7 @@ app.post('/login', async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    const token = jwt.sign({ username, level: user.level }, 'secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     console.error('Error logging in:', err);
@@ -93,23 +96,25 @@ app.post('/change-password', authenticateToken, async (req, res) => {
 });
 
 // User Management Routes
-app.get('/users', async (req, res) => {
+app.get('/user', async (req, res) => {
   try {
-    const users = await User.findAll();
-    res.status(200).json(users);
+    const user = await User.findAll();
+    res.status(200).json(user);
   } catch (err) {
-    console.error('Error fetching users:', err);
-    res.status(500).json({ message: 'Error fetching users', error: err.message });
+    console.error('Error fetching user:', err);
+    res.status(500).json({ message: 'Error fetching user', error: err.message });
   }
 });
 
-app.put('/users/:id/approve', async (req, res) => {
+app.put('/user/:userid/approve', async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByPk(req.params.userid);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     user.approved = true;
+    user.active = true;
+    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1'
     await user.save();
     res.status(200).json({ message: 'User approved successfully' });
   } catch (err) {
@@ -118,25 +123,25 @@ app.put('/users/:id/approve', async (req, res) => {
   }
 });
 
-app.put('/users/:id/level', async (req, res) => {
-  const { level } = req.body;
+app.put('/user/:userid/usertype', async (req, res) => {
+  const { usertype } = req.body;
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByPk(req.params.userid);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    user.level = level;
+    user.usertype = usertype;
     await user.save();
-    res.status(200).json({ message: 'User level updated successfully' });
+    res.status(200).json({ message: 'User usertype updated successfully' });
   } catch (err) {
-    console.error('Error updating user level:', err);
-    res.status(500).json({ message: 'Error updating user level', error: err.message });
+    console.error('Error updating user usertype:', err);
+    res.status(500).json({ message: 'Error updating user usertype', error: err.message });
   }
 });
 
-app.delete('/users/:id', async (req, res) => {
+app.delete('/user/:userid', async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByPk(req.params.userid);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -217,12 +222,11 @@ app.put('/devotees/:id', async (req, res) => {
   }
 });
 
-app.delete('/devotees/:id', async (req, res) => {
-  const transaction = await sequelize.transaction();
+app.delete('/contacts/:id', async (req, res) => {
   try {
-    const devotee = await Devotee.findByPk(req.params.id);
-    if (!devotee) {
-      return res.status(404).json({ message: 'Devotee not found' });
+    const contact = await Contact.findByPk(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ message: 'Contact not found' });
     }
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
@@ -273,8 +277,11 @@ sequelize.sync().then(async () => {
     await User.create({
       username: 'admin',
       password: hashedPassword,
-      level: 'Super Admin',
+      usertype: 'Super Admin',
       approved: true,
+      approvedBy: 0,
+      active: true,
+      super_user: true,
       reason_for_access: 'Initial super user',
     });
     console.log('Super user created');
