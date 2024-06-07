@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const config = require('../../config/config.json');
-
+const { v4: uuidv4 } = require('uuid');
 const env = process.env.NODE_ENV || 'development';
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
@@ -10,8 +10,8 @@ const sequelize = new Sequelize(config[env].database, config[env].username, conf
 // Define User model
 const User = sequelize.define('User', {
   userid: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
+    type: DataTypes.STRING,
+    defaultValue: () => uuidv4(), // Automatically generate UUIDs
     primaryKey: true,
   },
   username: {
@@ -32,7 +32,7 @@ const User = sequelize.define('User', {
     defaultValue: false
   },
   approvedBy: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: true,
     defaultValue: null
   },

@@ -55,12 +55,12 @@ const SuperAdmin = () => {
         });
         message.success('User deleted');
       } else {
-        await axios.put(`http://localhost:5001/user/${userid}/level`, { level: action }, {
+        await axios.put(`http://localhost:5001/user/${userid}/usertype`, { usertype: action }, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        message.success(`User level updated to ${action}`);
+        message.success(`User usertype updated to ${action}`);
       }
       fetchUsers();
     } catch (error) {
@@ -70,7 +70,7 @@ const SuperAdmin = () => {
 
   const columns = [
     { title: 'Username', dataIndex: 'username', key: 'username' },
-    { title: 'Level', dataIndex: 'level', key: 'level' },
+    { title: 'Usertype', dataIndex: 'usertype', key: 'usertype' },
     { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => (text ? 'Yes' : 'No') },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
