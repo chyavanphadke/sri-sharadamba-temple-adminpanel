@@ -38,9 +38,9 @@ coverage/
 Thumbs.db
 
 # SQL files and database-specific files
-*.sql
-*.sqlite
-*.sqlite3
+#*.sql
+#*.sqlite
+#*.sqlite3
 
 # Miscellaneous
 .cache
