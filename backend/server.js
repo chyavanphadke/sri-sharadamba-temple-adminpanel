@@ -158,7 +158,14 @@ app.get('/devotees', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = search
-      ? { [Op.or]: [{ FirstName: { [Op.like]: `%${search}%` } }, { LastName: { [Op.like]: `%${search}%` } }] }
+      ? { 
+          [Op.or]: [
+            { FirstName: { [Op.like]: `%${search}%` } },
+            { LastName: { [Op.like]: `%${search}%` } },
+            { Phone: { [Op.like]: `%${search}%` } },
+            { Email: { [Op.like]: `%${search}%` } }
+          ]
+        }
       : {};
 
     const devotees = await Devotee.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
