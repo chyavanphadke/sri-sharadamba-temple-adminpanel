@@ -48,3 +48,20 @@ npm install express body-parser bcrypt jsonwebtoken mongoose cors
 npm install mysql2
 
 node server.js
+
+
+## Changed to the DB after importing:
+
+
+# User Table:
+
+ALTER TABLE `seva`.`user` 
+ADD COLUMN `approved` BIT(1) NULL AFTER `su`,
+ADD COLUMN `approvedBy` VARCHAR(45) NULL AFTER `approved`,
+ADD COLUMN `super_user` VARCHAR(45) NULL AFTER `approvedBy`,
+ADD COLUMN `reason_for_access` VARCHAR(45) NULL AFTER `super_user`,
+ADD COLUMN `old_users` BIT(1) NULL AFTER `reason_for_access`,
+ADD COLUMN `createdAt` DATETIME NULL AFTER `old_users`,
+ADD COLUMN `updatedAt` DATETIME NULL AFTER `createdAt`,
+CHANGE COLUMN `password` `password` VARCHAR(255) NOT NULL DEFAULT '',
+CHANGE COLUMN `usertype` `usertype` VARCHAR(50) NOT NULL DEFAULT 'FD';
