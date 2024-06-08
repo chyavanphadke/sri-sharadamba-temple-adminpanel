@@ -121,6 +121,13 @@ const Family = sequelize.define('Family', {
       key: 'DevoteeId'
     }
   },
+  ModifiedBy: {
+    type: DataTypes.STRING,
+    references: {
+      model: User,
+      key: 'userid',
+    }
+  },
   FirstName: {
     type: DataTypes.STRING,
   },

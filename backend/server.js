@@ -24,7 +24,7 @@ const authenticateToken = (req, res, next) => {
       console.error('JWT verification failed:', err);
       return res.sendStatus(403);
     }
-    req.user = decodedToken; // Assuming your user object in the token has a 'userid' property
+    req.user = decodedToken; // Ensure decodedToken contains userid
     next();
   });
 };
@@ -66,7 +66,7 @@ app.post('/login', async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    const token = jwt.sign({ username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ userid: user.userid, username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     console.error('Error logging in:', err);
@@ -179,7 +179,7 @@ app.get('/devotees/:id/family', async (req, res) => {
   }
 });
 
-app.post('/devotees', async (req, res) => {
+app.post('/devotees', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
@@ -189,7 +189,7 @@ app.post('/devotees', async (req, res) => {
     }
     const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }
     await transaction.commit();
     res.status(201).json(devotee);
@@ -200,7 +200,7 @@ app.post('/devotees', async (req, res) => {
   }
 });
 
-app.put('/devotees/:id', async (req, res) => {
+app.put('/devotees/:id', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
@@ -211,7 +211,7 @@ app.put('/devotees/:id', async (req, res) => {
     await devotee.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }
     await transaction.commit();
     res.status(200).json({ message: 'Devotee updated successfully' });
@@ -222,7 +222,7 @@ app.put('/devotees/:id', async (req, res) => {
   }
 });
 
-app.delete('/devotees/:id', async (req, res) => {
+app.delete('/devotees/:id', authenticateToken, async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
     const devotee = await Devotee.findByPk(req.params.id);

@@ -21,6 +21,15 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
 
+  const token = localStorage.getItem('token');
+
+  const axiosInstance = axios.create({
+    baseURL: 'http://localhost:5001',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
   useEffect(() => {
     fetchDevotees();
     fetchServices();
@@ -30,7 +39,7 @@ const Home = () => {
   const fetchDevotees = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/devotees');
+      const response = await axiosInstance.get('/devotees');
       const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
       setDevotees(sortedDevotees);
       setTotalDevotees(sortedDevotees.length);
@@ -43,7 +52,7 @@ const Home = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/services');
+      const response = await axiosInstance.get('/services');
       setServices(response.data);
     } catch (error) {
       message.error('Failed to load services');
@@ -52,7 +61,7 @@ const Home = () => {
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/payment-methods');
+      const response = await axiosInstance.get('/payment-methods');
       setPaymentMethods(response.data);
     } catch (error) {
       message.error('Failed to load payment methods');
@@ -68,7 +77,7 @@ const Home = () => {
 
   const handleEditDevotee = async (devotee) => {
     try {
-      const familyResponse = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/family`);
+      const familyResponse = await axiosInstance.get(`/devotees/${devotee.DevoteeId}/family`);
       const familyMembersData = familyResponse.data.map(member => ({
         ...member,
         DOB: member.DOB ? moment(member.DOB) : null
@@ -90,7 +99,7 @@ const Home = () => {
 
   const handleDeleteDevotee = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/devotees/${id}`);
+      await axiosInstance.delete(`/devotees/${id}`);
       message.success('Devotee deleted');
       fetchDevotees();
     } catch (error) {
@@ -122,7 +131,7 @@ const Home = () => {
         UserId: 1, // Assuming current logged in user ID
         ServiceDate: values.ServiceDate,
       };
-      await axios.post('http://localhost:5001/activities', payload);
+      await axiosInstance.post('/activities', payload);
       message.success('Seva added successfully');
       setIsSevaModalVisible(false);
       sevaForm.resetFields();
@@ -144,10 +153,10 @@ const Home = () => {
     try {
       const payload = { ...values, family: familyMembers };
       if (currentDevotee) {
-        await axios.put(`http://localhost:5001/devotees/${currentDevotee.DevoteeId}`, payload);
+        await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
       } else {
-        const response = await axios.post('http://localhost:5001/devotees', payload);
+        const response = await axiosInstance.post('/devotees', payload);
         if (response.data.error) {
           message.error(response.data.error);
         } else {
@@ -189,7 +198,7 @@ const Home = () => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/devotees?search=${value}`);
+        const response = await axiosInstance.get(`/devotees?search=${value}`);
         const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
         setDevotees(sortedDevotees);
       } catch (error) {
