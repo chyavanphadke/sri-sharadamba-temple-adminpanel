@@ -194,6 +194,11 @@ const Home = () => {
     setFamilyMembers([...familyMembers, { FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   };
 
+  const removeFamilyMember = (index) => {
+    const newFamilyMembers = familyMembers.filter((_, idx) => idx !== index);
+    setFamilyMembers(newFamilyMembers);
+  };
+
   const debounceSearch = useCallback(_.debounce(async (value) => {
     if (value.length >= 3) {
       setLoading(true);
@@ -345,7 +350,16 @@ const Home = () => {
             <h3>Family Members</h3>
             {familyMembers.map((member, index) => (
               <div key={index} style={{ marginBottom: 16 }}>
-                <h4>Family member {index + 1}</h4>
+                <Row gutter={16}>
+                  <Col span={20}>
+                    <h4>Family member {index + 1}</h4>
+                  </Col>
+                  <Col span={4}>
+                    <Button type="danger" onClick={() => removeFamilyMember(index)}>
+                      Remove
+                    </Button>
+                  </Col>
+                </Row>
                 <Row gutter={16}>
                   <Col span={8}>
                     <Input
