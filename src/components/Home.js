@@ -7,6 +7,7 @@ import './Home.css';
 
 const { Content } = Layout;
 const { Option } = Select;
+const { confirm } = Modal;
 
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
@@ -99,11 +100,29 @@ const Home = () => {
 
   const handleDeleteDevotee = async (id) => {
     try {
-      await axiosInstance.delete(`/devotees/${id}`);
-      message.success('Devotee deleted');
-      fetchDevotees();
+      // Fetch the number of related activities and family members
+      const response = await axiosInstance.get(`/devotees/${id}/related-count`);
+      const { activityCount, familyMemberCount } = response.data;
+
+      // Show confirmation modal
+      confirm({
+        title: 'Are you sure you want to delete this devotee?',
+        content: `There are ${activityCount} activities and ${familyMemberCount} family members related to this devotee.`,
+        onOk: async () => {
+          try {
+            await axiosInstance.delete(`/devotees/${id}`);
+            message.success('Devotee deleted');
+            fetchDevotees();
+          } catch (error) {
+            message.error('Failed to delete devotee');
+          }
+        },
+        onCancel() {
+          message.info('Delete operation cancelled');
+        },
+      });
     } catch (error) {
-      message.error('Failed to delete devotee');
+      message.error('Failed to fetch related counts');
     }
   };
 

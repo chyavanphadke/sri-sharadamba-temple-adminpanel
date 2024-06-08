@@ -179,6 +179,19 @@ app.get('/devotees/:id/family', async (req, res) => {
   }
 });
 
+app.get('/devotees/:id/related-count', authenticateToken, async (req, res) => {
+  try {
+    const devoteeId = req.params.id;
+    const activityCount = await Activity.count({ where: { DevoteeId: devoteeId } });
+    const familyMemberCount = await Family.count({ where: { DevoteeId: devoteeId } });
+
+    res.status(200).json({ activityCount, familyMemberCount });
+  } catch (err) {
+    console.error('Error fetching related counts:', err);
+    res.status(500).json({ message: 'Error fetching related counts', error: err.message });
+  }
+});
+
 app.post('/devotees', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
@@ -229,6 +242,8 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
     if (!devotee) {
       return res.status(404).json({ message: 'Devotee not found' });
     }
+    // Manually delete related records in the Activity table
+    await Activity.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
     await transaction.commit();
