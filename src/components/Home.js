@@ -3,6 +3,7 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
+import { jwtDecode } from 'jwt-decode'; // Correctly import jwtDecode
 import './Home.css';
 
 const { Content } = Layout;
@@ -31,12 +32,6 @@ const Home = () => {
     },
   });
 
-  useEffect(() => {
-    fetchDevotees();
-    fetchServices();
-    fetchPaymentMethods();
-  }, []);
-
   const fetchDevotees = async () => {
     setLoading(true);
     try {
@@ -63,11 +58,18 @@ const Home = () => {
   const fetchPaymentMethods = async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
+      console.log('Fetched payment methods:', response.data); // Log fetched payment methods
       setPaymentMethods(response.data);
     } catch (error) {
       message.error('Failed to load payment methods');
     }
   };
+
+  useEffect(() => {
+    fetchDevotees();
+    fetchServices();
+    fetchPaymentMethods();
+  }, []); // Removed dependencies array to avoid unnecessary warnings
 
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
@@ -140,6 +142,26 @@ const Home = () => {
     try {
       const service = services.find(s => s.Service === values.Service);
       const paymentMethod = paymentMethods.find(pm => pm.MethodName === values.PaymentMethod);
+
+      console.log('Selected service:', service);
+      console.log('Selected payment method:', paymentMethod);
+      console.log('Available payment methods:', paymentMethods);
+      console.log('Selected payment method name:', values.PaymentMethod); // Log the selected payment method name
+
+      if (!service) {
+        message.error('Selected service not found');
+        return;
+      }
+
+      if (!paymentMethod) {
+        message.error('Selected payment method not found');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      const decodedToken = jwtDecode(token); // Decode the JWT token to get the user details
+      const userId = decodedToken.userid;
+
       const payload = {
         DevoteeId: currentDevotee.DevoteeId,
         ServiceId: service.ServiceId,
@@ -147,17 +169,21 @@ const Home = () => {
         Amount: values.AmountPaid,
         CheckNumber: values.CheckNumber,
         Comments: values.Comments,
-        UserId: 1, // Assuming current logged in user ID
+        UserId: userId, // Use the extracted UserId from the token
         ServiceDate: values.ServiceDate,
       };
+
+      console.log('Sending payload to add activity:', payload); // Log payload
       await axiosInstance.post('/activities', payload);
       message.success('Seva added successfully');
       setIsSevaModalVisible(false);
       sevaForm.resetFields();
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
+        console.error('Error response from server:', error.response.data); // Log server response
         message.error(error.response.data.message);
       } else {
+        console.error('Unexpected error:', error); // Log unexpected errors
         message.error('Failed to add seva');
       }
     }
@@ -233,7 +259,7 @@ const Home = () => {
     } else {
       fetchDevotees();
     }
-  }, 300), []);
+  }, 300), [axiosInstance]);
 
   const handleSearchChange = (e) => {
     debounceSearch(e.target.value);
@@ -480,7 +506,7 @@ const Home = () => {
           <Form.Item name="PaymentMethod" label="Payment Method" rules={[{ required: true, message: 'Please select a payment method!' }]}>
             <Select placeholder="Select a payment method">
               {paymentMethods.map(method => (
-                <Option key={method.PaymentMethodId} value={method.PaymentMethodId}>{method.MethodName}</Option>
+                <Option key={method.PaymentMethodId} value={method.MethodName}>{method.MethodName}</Option>
               ))}
             </Select>
           </Form.Item>
