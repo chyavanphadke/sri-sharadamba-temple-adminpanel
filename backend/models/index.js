@@ -47,6 +47,10 @@ const User = sequelize.define('User', {
   reason_for_access: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  old_users: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   freezeTableName: true
