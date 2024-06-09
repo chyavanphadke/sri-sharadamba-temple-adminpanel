@@ -9,7 +9,9 @@ import {
 import { Route, Routes, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Home from './Home';
 import SuperAdmin from './SuperAdmin';
+import Calendar from './Calendar';
 import Reports from './Reports';
+import Receipts from './Receipts';
 import Settings from './Settings';
 import { jwtDecode } from 'jwt-decode'; // Correct the import statement
 import './Dashboard.css'; // Import the CSS file
@@ -38,8 +40,10 @@ const Dashboard = () => {
   const menuItems = [
     { key: '1', icon: <UserOutlined />, label: <Link to="/dashboard/home">Home</Link> },
     { key: '2', icon: <LaptopOutlined />, label: <Link to="/dashboard/super-admin">Super Admin</Link> },
-    { key: '3', icon: <NotificationOutlined />, label: <Link to="/dashboard/reports">Reports</Link> },
-    { key: '4', icon: <NotificationOutlined />, label: <Link to="/dashboard/settings">Settings</Link> },
+    { key: '3', icon: <NotificationOutlined />, label: <Link to="/dashboard/calendar">Calendar</Link> },
+    { key: '4', icon: <NotificationOutlined />, label: <Link to="/dashboard/reports">Reports</Link> },
+    { key: '5', icon: <NotificationOutlined />, label: <Link to="/dashboard/receipts">Receipts</Link> },
+    { key: '6', icon: <NotificationOutlined />, label: <Link to="/dashboard/settings">Settings</Link> },
   ];
 
   const getBreadcrumbItems = () => {
@@ -48,8 +52,10 @@ const Dashboard = () => {
       '/dashboard': 'Dashboard',
       '/dashboard/home': 'Home',
       '/dashboard/super-admin': 'Super Admin',
+      '/dashboard/calendar': 'Calendar',
       '/dashboard/reports': 'Reports',
-      '/dashboard/settings': 'Settings',
+      '/dashboard/receipts': 'Receipts',
+      '/dashboard/settings': 'Settings'
     };
     const breadcrumbItems = pathSnippets.map((_, index) => {
       const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -96,7 +102,9 @@ const Dashboard = () => {
             <Routes>
               <Route path="home" element={<Home />} />
               <Route path="super-admin" element={<SuperAdmin />} />
+              <Route path="calendar" element={<Calendar />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="receipts" element={<Receipts />} />
               <Route path="settings" element={<Settings />} />
               <Route path="/" element={<Navigate to="/dashboard/home" />} /> {/* Default route to /dashboard/home */}
             </Routes>
