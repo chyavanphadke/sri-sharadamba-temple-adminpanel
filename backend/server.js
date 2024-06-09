@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment } = require('./models');
 const { Op } = require('sequelize');
 
 const app = express();
@@ -24,12 +24,12 @@ const authenticateToken = (req, res, next) => {
       console.error('JWT verification failed:', err);
       return res.sendStatus(403);
     }
-    req.user = decodedToken; // Assuming your user object in the token has a 'userid' property
+    req.user = decodedToken; // Ensure decodedToken contains userid
     next();
   });
 };
 
-// Authentication Routes sign up
+// Authentication Routes
 app.post('/signup', async (req, res) => {
   const { username, password, reason_for_access } = req.body;
   try {
@@ -66,7 +66,7 @@ app.post('/login', async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    const token = jwt.sign({ username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ userid: user.userid, username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     console.error('Error logging in:', err);
@@ -114,7 +114,7 @@ app.put('/user/:userid/approve', async (req, res) => {
     }
     user.approved = true;
     user.active = true;
-    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1'
+    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1';
     await user.save();
     res.status(200).json({ message: 'User approved successfully' });
   } catch (err) {
@@ -158,7 +158,14 @@ app.get('/devotees', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = search
-      ? { [Op.or]: [{ FirstName: { [Op.like]: `%${search}%` } }, { LastName: { [Op.like]: `%${search}%` } }] }
+      ? { 
+          [Op.or]: [
+            { FirstName: { [Op.like]: `%${search}%` } },
+            { LastName: { [Op.like]: `%${search}%` } },
+            { Phone: { [Op.like]: `%${search}%` } },
+            { Email: { [Op.like]: `%${search}%` } }
+          ]
+        }
       : {};
 
     const devotees = await Devotee.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
@@ -179,7 +186,20 @@ app.get('/devotees/:id/family', async (req, res) => {
   }
 });
 
-app.post('/devotees', async (req, res) => {
+app.get('/devotees/:id/related-count', authenticateToken, async (req, res) => {
+  try {
+    const devoteeId = req.params.id;
+    const activityCount = await Activity.count({ where: { DevoteeId: devoteeId } });
+    const familyMemberCount = await Family.count({ where: { DevoteeId: devoteeId } });
+
+    res.status(200).json({ activityCount, familyMemberCount });
+  } catch (err) {
+    console.error('Error fetching related counts:', err);
+    res.status(500).json({ message: 'Error fetching related counts', error: err.message });
+  }
+});
+
+app.post('/devotees', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
@@ -189,7 +209,7 @@ app.post('/devotees', async (req, res) => {
     }
     const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }
     await transaction.commit();
     res.status(201).json(devotee);
@@ -200,7 +220,7 @@ app.post('/devotees', async (req, res) => {
   }
 });
 
-app.put('/devotees/:id', async (req, res) => {
+app.put('/devotees/:id', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
@@ -211,7 +231,7 @@ app.put('/devotees/:id', async (req, res) => {
     await devotee.update({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     for (const member of family) {
-      await Family.create({ DevoteeId: devotee.DevoteeId, ...member }, { transaction });
+      await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }
     await transaction.commit();
     res.status(200).json({ message: 'Devotee updated successfully' });
@@ -222,12 +242,15 @@ app.put('/devotees/:id', async (req, res) => {
   }
 });
 
-app.delete('/contacts/:id', async (req, res) => {
+app.delete('/devotees/:id', authenticateToken, async (req, res) => {
+  const transaction = await sequelize.transaction();
   try {
-    const contact = await Contact.findByPk(req.params.id);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
+    const devotee = await Devotee.findByPk(req.params.id);
+    if (!devotee) {
+      return res.status(404).json({ message: 'Devotee not found' });
     }
+    // Manually delete related records in the Activity table
+    await Activity.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
     await transaction.commit();
@@ -236,6 +259,70 @@ app.delete('/contacts/:id', async (req, res) => {
     await transaction.rollback();
     console.error('Error deleting devotee:', err);
     res.status(500).json({ message: 'Error deleting devotee', error: err.message });
+  }
+});
+
+// Service Management Routes
+app.get('/services', async (req, res) => {
+  try {
+    const services = await Service.findAll();
+    res.status(200).json(services);
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    res.status(500).json({ message: 'Error fetching services', error: err.message });
+  }
+});
+
+app.put('/services', async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const updates = req.body;
+    for (const update of updates) {
+      const service = await Service.findByPk(update.ServiceId);
+      if (service) {
+        await service.update(update, { transaction });
+      }
+    }
+    await transaction.commit();
+    res.status(200).json({ message: 'Services updated successfully' });
+  } catch (err) {
+    await transaction.rollback();
+    console.error('Error updating services:', err);
+    res.status(500).json({ message: 'Error updating services', error: err.message });
+  }
+});
+
+// ModeOfPayment Management Routes
+app.get('/payment-methods', async (req, res) => {
+  try {
+    const paymentMethods = await ModeOfPayment.findAll();
+    res.status(200).json(paymentMethods);
+  } catch (err) {
+    console.error('Error fetching payment methods:', err);
+    res.status(500).json({ message: 'Error fetching payment methods', error: err.message });
+  }
+});
+
+// Activity Management Routes
+app.post('/activities', async (req, res) => {
+  const { DevoteeId, ServiceId, PaymentMethod, Amount, CheckNumber, Comments, UserId, ServiceDate } = req.body;
+  console.log('Received request to add activity:', req.body); // Log input values
+  try {
+    await Activity.create({
+      DevoteeId,
+      ServiceId,
+      PaymentMethod,
+      Amount,
+      CheckNumber,
+      Comments,
+      UserId,
+      ActivityDate: new Date(),
+      ServiceDate
+    });
+    res.status(201).json({ message: 'Activity added successfully' });
+  } catch (error) {
+    console.error('Error adding activity:', error); // Log the error
+    res.status(500).json({ message: 'Error adding activity', error: error.message });
   }
 });
 
@@ -256,7 +343,7 @@ sequelize.sync().then(async () => {
     });
     console.log('Super user created');
   }
-  
+
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });

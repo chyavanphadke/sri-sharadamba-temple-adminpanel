@@ -47,6 +47,10 @@ const User = sequelize.define('User', {
   reason_for_access: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  old_users: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   freezeTableName: true
@@ -95,18 +99,9 @@ const Devotee = sequelize.define('Devotee', {
   Star: {
     type: DataTypes.STRING,
   },
-  // Todo: add if required
-  // Rashi: {
-  // type: DataTypes.STRING,
-  // },
   DOB: {
     type: DataTypes.DATE,
   },
-  // Todo: add if required
-  // CreatedAt: {
-  //   type: DataTypes.DATE,
-  //   defaultValue: Sequelize.NOW
-  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
@@ -130,6 +125,13 @@ const Family = sequelize.define('Family', {
       key: 'DevoteeId'
     }
   },
+  ModifiedBy: {
+    type: DataTypes.STRING,
+    references: {
+      model: User,
+      key: 'userid',
+    }
+  },
   FirstName: {
     type: DataTypes.STRING,
   },
@@ -151,14 +153,107 @@ const Family = sequelize.define('Family', {
   DOB: {
     type: DataTypes.DATE,
   },
-  // Todo: add if required
-  // CreatedAt: {
-  //   type: DataTypes.DATE,
-  //  defaultValue: Sequelize.NOW
-  // },
   LastModified: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
+// Define Service model
+const Service = sequelize.define('Service', {
+  ServiceId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  Service: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Rate: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  Active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
+// Define Activity model
+const Activity = sequelize.define('Activity', {
+  ActivityId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  DevoteeId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Devotee,
+      key: 'DevoteeId'
+    }
+  },
+  ServiceId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Service,
+      key: 'ServiceId'
+    }
+  },
+  PaymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Amount: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  CheckNumber: {
+    type: DataTypes.STRING,
+  },
+  Comments: {
+    type: DataTypes.STRING,
+  },
+  UserId: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  ActivityDate: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  },
+  ServiceDate: {
+    type: DataTypes.DATE,
+  },
+  PrintDate: {
+    type: DataTypes.DATE,
+  },
+  CheckFile: {
+    type: DataTypes.STRING,
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
+// Define ModeOfPayment model
+const ModeOfPayment = sequelize.define('ModeOfPayment', {
+  PaymentMethodId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  MethodName: {
+    type: DataTypes.STRING,
+    allowNull: false
   }
 }, {
   timestamps: false,
@@ -182,5 +277,8 @@ module.exports = {
   sequelize,
   User,
   Devotee,
-  Family
+  Family,
+  Service,
+  Activity,
+  ModeOfPayment
 };

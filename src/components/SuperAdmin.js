@@ -1,12 +1,13 @@
 // src/components/SuperAdmin.js
-import React, { useEffect, useState } from 'react';
-import { Layout, Table, Button, message } from 'antd';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Layout, Table, Button, message, Input } from 'antd';
 import axios from 'axios';
+import _ from 'lodash';
 
 const { Content } = Layout;
 
 const SuperAdmin = () => {
-  const [user, setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -21,10 +22,11 @@ const SuperAdmin = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      const sortedUsers = response.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      const filteredUsers = response.data.filter(user => !user.old_users);
+      const sortedUsers = filteredUsers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setUsers(sortedUsers);
     } catch (error) {
-      message.error('Failed to load user');
+      message.error('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -32,9 +34,7 @@ const SuperAdmin = () => {
 
   const handleAction = async (userid, action) => {
     try {
-
       const token = localStorage.getItem('token');
-      
       if (!token) {
         message.error('Authentication token not found');
         return;
@@ -68,6 +68,32 @@ const SuperAdmin = () => {
     }
   };
 
+  const debounceSearch = useCallback(_.debounce(async (value) => {
+    if (value.length >= 3) {
+      setLoading(true);
+      try {
+        const response = await axios.get(`http://localhost:5001/user?search=${value}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const filteredUsers = response.data.filter(user => !user.old_users);
+        const sortedUsers = filteredUsers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        setUsers(sortedUsers);
+      } catch (error) {
+        message.error('Failed to search users');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      fetchUsers();
+    }
+  }, 300), []);
+
+  const handleSearchChange = (e) => {
+    debounceSearch(e.target.value);
+  };
+
   const columns = [
     { title: 'Username', dataIndex: 'username', key: 'username' },
     { title: 'Usertype', dataIndex: 'usertype', key: 'usertype' },
@@ -90,7 +116,12 @@ const SuperAdmin = () => {
       <Content style={{ padding: '0 50px' }}>
         <div className="site-layout-content">
           <h2>Super Admin Page</h2>
-          <Table columns={columns} dataSource={user} loading={loading} rowKey="userid" pagination={{ pageSize: 10 }} />
+          <Input
+            placeholder="Search users"
+            onChange={handleSearchChange}
+            style={{ width: 400, marginBottom: 16 }}
+          />
+          <Table columns={columns} dataSource={users} loading={loading} rowKey="userid" pagination={{ pageSize: 10 }} />
         </div>
       </Content>
     </Layout>
