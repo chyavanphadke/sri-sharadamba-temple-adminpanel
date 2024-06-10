@@ -1,0 +1,50 @@
+.calendar-container {
+  padding: 20px;
+}
+
+.section-card {
+  margin-bottom: 30px; /* Increased the bottom margin for more space between rows */
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 95%;
+  border-radius: 20px; /* Rounded corners */
+}
+
+.event-card {
+  margin-bottom: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 20px; /* Rounded corners */
+}
+
+.event-card.compact {
+  padding: 8px;
+}
+
+.event-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.event-title {
+  margin-bottom: 5px;
+  margin-right: 10px;
+}
+
+.event-date, .event-devotee {
+  margin: 0;
+}
+
+.ant-card-body {
+  padding: 16px; /* Consistent padding inside cards */
+}
+
+.ant-table {
+  table-layout: fixed;
+}
+
+.ant-table-thead > tr > th, .ant-table-tbody > tr > td {
+  padding: 8px;
+}

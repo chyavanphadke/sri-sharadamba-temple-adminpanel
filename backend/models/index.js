@@ -264,6 +264,12 @@ const ModeOfPayment = sequelize.define('ModeOfPayment', {
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
 
+Devotee.hasMany(Activity, { foreignKey: 'DevoteeId' });
+Activity.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
+
+Service.hasMany(Activity, { foreignKey: 'ServiceId' });
+Activity.belongsTo(Service, { foreignKey: 'ServiceId' });
+
 // Sync the models with the database
 sequelize.sync()
   .then(() => {
