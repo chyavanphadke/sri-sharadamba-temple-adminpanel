@@ -3,8 +3,9 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const moment = require('moment'); // Import moment for date manipulations
 const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment } = require('./models');
-const { Op } = require('sequelize');
+const { Op } = require('sequelize'); // Make sure this is only declared once
 
 const app = express();
 const port = 5001;
@@ -163,7 +164,7 @@ app.get('/devotees', async (req, res) => {
             { FirstName: { [Op.like]: `%${search}%` } },
             { LastName: { [Op.like]: `%${search}%` } },
             { Phone: { [Op.like]: `%${search}%` } },
-            { Email: { [Op.like]: `%${search}%` } }
+            { Email: { [Op.like]: `%{search}%` } }
           ]
         }
       : {};
@@ -373,6 +374,63 @@ app.get('/reports', authenticateToken, async (req, res) => {
   }
 });
 //end of code for reports page
+// Endpoint to get activities for the calendar
+app.get('/calendar/activities', async (req, res) => {
+  try {
+    const activities = await Activity.findAll({
+      where: {
+        PrintDate: {
+          [Op.is]: null,
+        },
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    // Transform the data to the required format
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching activities for calendar:', err);
+    res.status(500).json({ message: 'Error fetching activities for calendar', error: err.message });
+  }
+});
+
+
+app.put('/calendar/activities/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findByPk(id);
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+
+    activity.PrintDate = new Date();
+    await activity.save();
+
+    res.status(200).json({ message: 'Activity marked as complete' });
+  } catch (err) {
+    console.error('Error marking activity as complete:', err);
+    res.status(500).json({ message: 'Error marking activity as complete', error: err.message });
+  }
+});
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
@@ -395,4 +453,125 @@ sequelize.sync().then(async () => {
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
+});
+
+// Endpoint to get activities in a date range with null PrintDate
+app.get('/calendar/activities/range', async (req, res) => {
+  const { from, to } = req.query;
+  try {
+    const activities = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.between]: [new Date(from), new Date(to)]
+        },
+        PrintDate: {
+          [Op.is]: null
+        },
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching activities for calendar:', err);
+    res.status(500).json({ message: 'Error fetching activities for calendar', error: err.message });
+  }
+});
+
+// Endpoint to get activities with past ServiceDate and null PrintDate
+app.get('/calendar/activities/past', async (req, res) => {
+  try {
+    const activities = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.lt]: new Date()
+        },
+        PrintDate: {
+          [Op.is]: null
+        },
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching past activities for calendar:', err);
+    res.status(500).json({ message: 'Error fetching past activities for calendar', error: err.message });
+  }
+});
+
+// Endpoint to get services and their upcoming event count
+app.get('/services/upcoming-count', async (req, res) => {
+  try {
+    const services = await Service.findAll({
+      attributes: ['ServiceId', 'Service']
+    });
+
+    const upcomingEvents = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.between]: [moment().add(1, 'day').toDate(), moment().add(15, 'days').toDate()]
+        },
+        PrintDate: {
+          [Op.is]: null
+        }
+      },
+      attributes: ['ServiceId', [sequelize.fn('COUNT', sequelize.col('ServiceId')), 'count']],
+      group: ['ServiceId']
+    });
+
+    const serviceCountMap = {};
+    upcomingEvents.forEach(event => {
+      serviceCountMap[event.ServiceId] = event.dataValues.count;
+    });
+
+    const result = services.map(service => ({
+      ServiceId: service.ServiceId,
+      Service: service.Service,
+      Count: serviceCountMap[service.ServiceId] || 0
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching services and upcoming counts:', err);
+    res.status(500).json({ message: 'Error fetching services and upcoming counts', error: err.message });
+  }
 });
