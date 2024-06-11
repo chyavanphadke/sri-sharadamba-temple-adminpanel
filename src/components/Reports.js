@@ -79,21 +79,10 @@ const Reports = () => {
         excludeDonations: selectedService === 'All but Donations',
         paymentMethod: selectedPaymentMethod,
       };
-  
-      if (selectedService === 'All but Donations') {
-        const response = await axiosInstance.get('/services');
-        const servicesData = response.data;
-        const donationService = servicesData.find(service => service.Service === 'DONATION');
-        if (donationService) {
-          params.excludeService = donationService.ServiceId;
-        }
-      } else if (isDonationToggled) {
-        params.service = donationServiceId;
-      }
-  
+
       const response = await axiosInstance.get('/reports', { params });
       setReportData(response.data);
-  
+
       // Calculate totals
       const totalDevotees = response.data.length;
       const totalAmt = response.data.reduce((sum, record) => sum + record.Amount, 0);
@@ -103,7 +92,7 @@ const Reports = () => {
       message.error('Error generating report');
     }
   };
-  
+
   const handleDonationToggle = () => {
     if (isDonationToggled) {
       setIsDonationToggled(false); // Toggle off
