@@ -164,7 +164,7 @@ app.get('/devotees', async (req, res) => {
             { FirstName: { [Op.like]: `%${search}%` } },
             { LastName: { [Op.like]: `%${search}%` } },
             { Phone: { [Op.like]: `%${search}%` } },
-            { Email: { [Op.like]: `%{search}%` } }
+            { Email: { [Op.like]: `%${search}%` } }
           ]
         }
       : {};
@@ -329,7 +329,7 @@ app.post('/activities', async (req, res) => {
 
 // Updated code for reports page
 app.get('/reports', authenticateToken, async (req, res) => {
-  const { startDate, endDate, service, paymentMethod } = req.query;
+  const { startDate, endDate, service, excludeDonations, paymentMethod } = req.query;
 
   const whereClause = {
     ActivityDate: {
@@ -338,8 +338,15 @@ app.get('/reports', authenticateToken, async (req, res) => {
   };
 
   try {
-    if (service && service !== 'All') {
+    if (service && service !== 'null') {
       whereClause.ServiceId = service;
+    }
+
+    if (excludeDonations === 'true') {
+      const donationService = await Service.findOne({ where: { Service: 'DONATION' } });
+      if (donationService) {
+        whereClause.ServiceId = { [Op.ne]: donationService.ServiceId };
+      }
     }
 
     if (paymentMethod && paymentMethod !== 'All') {

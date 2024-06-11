@@ -72,16 +72,28 @@ const Reports = () => {
 
   const generateReport = async () => {
     try {
-      const response = await axiosInstance.get('/reports', {
-        params: {
-          startDate: startDate.format('YYYY-MM-DD'),
-          endDate: endDate.format('YYYY-MM-DD'),
-          service: isDonationToggled ? donationServiceId : selectedService, // Use 'donationServiceId' if toggled
-          paymentMethod: selectedPaymentMethod
+      const params = {
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+        service: selectedService === 'All'||selectedService === 'All but Donations' ? isDonationToggled ? donationServiceId : null : isDonationToggled ? donationServiceId : selectedService,
+        excludeDonations: selectedService === 'All but Donations',
+        paymentMethod: selectedPaymentMethod,
+      };
+  
+      if (selectedService === 'All but Donations') {
+        const response = await axiosInstance.get('/services');
+        const servicesData = response.data;
+        const donationService = servicesData.find(service => service.Service === 'DONATION');
+        if (donationService) {
+          params.excludeService = donationService.ServiceId;
         }
-      });
+      } else if (isDonationToggled) {
+        params.service = donationServiceId;
+      }
+  
+      const response = await axiosInstance.get('/reports', { params });
       setReportData(response.data);
-
+  
       // Calculate totals
       const totalDevotees = response.data.length;
       const totalAmt = response.data.reduce((sum, record) => sum + record.Amount, 0);
@@ -91,14 +103,32 @@ const Reports = () => {
       message.error('Error generating report');
     }
   };
-
+  
   const handleDonationToggle = () => {
-    setIsDonationToggled(!isDonationToggled); // Toggle the state
+    if (isDonationToggled) {
+      setIsDonationToggled(false); // Toggle off
+    } else {
+      setIsDonationToggled(true); // Toggle on
+      setSelectedPaymentMethod('All'); // Reset Payment Method to 'All'
+    }
     message.info(`Donations ${!isDonationToggled ? 'enabled' : 'disabled'}`);
   };
 
+  const handleServiceChange = (value) => {
+    if (isDonationToggled) {
+      setIsDonationToggled(false); // Turn off donation toggle if a service is selected
+    }
+    setSelectedService(value);
+  };
+
   const handleButtonClick = (buttonName) => {
-    message.info(`${buttonName} button is clicked`);
+    if (buttonName === 'Donations') {
+      handleDonationToggle();
+    } else if (buttonName === 'Checks') {
+      message.info(`Checks feature coming soon!`);
+    } else {
+      message.info(`${buttonName} button is clicked`);
+    }
   };
 
   const columns = [
@@ -132,56 +162,78 @@ const Reports = () => {
           <h2>Reports Page</h2>
           <Row gutter={16}>
             <Col>
+              <div>Start Date</div>
               <DatePicker
                 defaultValue={startDate}
                 onChange={(date) => setStartDate(date)}
-                style={{ marginRight: 10 }}
+                style={{ marginRight: 10, width: 250 }}
               />
             </Col>
             <Col>
+              <div>End Date</div>
               <DatePicker
                 defaultValue={endDate}
                 onChange={(date) => setEndDate(date)}
                 disabledDate={disabledEndDate}
-                style={{ marginRight: 10 }}
+                style={{ marginRight: 10, width: 250 }}
               />
             </Col>
           </Row>
-          <Select
-            defaultValue="All"
-            style={{ width: 200, marginRight: 10, marginTop: 10 }}
-            onChange={value => setSelectedService(value)}
-          >
-            <Option value="All">All</Option>
-            {services.map(service => (
-              <Option key={service.ServiceId} value={service.ServiceId}>
-                {service.Service}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            defaultValue="All"
-            style={{ width: 200, marginRight: 10, marginTop: 10 }}
-            onChange={value => setSelectedPaymentMethod(value)}
-          >
-            <Option value="All">All</Option>
-            {paymentMethods.map(method => (
-              <Option key={method.PaymentMethodId} value={method.PaymentMethodId}>
-                {method.MethodName}
-              </Option>
-            ))}
-          </Select>
-          <div style={{ marginTop: 20 }}>
-            <Button 
-              onClick={handleDonationToggle}
-              className={isDonationToggled ? 'toggle-button' : ''} // Apply CSS class if toggled
-            >
-              Donations
-            </Button>
-            <Button onClick={() => handleButtonClick('Memberships')}>Memberships</Button>
-            <Button onClick={() => handleButtonClick('Pledges')}>Pledges</Button>
-            <Button onClick={() => handleButtonClick('Sales')}>Sales</Button>
-          </div>
+          <Row gutter={16} style={{ marginTop: 20 }}>
+            <Col>
+              <div>Service</div>
+              <Select
+                defaultValue="All"
+                style={{ width: 200, marginRight: 10, marginTop: 10 }}
+                onChange={handleServiceChange}
+              >
+                <Option value="All">All</Option>
+                <Option value="All but Donations">All but Donations</Option>
+                {services.map(service => (
+                  <Option key={service.ServiceId} value={service.ServiceId}>
+                    {service.Service}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col>
+              <Button 
+                onClick={() => handleButtonClick('Donations')}
+                className={isDonationToggled ? 'toggle-button' : ''} // Apply CSS class if toggled
+                style={{ marginTop: 28 }} // Align with dropdowns
+              >
+                Donations
+              </Button>
+            </Col>
+            <Col>
+              <div>Payment Method</div>
+              <Select
+                defaultValue="All"
+                style={{ width: 200, marginRight: 10, marginTop: 10 }}
+                value={selectedPaymentMethod} // Add value to control the component
+                onChange={value => setSelectedPaymentMethod(value)}
+              >
+                <Option value="All">All</Option>
+                {paymentMethods.map(method => (
+                  <Option key={method.PaymentMethodId} value={method.PaymentMethodId}>
+                    {method.MethodName}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col>
+              <Button onClick={() => handleButtonClick('Checks')} style={{ marginTop: 28 }}>Checks</Button>
+            </Col>
+            <Col>
+              <Button onClick={() => handleButtonClick('Memberships')} style={{ marginTop: 28 }}>Memberships</Button>
+            </Col>
+            <Col>
+              <Button onClick={() => handleButtonClick('Pledges')} style={{ marginTop: 28 }}>Pledges</Button>
+            </Col>
+            <Col>
+              <Button onClick={() => handleButtonClick('Sales')} style={{ marginTop: 28 }}>Sales</Button>
+            </Col>
+          </Row>
           <Row gutter={16} style={{ marginTop: 20 }}>
             <Col span={12}>
               <Statistic title="Total Devotee Count" value={totalDevoteeCount} />
