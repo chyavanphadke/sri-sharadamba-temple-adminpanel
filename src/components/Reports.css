@@ -45,3 +45,13 @@
   margin-top: 20px;
   color: #ff4d4f;
 }
+
+.message-placeholder {
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  text-align: center;
+  color: #333;
+}

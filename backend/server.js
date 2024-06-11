@@ -380,7 +380,9 @@ app.get('/reports', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching reports', error: err.message });
   }
 });
+
 //end of code for reports page
+
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {
   try {

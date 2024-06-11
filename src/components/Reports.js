@@ -72,17 +72,28 @@ const Reports = () => {
 
   const generateReport = async () => {
     try {
+      let serviceParam = null;
+      let excludeDonations = false;
+  
+      if (isDonationToggled) {
+        serviceParam = donationServiceId;
+      } else if (selectedService === 'All but Donations') {
+        excludeDonations = true;
+      } else if (selectedService !== 'All') {
+        serviceParam = selectedService;
+      }
+  
       const params = {
         startDate: startDate.format('YYYY-MM-DD'),
         endDate: endDate.format('YYYY-MM-DD'),
-        service: selectedService === 'All'||selectedService === 'All but Donations' ? isDonationToggled ? donationServiceId : null : isDonationToggled ? donationServiceId : selectedService,
-        excludeDonations: selectedService === 'All but Donations',
+        service: serviceParam,
+        excludeDonations: excludeDonations,
         paymentMethod: selectedPaymentMethod,
       };
-
+  
       const response = await axiosInstance.get('/reports', { params });
       setReportData(response.data);
-
+  
       // Calculate totals
       const totalDevotees = response.data.length;
       const totalAmt = response.data.reduce((sum, record) => sum + record.Amount, 0);
