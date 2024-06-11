@@ -327,6 +327,53 @@ app.post('/activities', async (req, res) => {
   }
 });
 
+// Updated code for reports page
+app.get('/reports', authenticateToken, async (req, res) => {
+  const { startDate, endDate, service, paymentMethod } = req.query;
+
+  const whereClause = {
+    ActivityDate: {
+      [Op.between]: [new Date(startDate), new Date(endDate)]
+    }
+  };
+
+  try {
+    if (service && service !== 'All') {
+      whereClause.ServiceId = service;
+    }
+
+    if (paymentMethod && paymentMethod !== 'All') {
+      whereClause.PaymentMethod = paymentMethod;
+    }
+
+    const activities = await Activity.findAll({
+      where: whereClause,
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Phone'], required: true },
+        { model: Service, attributes: ['Service'], required: true },
+        { model: ModeOfPayment, attributes: ['MethodName'], required: true }
+      ],
+      order: [['ActivityDate', 'DESC']]
+    });
+
+    const reportData = activities.map(activity => ({
+      Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+      Phone: activity.Devotee.Phone,
+      Service: activity.Service.Service,
+      Amount: activity.Amount,
+      Date: activity.ActivityDate,
+      ServiceDate: activity.ServiceDate,
+      'Payment Method': activity.ModeOfPayment.MethodName,
+      'Check Number': activity.CheckNumber
+    }));
+
+    res.status(200).json(reportData);
+  } catch (err) {
+    console.error('Error fetching reports:', err);
+    res.status(500).json({ message: 'Error fetching reports', error: err.message });
+  }
+});
+//end of code for reports page
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {
   try {

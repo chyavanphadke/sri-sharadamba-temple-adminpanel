@@ -1,0 +1,26 @@
+/* src/components/Reports.css */
+
+.site-layout-content {
+    background: #fff;
+    padding: 24px;
+    margin: 0;
+    min-height: 280px;
+  }
+  
+  .ant-select {
+    margin-right: 10px;
+  }
+  
+  .ant-btn {
+    margin-right: 10px;
+  }
+  
+  .ant-statistic {
+    margin-right: 20px;
+  }
+  
+  .toggle-button {
+    color: #1890ff; /* Use the same blue color as other elements */
+    border-color: #1890ff; /* Border color */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Minimal shadow */
+  }

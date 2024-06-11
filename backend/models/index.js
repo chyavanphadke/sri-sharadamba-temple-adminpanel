@@ -187,6 +187,22 @@ const Service = sequelize.define('Service', {
   freezeTableName: true
 });
 
+// Define ModeOfPayment model
+const ModeOfPayment = sequelize.define('ModeOfPayment', {
+  PaymentMethodId: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  MethodName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Define Activity model
 const Activity = sequelize.define('Activity', {
   ActivityId: {
@@ -209,8 +225,11 @@ const Activity = sequelize.define('Activity', {
     }
   },
   PaymentMethod: {
-    type: DataTypes.STRING,
-    allowNull: false
+    type: DataTypes.INTEGER,
+    references: {
+      model: ModeOfPayment,
+      key: 'PaymentMethodId'
+    }
   },
   Amount: {
     type: DataTypes.FLOAT,
@@ -244,22 +263,6 @@ const Activity = sequelize.define('Activity', {
   freezeTableName: true
 });
 
-// Define ModeOfPayment model
-const ModeOfPayment = sequelize.define('ModeOfPayment', {
-  PaymentMethodId: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  MethodName: {
-    type: DataTypes.STRING,
-    allowNull: false
-  }
-}, {
-  timestamps: false,
-  freezeTableName: true
-});
-
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -269,6 +272,9 @@ Activity.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
 
 Service.hasMany(Activity, { foreignKey: 'ServiceId' });
 Activity.belongsTo(Service, { foreignKey: 'ServiceId' });
+
+ModeOfPayment.hasMany(Activity, { foreignKey: 'PaymentMethod' });
+Activity.belongsTo(ModeOfPayment, { foreignKey: 'PaymentMethod' });
 
 // Sync the models with the database
 sequelize.sync()
