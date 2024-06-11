@@ -263,6 +263,40 @@ const Activity = sequelize.define('Activity', {
   freezeTableName: true
 });
 
+// Define Receipt model
+const Receipt = sequelize.define('Receipt', {
+  receiptid: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  servicetype: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  activityid: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Activity,
+      key: 'ActivityId'
+    }
+  },
+  approvedby: {
+    type: DataTypes.STRING,
+    references: {
+      model: User,
+      key: 'username'
+    }
+  },
+  approvaldate: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.NOW
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -275,6 +309,15 @@ Activity.belongsTo(Service, { foreignKey: 'ServiceId' });
 
 ModeOfPayment.hasMany(Activity, { foreignKey: 'PaymentMethod' });
 Activity.belongsTo(ModeOfPayment, { foreignKey: 'PaymentMethod' });
+
+User.hasMany(Activity, { foreignKey: 'UserId', as: 'AssistedBy' });
+Activity.belongsTo(User, { foreignKey: 'UserId', as: 'AssistedBy' });
+
+Activity.hasOne(Receipt, { foreignKey: 'activityid' });
+Receipt.belongsTo(Activity, { foreignKey: 'activityid' });
+
+Service.hasMany(Receipt, { foreignKey: 'servicetype', as: 'ServiceType' });
+Receipt.belongsTo(Service, { foreignKey: 'servicetype', targetKey: 'Service' });
 
 // Sync the models with the database
 sequelize.sync()
@@ -292,5 +335,6 @@ module.exports = {
   Family,
   Service,
   Activity,
-  ModeOfPayment
+  ModeOfPayment,
+  Receipt
 };
