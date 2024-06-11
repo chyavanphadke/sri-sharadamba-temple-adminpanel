@@ -4,7 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const moment = require('moment'); // Import moment for date manipulations
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt } = require('./models');
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
 const app = express();
@@ -250,7 +250,7 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
     if (!devotee) {
       return res.status(404).json({ message: 'Devotee not found' });
     }
-    // Manually delete related records in the Activity table
+// Manually delete related records in the Activity table
     await Activity.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
@@ -441,29 +441,6 @@ app.put('/calendar/activities/:id/complete', async (req, res) => {
   }
 });
 
-// Sync the database and create a super user
-sequelize.sync().then(async () => {
-  const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
-  if (!existingSuperUser) {
-    const hashedPassword = await bcrypt.hash('maya@111', 10);
-    await User.create({
-      username: 'admin',
-      password: hashedPassword,
-      usertype: 'Super Admin',
-      approved: true,
-      approvedBy: 0,
-      active: true,
-      super_user: true,
-      reason_for_access: 'Initial super user',
-    });
-    console.log('Super user created');
-  }
-
-  app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-  });
-});
-
 // Endpoint to get activities in a date range with null PrintDate
 app.get('/calendar/activities/range', async (req, res) => {
   const { from, to } = req.query;
@@ -583,4 +560,165 @@ app.get('/services/upcoming-count', async (req, res) => {
     console.error('Error fetching services and upcoming counts:', err);
     res.status(500).json({ message: 'Error fetching services and upcoming counts', error: err.message });
   }
+});
+
+app.get('/receipts/pending', async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    const whereClause = {
+      '$Receipt.activityid$': { [Op.is]: null },
+      PrintDate: { [Op.is]: null }
+    };
+
+    if (search) {
+      whereClause[Op.or] = [
+        { '$Devotee.FirstName$': { [Op.like]: `%${search}%` } },
+        { '$Devotee.LastName$': { [Op.like]: `%${search}%` } },
+        { '$Devotee.Phone$': { [Op.like]: `%${search}%` } },
+        { '$Devotee.Email$': { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const activities = await Activity.findAll({
+      where: whereClause,
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName'] },
+        { model: Service, attributes: ['Service'] },
+        { model: User, as: 'AssistedBy', attributes: ['username'] },
+        { model: Receipt, attributes: [] }
+      ],
+      raw: true,
+      nest: true,
+      order: [['ActivityDate', 'DESC']]
+    });
+
+    const pendingReceipts = activities.map(activity => ({
+      ActivityId: activity.ActivityId,
+      Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+      Service: activity.Service.Service,
+      Date: activity.ActivityDate,
+      CheckNumber: activity.CheckNumber,
+      Amount: activity.Amount,
+      AssistedBy: activity.AssistedBy.username,
+    }));
+
+    res.status(200).json(pendingReceipts);
+  } catch (err) {
+    console.error('Error fetching pending receipts:', err);
+    res.status(500).json({ message: 'Error fetching pending receipts', error: err.message });
+  }
+});
+
+app.get('/receipts/approved', async (req, res) => {
+  try {
+    const { search } = req.query;
+    const whereClause = search
+      ? {
+          [Op.or]: [
+            { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
+            { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },
+            { '$Activity.Devotee.Phone$': { [Op.like]: `%${search}%` } },
+            { '$Activity.Devotee.Email$': { [Op.like]: `%${search}%` } }
+          ]
+        }
+      : {};
+
+    const receipts = await Receipt.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Activity,
+          include: [
+            { model: Devotee, attributes: ['FirstName', 'LastName'] },
+            { model: Service, attributes: ['Service'] },
+            { model: User, as: 'AssistedBy', attributes: ['username'] }
+          ]
+        }
+      ],
+      order: [['approvaldate', 'DESC']]
+    });
+
+    const approvedReceipts = receipts.map(receipt => ({
+      ReceiptId: receipt.receiptid,
+      Name: `${receipt.Activity.Devotee.FirstName} ${receipt.Activity.Devotee.LastName}`,
+      Service: receipt.servicetype,
+      ActivityDate: receipt.Activity.ActivityDate,
+      ApprovedDate: receipt.approvaldate,
+      CheckNumber: receipt.Activity.CheckNumber,
+      Amount: receipt.Activity.Amount,
+      AssistedBy: receipt.Activity.AssistedBy.username,
+    }));
+
+    res.status(200).json(approvedReceipts);
+  } catch (err) {
+    console.error('Error fetching approved receipts:', err);
+    res.status(500).json({ message: 'Error fetching approved receipts', error: err.message });
+  }
+});
+
+
+app.post('/receipts/approve', authenticateToken, async (req, res) => {
+  const { activityId } = req.body;
+  try {
+    const activity = await Activity.findByPk(activityId);
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+
+    const service = await Service.findByPk(activity.ServiceId);
+    const user = await User.findByPk(req.user.userid);
+
+    await Receipt.create({
+      servicetype: service.Service,
+      activityid: activity.ActivityId,
+      approvedby: user.username,
+      approvaldate: new Date(),
+    });
+
+    res.status(200).json({ message: 'Receipt approved successfully' });
+  } catch (err) {
+    console.error('Error approving receipt:', err);
+    res.status(500).json({ message: 'Error approving receipt', error: err.message });
+  }
+});
+
+app.put('/activities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findByPk(id);
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+    const updatedData = req.body;
+    await activity.update(updatedData);
+    res.status(200).json({ message: 'Activity updated successfully' });
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    res.status(500).json({ message: 'Error updating activity', error: error.message });
+  }
+});
+
+
+// Sync the database and create a super user
+sequelize.sync().then(async () => {
+  const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
+  if (!existingSuperUser) {
+    const hashedPassword = await bcrypt.hash('maya@111', 10);
+    await User.create({
+      username: 'admin',
+      password: hashedPassword,
+      usertype: 'Super Admin',
+      approved: true,
+      approvedBy: 0,
+      active: true,
+      super_user: true,
+      reason_for_access: 'Initial super user',
+    });
+    console.log('Super user created');
+  }
+
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
 });

@@ -1,0 +1,40 @@
+.ant-tabs-tab {
+    padding: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .ant-tabs-tab-active {
+    background-color: #E6F4EA; /* Light green for "Receipts for Approval" */
+  }
+  
+  .ant-tabs-tab:nth-child(2).ant-tabs-tab-active {
+    background-color: #FFF4E6; /* Light orange for "Approved Receipts" */
+  }
+ 
+  
+  .ant-btn:focus, .ant-btn:hover {
+    opacity: 0.9;
+  }
+  
+  .ant-btn-approve {
+    background-color: #ff7b00; /* Solid orange for Approve button */
+  }
+  
+  .ant-btn-edit {
+    background-color: #1976D2; /* Solid blue for Edit button */
+  }
+  
+  .ant-btn-email {
+    background-color: #1976D2; /* Material blue for Email button */
+  }
+  
+  .ant-btn-print {
+    background-color: #388E3C; /* Material green for Print button */
+  }
+  
+  .ant-table-thead > tr > th {
+    font-weight: bold;
+  }
+  
