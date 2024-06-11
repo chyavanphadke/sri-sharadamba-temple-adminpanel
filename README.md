@@ -54,7 +54,7 @@ node server.js
 
 
 # Modify User Table:
-
+```
 ALTER TABLE `seva`.`user` 
 ADD COLUMN `approved` BIT(1) NULL AFTER `su`,
 ADD COLUMN `approvedBy` VARCHAR(45) NULL AFTER `approved`,
@@ -65,10 +65,12 @@ ADD COLUMN `createdAt` DATETIME NULL AFTER `old_users`,
 ADD COLUMN `updatedAt` DATETIME NULL AFTER `createdAt`,
 CHANGE COLUMN `password` `password` VARCHAR(255) NOT NULL DEFAULT '',
 CHANGE COLUMN `usertype` `usertype` VARCHAR(50) NOT NULL DEFAULT 'FD';
-
-
+UPDATE user SET old_users = 1 WHERE userid = 'anilv';
+UPDATE user SET old_users = 1 WHERE userid = 'omdhimahi';
+UPDATE user SET old_users = 1 WHERE userid = 'sharada';
+```
 # Create ModeOfPayment Table:
-
+```
 CREATE TABLE ModeOfPayment (
   PaymentMethodId INT AUTO_INCREMENT PRIMARY KEY,
   MethodName VARCHAR(255) NOT NULL
@@ -79,3 +81,4 @@ INSERT INTO ModeOfPayment (MethodName) VALUES ('Check');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Credit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Debit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Online Transfer');
+```
