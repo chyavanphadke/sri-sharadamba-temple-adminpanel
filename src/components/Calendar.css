@@ -3,42 +3,17 @@
 }
 
 .section-card {
-  margin-bottom: 30px; /* Increased the bottom margin for more space between rows */
+  margin-bottom: 30px;
   box-shadow: 0 8px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 95%;
-  border-radius: 20px; /* Rounded corners */
-}
-
-.event-card {
-  margin-bottom: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 20px; /* Rounded corners */
-}
-
-.event-card.compact {
-  padding: 8px;
-}
-
-.event-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.event-title {
-  margin-bottom: 5px;
-  margin-right: 10px;
-}
-
-.event-date, .event-devotee {
-  margin: 0;
+  border-radius: 20px;
 }
 
 .ant-card-body {
-  padding: 16px; /* Consistent padding inside cards */
+  padding: 16px;
 }
 
 .ant-table {
@@ -47,4 +22,19 @@
 
 .ant-table-thead > tr > th, .ant-table-tbody > tr > td {
   padding: 8px;
+}
+
+.react-big-calendar {
+  height: 500px; /* Adjust height as needed */
+}
+
+.react-datepicker-wrapper {
+  display: block;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 4px 11px;
+  border-radius: 2px;
+  border: 1px solid #d9d9d9;
 }

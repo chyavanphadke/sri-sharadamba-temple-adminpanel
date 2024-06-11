@@ -1,31 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DatePicker, Card, Col, Row, Table, Typography, Modal, Button, message } from 'antd';
+import { Card, Col, Row, Typography, Modal, Input, Table, message } from 'antd';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
+import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendar.css';
 
-const { RangePicker } = DatePicker;
 const { Title } = Typography;
+const { Search } = Input;
+const localizer = momentLocalizer(moment);
 
 const Calendar = () => {
   const [activities, setActivities] = useState([]);
-  const [pastActivities, setPastActivities] = useState([]);
-  const [todayActivities, setTodayActivities] = useState([]);
-  const [servicesCounts, setServicesCounts] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [dateRange, setDateRange] = useState([moment(), moment().add(15, 'days')]);
+  const [currentMonth, setCurrentMonth] = useState(moment().startOf('month'));
 
   useEffect(() => {
     fetchActivities();
-    fetchPastActivities();
-    fetchTodayActivities();
-    fetchServicesCounts();
-  }, [dateRange]);
+  }, [currentMonth]);
+
+  useEffect(() => {
+    // Set current month on initial load
+    handleNavigate(new Date());
+  }, []);
 
   const fetchActivities = async () => {
     try {
+      const from = currentMonth.format('YYYY-MM-DD');
+      const to = currentMonth.endOf('month').format('YYYY-MM-DD');
       const response = await axios.get('http://localhost:5001/calendar/activities/range', {
-        params: { from: dateRange[0].format('YYYY-MM-DD'), to: dateRange[1].format('YYYY-MM-DD') }
+        params: { from, to }
       });
       setActivities(response.data);
     } catch (error) {
@@ -33,44 +40,49 @@ const Calendar = () => {
     }
   };
 
-  const fetchPastActivities = async () => {
+  const handleSearch = async (value) => {
     try {
-      const from = moment().subtract(1, 'month').format('YYYY-MM-DD');
-      const to = moment().subtract(1, 'days').format('YYYY-MM-DD');
-      const response = await axios.get('http://localhost:5001/calendar/activities/range', {
-        params: { from, to }
+      const response = await axios.get('http://localhost:5001/devotees', {
+        params: { search: value }
       });
-      setPastActivities(response.data.slice(0, 4)); // Limit to 4 past events
-    } catch (error) {
-      console.error('Error fetching past activities:', error);
-    }
-  };
+      const devotees = response.data;
 
-  const fetchTodayActivities = async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/calendar/activities/range', {
-        params: { from: moment().startOf('day').format('YYYY-MM-DD'), to: moment().endOf('day').format('YYYY-MM-DD') }
-      });
-      setTodayActivities(response.data);
-    } catch (error) {
-      console.error('Error fetching today activities:', error);
-    }
-  };
+      const activities = await Promise.all(devotees.map(async (devotee) => {
+        const res = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/activities`, {
+          params: { printDateNull: true } // Only fetch activities with PrintDate as null
+        });
+        return res.data;
+      }));
 
-  const fetchServicesCounts = async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/services/upcoming-count');
-      const filteredServices = response.data.filter(service =>
-        ['Archana', 'Rathotsava Seva', 'Vastra Sponsor', 'Flower Sponsor', 'Sarva Seva', 'Satyanarana Pooja'].includes(service.Service)
-      );
-      setServicesCounts(filteredServices);
+      setSearchResults(activities.flat());
     } catch (error) {
-      console.error('Error fetching services and upcoming counts:', error);
+      console.error('Error searching devotees:', error);
     }
   };
 
   const handleEventClick = (activity) => {
     setSelectedActivity(activity);
+  };
+
+  const handleDateChange = async (date, activityId) => {
+    if (!date) {
+      message.error('Invalid date selected');
+      return;
+    }
+
+    try {
+      await axios.put(`http://localhost:5001/calendar/activities/${activityId}`, {
+        ServiceDate: moment(date).format('YYYY-MM-DD')
+      });
+      message.success('Service Date updated successfully');
+      fetchActivities();
+      if (selectedActivity) {
+        handleSearch(selectedActivity.DevoteeName);
+      }
+    } catch (error) {
+      console.error('Error updating Service Date:', error);
+      message.error('Failed to update Service Date');
+    }
   };
 
   const handleOk = async () => {
@@ -80,9 +92,6 @@ const Calendar = () => {
         message.success('Event marked as complete');
         setSelectedActivity(null);
         fetchActivities();
-        fetchPastActivities();
-        fetchTodayActivities();
-        fetchServicesCounts();
       } catch (error) {
         console.error('Error marking event as complete:', error);
         message.error('Failed to mark event as complete');
@@ -94,81 +103,76 @@ const Calendar = () => {
     setSelectedActivity(null);
   };
 
+  const handleNavigate = (date) => {
+    setCurrentMonth(moment(date).startOf('month'));
+  };
+
   const columns = [
     {
-      title: 'Service',
-      dataIndex: 'Service',
-      key: 'Service',
+      title: 'Devotee Name',
+      dataIndex: 'DevoteeName',
+      key: 'DevoteeName',
     },
     {
-      title: 'Upcoming Events Count',
-      dataIndex: 'Count',
-      key: 'Count',
+      title: 'Service Name',
+      dataIndex: 'EventName',
+      key: 'EventName',
+    },
+    {
+      title: 'Service Date',
+      dataIndex: 'ServiceDate',
+      key: 'ServiceDate',
+      render: (text, record) => (
+        <DatePicker
+          selected={new Date(text)}
+          onChange={(date) => handleDateChange(date, record.ActivityId)}
+          dateFormat="yyyy-MM-dd"
+        />
+      ),
     },
   ];
 
-  const renderEvents = (events) => {
-    return (
-      <Row gutter={[16, 16]}>
-        {events.map((activity) => (
-          <Col span={12} key={activity.ActivityId}>
-            <Card className="event-card compact" onClick={() => handleEventClick(activity)}>
-              <div className="event-info">
-                <Title level={4} className="event-title">{activity.EventName}</Title>
-                <span className="event-date">{moment(activity.ServiceDate).format('MMMM Do')}</span>
-              </div>
-              <p className="event-devotee">{activity.DevoteeName}</p>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-    );
-  };
+  const events = activities.map(activity => ({
+    title: activity.EventName,
+    start: new Date(activity.ServiceDate),
+    end: new Date(activity.ServiceDate),
+    allDay: true,
+    resource: activity,
+  }));
 
   return (
     <div className="calendar-container">
       <Row gutter={16}>
-        <Col span={12}>
+        <Col span={17}>
           <Card className="section-card">
-            <Title level={3}>Today's Events</Title>
-            {todayActivities.length > 0 ? (
-              renderEvents(todayActivities)
-            ) : (
-              <Card className="event-card">
-                <p>No SEVA today</p>
-              </Card>
-            )}
+            <Title level={3}>Events Calendar</Title>
+            <BigCalendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 500 }}
+              onSelectEvent={(event) => handleEventClick(event.resource)}
+              onNavigate={handleNavigate}
+            />
           </Card>
         </Col>
-        <Col span={12}>
+        <Col span={7}>
           <Card className="section-card">
-            <Title level={3}>Service Counts</Title>
+            <Title level={3}>Change Seva Date</Title>
+            <Search
+              placeholder="Search by name, email, or phone"
+              enterButton="Search"
+              onSearch={handleSearch}
+            />
             <Table
-              dataSource={servicesCounts}
+              dataSource={searchResults}
               columns={columns}
+              rowKey="ActivityId"
               pagination={false}
-              rowKey="ServiceId"
               size="small"
+              style={{ marginTop: 20 }}
             />
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card className="section-card">
-            <Title level={3}>Upcoming Events</Title>
-            <RangePicker
-              value={dateRange}
-              onChange={(dates) => setDateRange(dates)}
-              style={{ marginBottom: '20px' }}
-            />
-            {renderEvents(activities)}
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card className="section-card">
-            <Title level={3}>Past Events</Title>
-            {renderEvents(pastActivities)}
           </Card>
         </Col>
       </Row>

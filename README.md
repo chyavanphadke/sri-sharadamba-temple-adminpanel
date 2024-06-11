@@ -65,7 +65,9 @@ ADD COLUMN `createdAt` DATETIME NULL AFTER `old_users`,
 ADD COLUMN `updatedAt` DATETIME NULL AFTER `createdAt`,
 CHANGE COLUMN `password` `password` VARCHAR(255) NOT NULL DEFAULT '',
 CHANGE COLUMN `usertype` `usertype` VARCHAR(50) NOT NULL DEFAULT 'FD';
-
+UPDATE user SET old_users = 1 WHERE userid = 'anilv';
+UPDATE user SET old_users = 1 WHERE userid = 'omdhimahi';
+UPDATE user SET old_users = 1 WHERE userid = 'sharada';
 
 # Create ModeOfPayment Table:
 

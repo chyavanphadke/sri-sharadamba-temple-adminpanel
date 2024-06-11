@@ -528,3 +528,69 @@ app.get('/services/upcoming-count', async (req, res) => {
     res.status(500).json({ message: 'Error fetching services and upcoming counts', error: err.message });
   }
 });
+
+// Endpoint to get activities for a specific devotee
+app.get('/devotees/:id/activities', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { printDateNull } = req.query;
+
+    const whereClause = {
+      DevoteeId: id,
+    };
+
+    if (printDateNull === 'true') {
+      whereClause.PrintDate = null;
+    }
+
+    const activities = await Activity.findAll({
+      where: whereClause,
+      include: [
+        { model: Service, attributes: ['Service'] },
+        { model: Devotee, attributes: ['FirstName', 'LastName'] }
+      ],
+    });
+    
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+        PrintDate: activity.PrintDate
+      };
+    }));
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching activities for devotee:', err);
+    res.status(500).json({ message: 'Error fetching activities for devotee', error: err.message });
+  }
+});
+
+
+
+
+// Endpoint to update the ServiceDate for an activity
+app.put('/calendar/activities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ServiceDate } = req.body;
+    const activity = await Activity.findByPk(id);
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+    activity.ServiceDate = ServiceDate;
+    await activity.save();
+    res.status(200).json({ message: 'Service Date updated successfully' });
+  } catch (err) {
+    console.error('Error updating Service Date:', err);
+    res.status(500).json({ message: 'Error updating Service Date', error: err.message });
+  }
+});
