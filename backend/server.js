@@ -329,7 +329,7 @@ app.post('/activities', async (req, res) => {
 
 // Updated code for reports page
 app.get('/reports', authenticateToken, async (req, res) => {
-  const { startDate, endDate, service, excludeDonations, paymentMethod } = req.query;
+  const { startDate, endDate, service, excludeDonations, paymentMethod, excludeChecks } = req.query;
 
   const whereClause = {
     ActivityDate: {
@@ -349,8 +349,15 @@ app.get('/reports', authenticateToken, async (req, res) => {
       }
     }
 
-    if (paymentMethod && paymentMethod !== 'All') {
+    if (paymentMethod && paymentMethod !== 'null') {
       whereClause.PaymentMethod = paymentMethod;
+    }
+
+    if (excludeChecks === 'true') {
+      const checkMethod = await ModeOfPayment.findOne({ where: { MethodName: 'Check' } });
+      if (checkMethod) {
+        whereClause.PaymentMethod = { [Op.ne]: checkMethod.PaymentMethodId };
+      }
     }
 
     const activities = await Activity.findAll({
@@ -380,8 +387,9 @@ app.get('/reports', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching reports', error: err.message });
   }
 });
+// End of updated code for reports page
 
-//end of code for reports page
+
 
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {

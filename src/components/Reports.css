@@ -55,3 +55,44 @@
   text-align: center;
   color: #333;
 }
+
+.highlight-label {
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.highlight-dropdown {
+  border: 2px solid #1890ff !important;
+}
+
+.highlight-value {
+  background-color: #e6f7ff;
+  font-weight: bold;
+}
+
+/* new styles */
+
+.toggle-button,
+.highlight-dropdown,
+.highlight-button {
+  color: #1890ff; /* Blue color */
+  border-color: #1890ff; /* Border color */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Minimal shadow */
+  font-weight: bold;
+}
+
+.highlight-value {
+  background-color: #e6f7ff;
+}
+
+/* Ensure dropdowns and buttons share the same styles */
+.ant-select-highlight {
+  border: 2px solid #1890ff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ant-btn-highlight {
+  color: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

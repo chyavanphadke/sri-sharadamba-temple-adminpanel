@@ -1,4 +1,5 @@
 // src/components/Reports.js
+
 import React, { useState, useEffect } from 'react';
 import { Layout, DatePicker, Select, Button, Table, message, Statistic, Row, Col } from 'antd';
 import axios from 'axios';
@@ -19,7 +20,10 @@ const Reports = () => {
   const [totalDevoteeCount, setTotalDevoteeCount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isDonationToggled, setIsDonationToggled] = useState(false); // State to track donation button toggle
+  const [isChecksToggled, setIsChecksToggled] = useState(false); // State to track checks button toggle
+  const [activeFutureButton, setActiveFutureButton] = useState(null); // State to track active future use button
   const [donationServiceId, setDonationServiceId] = useState(null); // State to store donation service id
+  const [checkPaymentMethodId, setCheckPaymentMethodId] = useState(null); // State to store check payment method id
 
   const token = localStorage.getItem('token');
   
@@ -38,8 +42,9 @@ const Reports = () => {
 
   useEffect(() => {
     console.log('Selected service:', isDonationToggled ? 'DONATION' : selectedService);
+    console.log('Selected payment method:', isChecksToggled ? 'CHECKS' : selectedPaymentMethod);
     generateReport();
-  }, [startDate, endDate, selectedService, selectedPaymentMethod, isDonationToggled]); // Add isDonationToggled to dependencies
+  }, [startDate, endDate, selectedService, selectedPaymentMethod, isDonationToggled, isChecksToggled]);
 
   const fetchServices = async () => {
     try {
@@ -63,7 +68,12 @@ const Reports = () => {
       console.log('Fetching payment methods...');
       const response = await axiosInstance.get('/payment-methods');
       console.log('Payment methods response:', response.data);
-      setPaymentMethods(response.data);
+      const paymntData = response.data;
+      const checkMethod = paymntData.find(method => method.MethodName === 'Check');
+      if (checkMethod) {
+        setCheckPaymentMethodId(checkMethod.PaymentMethodId);
+      }
+      setPaymentMethods(paymntData.filter(method => method.MethodName !== 'Check'));
     } catch (error) {
       console.error('Error fetching payment methods:', error);
       message.error('Error fetching payment methods');
@@ -74,7 +84,9 @@ const Reports = () => {
     try {
       let serviceParam = null;
       let excludeDonations = false;
-  
+      let paymentMethodParam = null;
+      let excludeChecks = false;
+
       if (isDonationToggled) {
         serviceParam = donationServiceId;
       } else if (selectedService === 'All but Donations') {
@@ -82,18 +94,27 @@ const Reports = () => {
       } else if (selectedService !== 'All') {
         serviceParam = selectedService;
       }
-  
+
+      if (isChecksToggled) {
+        paymentMethodParam = checkPaymentMethodId;
+      } else if (selectedPaymentMethod === 'All but Checks') {
+        excludeChecks = true;
+      } else if (selectedPaymentMethod !== 'All') {
+        paymentMethodParam = selectedPaymentMethod;
+      }
+
       const params = {
         startDate: startDate.format('YYYY-MM-DD'),
         endDate: endDate.format('YYYY-MM-DD'),
         service: serviceParam,
         excludeDonations: excludeDonations,
-        paymentMethod: selectedPaymentMethod,
+        paymentMethod: paymentMethodParam,
+        excludeChecks: excludeChecks
       };
-  
+
       const response = await axiosInstance.get('/reports', { params });
       setReportData(response.data);
-  
+
       // Calculate totals
       const totalDevotees = response.data.length;
       const totalAmt = response.data.reduce((sum, record) => sum + record.Amount, 0);
@@ -105,13 +126,11 @@ const Reports = () => {
   };
 
   const handleDonationToggle = () => {
-    if (isDonationToggled) {
-      setIsDonationToggled(false); // Toggle off
-    } else {
-      setIsDonationToggled(true); // Toggle on
-      setSelectedPaymentMethod('All'); // Reset Payment Method to 'All'
-    }
-    message.info(`Donations ${!isDonationToggled ? 'enabled' : 'disabled'}`);
+    setIsDonationToggled(!isDonationToggled); // Toggle Donation button
+  };
+
+  const handleChecksToggle = () => {
+    setIsChecksToggled(!isChecksToggled); // Toggle Checks button
   };
 
   const handleServiceChange = (value) => {
@@ -121,13 +140,22 @@ const Reports = () => {
     setSelectedService(value);
   };
 
+  const handlePaymentMethodChange = (value) => {
+    if (isChecksToggled) {
+      setIsChecksToggled(false); // Turn off checks toggle if a payment method is selected
+    }
+    setSelectedPaymentMethod(value);
+  };
+
   const handleButtonClick = (buttonName) => {
     if (buttonName === 'Donations') {
       handleDonationToggle();
+      setActiveFutureButton(null); // Reset active future button state
     } else if (buttonName === 'Checks') {
-      message.info(`Checks feature coming soon!`);
+      handleChecksToggle();
+      setActiveFutureButton(null); // Reset active future button state
     } else {
-      message.info(`${buttonName} button is clicked`);
+      setActiveFutureButton(prevState => (prevState === buttonName ? null : buttonName)); // Toggle future button state
     }
   };
 
@@ -138,7 +166,7 @@ const Reports = () => {
     { title: 'Amount', dataIndex: 'Amount', key: 'amount' },
     { title: 'Date', dataIndex: 'Date', key: 'date' },
     { title: 'Payment Method', dataIndex: 'Payment Method', key: 'paymentMethod' },
-    { title: 'Check Number', dataIndex: 'Check Number', key: 'checkNumber' },
+    { title: 'Check Number', dataIndex: 'Check Number', key: 'CheckNumber' },
     {
       title: 'Actions',
       key: 'actions',
@@ -154,6 +182,10 @@ const Reports = () => {
   const disabledEndDate = (current) => {
     return current && current < startDate.startOf('day');
   };
+
+  // Highlight conditions
+  const isServiceHighlighted = !isDonationToggled && activeFutureButton === null;
+  const isPaymentMethodHighlighted = !isChecksToggled && activeFutureButton === null;
 
   return (
     <Layout>
@@ -181,16 +213,23 @@ const Reports = () => {
           </Row>
           <Row gutter={16} style={{ marginTop: 20 }}>
             <Col>
-              <div>Service</div>
+              <div className={isServiceHighlighted ? 'highlight-label' : ''}>Service</div>
               <Select
+                className={isServiceHighlighted ? 'highlight-dropdown' : ''}
                 defaultValue="All"
                 style={{ width: 200, marginRight: 10, marginTop: 10 }}
                 onChange={handleServiceChange}
+                value={selectedService} // Add value to control the component
+                disabled={activeFutureButton !== null} // Disable if any future button is active
               >
                 <Option value="All">All</Option>
                 <Option value="All but Donations">All but Donations</Option>
                 {services.map(service => (
-                  <Option key={service.ServiceId} value={service.ServiceId}>
+                  <Option 
+                    key={service.ServiceId} 
+                    value={service.ServiceId} 
+                    className={isServiceHighlighted && selectedService === service.ServiceId ? 'highlight-value' : ''}
+                  >
                     {service.Service}
                   </Option>
                 ))}
@@ -201,53 +240,94 @@ const Reports = () => {
                 onClick={() => handleButtonClick('Donations')}
                 className={isDonationToggled ? 'toggle-button' : ''} // Apply CSS class if toggled
                 style={{ marginTop: 28 }} // Align with dropdowns
+                disabled={activeFutureButton !== null} // Disable if any future button is active
               >
                 Donations
               </Button>
             </Col>
             <Col>
-              <div>Payment Method</div>
+              <div className={isPaymentMethodHighlighted ? 'highlight-label' : ''}>Payment Method</div>
               <Select
+                className={isPaymentMethodHighlighted ? 'highlight-dropdown' : ''}
                 defaultValue="All"
                 style={{ width: 200, marginRight: 10, marginTop: 10 }}
                 value={selectedPaymentMethod} // Add value to control the component
-                onChange={value => setSelectedPaymentMethod(value)}
+                onChange={handlePaymentMethodChange}
+                disabled={activeFutureButton !== null} // Disable if any future button is active
               >
                 <Option value="All">All</Option>
+                <Option value="All but Checks">All but Checks</Option>
                 {paymentMethods.map(method => (
-                  <Option key={method.PaymentMethodId} value={method.PaymentMethodId}>
+                  <Option 
+                    key={method.PaymentMethodId} 
+                    value={method.PaymentMethodId}
+                    className={isPaymentMethodHighlighted && selectedPaymentMethod === method.PaymentMethodId ? 'highlight-value' : ''}
+                  >
                     {method.MethodName}
                   </Option>
                 ))}
               </Select>
             </Col>
             <Col>
-              <Button onClick={() => handleButtonClick('Checks')} style={{ marginTop: 28 }}>Checks</Button>
+              <Button 
+                onClick={() => handleButtonClick('Checks')} 
+                className={isChecksToggled ? 'toggle-button' : ''} // Apply CSS class if toggled
+                style={{ marginTop: 28 }} // Align with dropdowns
+                disabled={activeFutureButton !== null} // Disable if any future button is active
+              >
+                Checks
+              </Button>
             </Col>
             <Col>
-              <Button onClick={() => handleButtonClick('Memberships')} style={{ marginTop: 28 }}>Memberships</Button>
+              <Button 
+                onClick={() => handleButtonClick('Memberships')} 
+                className={activeFutureButton === 'Memberships' ? 'toggle-button' : ''} 
+                style={{ marginTop: 28 }}
+              >
+                Memberships
+              </Button>
             </Col>
             <Col>
-              <Button onClick={() => handleButtonClick('Pledges')} style={{ marginTop: 28 }}>Pledges</Button>
+              <Button 
+                onClick={() => handleButtonClick('Pledges')} 
+                className={activeFutureButton === 'Pledges' ? 'toggle-button' : ''} 
+                style={{ marginTop: 28 }}
+              >
+                Pledges
+              </Button>
             </Col>
             <Col>
-              <Button onClick={() => handleButtonClick('Sales')} style={{ marginTop: 28 }}>Sales</Button>
+              <Button 
+                onClick={() => handleButtonClick('Sales')} 
+                className={activeFutureButton === 'Sales' ? 'toggle-button' : ''} 
+                style={{ marginTop: 28 }}
+              >
+                Sales
+              </Button>
             </Col>
           </Row>
-          <Row gutter={16} style={{ marginTop: 20 }}>
-            <Col span={12}>
-              <Statistic title="Total Devotee Count" value={totalDevoteeCount} />
-            </Col>
-            <Col span={12}>
-              <Statistic title="Total Amount" value={totalAmount} precision={2} />
-            </Col>
-          </Row>
-          <Table
-            columns={columns}
-            dataSource={reportData}
-            rowKey={record => record.id}
-            style={{ marginTop: 20 }}
-          />
+          {activeFutureButton ? (
+            <div className="message-placeholder">
+              This feature is coming soon! Currently, no data is available.
+            </div>
+          ) : (
+            <>
+              <Row gutter={16} style={{ marginTop: 20 }}>
+                <Col span={12}>
+                  <Statistic title="Total Devotee Count" value={totalDevoteeCount} />
+                </Col>
+                <Col span={12}>
+                  <Statistic title="Total Amount" value={totalAmount} precision={2} />
+                </Col>
+              </Row>
+              <Table
+                columns={columns}
+                dataSource={reportData}
+                rowKey={record => record.id}
+                style={{ marginTop: 20 }}
+              />
+            </>
+          )}
         </div>
       </Content>
     </Layout>
