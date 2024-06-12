@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, message, Tabs } from 'antd';
+import { Table, Button, Modal, Form, Input, message } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
 import './Receipts.css';
 
 const { Search } = Input;
-const { TabPane } = Tabs;
 
 const Receipts = () => {
   const [pendingReceipts, setPendingReceipts] = useState([]);
@@ -20,6 +19,7 @@ const Receipts = () => {
   const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
+  const [activeTab, setActiveTab] = useState('pending'); // New state for active tab
 
   const fetchPendingReceipts = async (search = '') => {
     setLoading(true);
@@ -271,8 +271,16 @@ const Receipts = () => {
   return (
     <div>
       <h2>Receipts</h2>
-      <Tabs defaultActiveKey="1">
-        <TabPane tab="Receipts for Approval" key="1">
+      <div style={{ marginBottom: '16px' }}>
+        <Button type={activeTab === 'pending' ? 'primary' : 'default'} onClick={() => setActiveTab('pending')}>
+          Receipts for Approval
+        </Button>
+        <Button type={activeTab === 'approved' ? 'primary' : 'default'} onClick={() => setActiveTab('approved')} style={{ marginLeft: '8px' }}>
+          Approved Receipts
+        </Button>
+      </div>
+      {activeTab === 'pending' && (
+        <>
           <Search
             placeholder="Search by name, phone or email"
             onChange={handlePendingSearchChange}
@@ -285,8 +293,10 @@ const Receipts = () => {
             rowKey="ActivityId"
             pagination={{ pageSize: 20 }}
           />
-        </TabPane>
-        <TabPane tab="Approved Receipts" key="2">
+        </>
+      )}
+      {activeTab === 'approved' && (
+        <>
           <Search
             placeholder="Search by name, phone or email"
             onChange={handleApprovedSearchChange}
@@ -299,8 +309,8 @@ const Receipts = () => {
             rowKey="ReceiptId"
             pagination={{ pageSize: 20 }}
           />
-        </TabPane>
-      </Tabs>
+        </>
+      )}
       <Modal
         title="Edit Activity"
         visible={isModalVisible}
