@@ -273,7 +273,7 @@ const Home = () => {
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          <Button onClick={() => handleSeva(record)}>SEVA</Button>
+          <Button onClick={() => handleSeva(record)} type="primary">SEVA</Button>
           <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>
           <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
         </>
