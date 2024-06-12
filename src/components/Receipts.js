@@ -18,6 +18,7 @@ const Receipts = () => {
   const [approvedSearch, setApprovedSearch] = useState('');
   const [form] = Form.useForm();
   const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
+  const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
 
   const fetchPendingReceipts = async (search = '') => {
@@ -147,12 +148,16 @@ const Receipts = () => {
     { title: 'Check Number', dataIndex: 'CheckNumber', key: 'CheckNumber' },
     { title: 'Amount', dataIndex: 'Amount', key: 'Amount' },
     { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy' },
+    { title: 'Email', dataIndex: 'Email', key: 'Email' }, // Add Email to the table columns
     {
       title: 'Actions',
       key: 'actions',
       render: (text, record) => (
         <>
-          <Button className="ant-btn-email" onClick={() => message.info(`Send Email to ${record.Name}`)}>Email</Button>
+          <Button className="ant-btn-email" onClick={() => {
+            setCurrentRecord(record);
+            setIsEmailModalVisible(true);
+          }}>Email</Button>
           <Button className="ant-btn-download" onClick={() => {
             setCurrentRecord(record);
             setIsPrintModalVisible(true);
@@ -238,6 +243,31 @@ const Receipts = () => {
     console.log("PDF generated and print dialog opened");
   };
 
+  const handleEmail = async () => {
+    setIsEmailModalVisible(false);
+    console.log("Email modal confirmed for record:", currentRecord);
+
+    const doc = generatePDF(currentRecord);
+    const pdfBlob = doc.output('blob');
+
+    const formData = new FormData();
+    formData.append('email', currentRecord.Email);
+    formData.append('Name', currentRecord.Name); // Include Name
+    formData.append('ActivityDate', formatDate(currentRecord.ActivityDate)); // Include ActivityDate
+    formData.append('pdf', new Blob([pdfBlob], { type: 'application/pdf' }), `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`);
+
+    try {
+      await axios.post('http://localhost:5001/send-receipt-email', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      message.success(`Email sent to ${currentRecord.Name}`);
+    } catch (error) {
+      message.error('Failed to send receipt via email');
+    }
+  };
+
   return (
     <div>
       <h2>Receipts</h2>
@@ -299,6 +329,14 @@ const Receipts = () => {
         onCancel={() => setIsPrintModalVisible(false)}
       >
         <p>Generate a receipt for {currentRecord ? currentRecord.Name : ''}?</p>
+      </Modal>
+      <Modal
+        title="Send Receipt"
+        visible={isEmailModalVisible}
+        onOk={handleEmail}
+        onCancel={() => setIsEmailModalVisible(false)}
+      >
+        <p>Send receipt to {currentRecord ? currentRecord.Email : ''}?</p>
       </Modal>
     </div>
   );

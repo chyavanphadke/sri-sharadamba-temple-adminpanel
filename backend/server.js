@@ -638,7 +638,7 @@ app.get('/receipts/approved', async (req, res) => {
         {
           model: Activity,
           include: [
-            { model: Devotee, attributes: ['FirstName', 'LastName'] },
+            { model: Devotee, attributes: ['FirstName', 'LastName', 'Email'] }, // Include Email attribute
             { model: Service, attributes: ['Service'] },
             { model: User, as: 'AssistedBy', attributes: ['username'] }
           ]
@@ -650,6 +650,7 @@ app.get('/receipts/approved', async (req, res) => {
     const approvedReceipts = receipts.map(receipt => ({
       ReceiptId: receipt.receiptid,
       Name: `${receipt.Activity.Devotee.FirstName} ${receipt.Activity.Devotee.LastName}`,
+      Email: receipt.Activity.Devotee.Email, // Include Email in the response
       Service: receipt.servicetype,
       ActivityDate: receipt.Activity.ActivityDate,
       ApprovedDate: receipt.approvaldate,
@@ -664,7 +665,6 @@ app.get('/receipts/approved', async (req, res) => {
     res.status(500).json({ message: 'Error fetching approved receipts', error: err.message });
   }
 });
-
 
 app.post('/receipts/approve', authenticateToken, async (req, res) => {
   const { activityId } = req.body;
@@ -691,6 +691,56 @@ app.post('/receipts/approve', authenticateToken, async (req, res) => {
   }
 });
 
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+app.post('/send-receipt-email', upload.single('pdf'), (req, res) => {
+  const email = req.body.email;
+  const pdfBuffer = req.file.buffer;
+  const pdfName = req.file.originalname;
+
+  const { Name, ActivityDate } = req.body;
+
+  // Configure nodemailer transport
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: 'chyavanphadke95@gmail.com',
+      pass: 'dkse hzdh yluv xcvn' // Use App Password here
+    }
+  });
+
+  const mailOptions = {
+    from: 'chyavanphadke95@gmail.com',
+    to: email,
+    subject: `Your Receipt for Donation at Sharada SEVA, Date ${ActivityDate}`,
+    text: `Dear ${Name},
+
+Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.
+
+If you wish, you can match this donation through Benevity under the name "Sringeri Education and Vedic Academy Inc."
+
+Sincerely,
+Sringeri Education and Vedic Academy.`,
+    attachments: [
+      {
+        filename: pdfName,
+        content: pdfBuffer
+      }
+    ]
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+      return res.status(500).send('Error sending email');
+    }
+    res.send('Email sent: ' + info.response);
+  });
+});
+
 app.put('/activities/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -706,7 +756,6 @@ app.put('/activities/:id', async (req, res) => {
     res.status(500).json({ message: 'Error updating activity', error: error.message });
   }
 });
-
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
