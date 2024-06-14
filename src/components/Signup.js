@@ -31,9 +31,12 @@ const Signup = () => {
         <Row justify="center" align="middle" style={{ height: '100vh' }}>
           <Col>
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <h2>Sign Up for Sharada Temple, Milpitas</h2>
+              <h2>Sign Up for Sri Sharadamba Temple, Milpitas</h2>
             </div>
             <Form name="signup_form" className="signup-form" onFinish={onFinish}>
+              <Form.Item name="email" rules={[{ required: true, message: 'Please input your Email!' }]}>
+                <Input placeholder="Email" />
+              </Form.Item>
               <Form.Item name="username" rules={[{ required: true, message: 'Please input your Username!' }]}>
                 <Input placeholder="Username" />
               </Form.Item>
@@ -56,9 +59,6 @@ const Signup = () => {
                 ]}
               >
                 <Input type="password" placeholder="Confirm Password" />
-              </Form.Item>
-              <Form.Item name="reason_for_access" rules={[{ required: true, message: 'Please input your Reason for Access!' }]}>
-                <Input placeholder="Reason for Access" />
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" className="signup-form-button">

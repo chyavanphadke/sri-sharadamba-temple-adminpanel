@@ -46,11 +46,23 @@ const User = sequelize.define('User', {
   },
   reason_for_access: {
     type: DataTypes.STRING,
-    allowNull: false
+    defaultValue: 'User'
   },
   old_users: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    unique: true
+  },
+  passwordResetToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  passwordResetExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   freezeTableName: true

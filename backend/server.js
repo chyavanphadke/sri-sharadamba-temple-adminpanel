@@ -32,19 +32,19 @@ const authenticateToken = (req, res, next) => {
 
 // Authentication Routes
 app.post('/signup', async (req, res) => {
-  const { username, password, reason_for_access } = req.body;
+  const { username, email, password } = req.body;
   try {
-    const existingUser = await User.findOne({ where: { username } });
+    const existingUser = await User.findOne({ where: { [Op.or]: [{ username }, { email }] } });
     if (existingUser) {
-      return res.status(400).json({ message: 'Username already taken' });
+      return res.status(400).json({ message: 'Username or Email already taken' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await User.create({
       username,
+      email,
       password: hashedPassword,
       approved: false,
-      reason_for_access,
     });
     res.status(200).json({ message: 'User signed up successfully. Waiting for Admin approval.' });
   } catch (err) {
@@ -53,10 +53,18 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+// Update Login Route to accept either username or email
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { usernameOrEmail, password } = req.body;
   try {
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { username: usernameOrEmail },
+          { email: usernameOrEmail }
+        ]
+      }
+    });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -67,13 +75,92 @@ app.post('/login', async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    const token = jwt.sign({ userid: user.userid, username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
+    const token = jwt.sign({ userid: user.userid, username: user.username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     console.error('Error logging in:', err);
     res.status(500).json({ message: 'Error logging in', error: err.message });
   }
 });
+
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+// Forgot Password Route to generate and send reset token
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: 'Email not found' });
+    }
+
+    // Generate a password reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = Date.now() + 3600000; // Token expires in 1 hour
+    await user.save();
+
+    // Send email with the reset token
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: 'chyavanphadke95@gmail.com',
+        pass: 'dkse hzdh yluv xcvn' // Use App Password here
+      }
+    });
+
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+    const mailOptions = {
+      from: 'chyavanphadke95@gmail.com',
+      to: email,
+      subject: 'Password Reset for Sharada Temple, Milpitas',
+      text: `You requested a password reset. Please click the following link to reset your password: ${resetUrl}`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).send('Error sending email');
+      }
+      res.send('Email sent: ' + info.response);
+    });
+
+    res.status(200).json({ message: `Reset email sent to ${email}` });
+  } catch (err) {
+    console.error('Error sending reset email:', err);
+    res.status(500).json({ message: 'Error sending reset email', error: err.message });
+  }
+});
+
+// Reset Password Route
+app.post('/reset-password/:token', async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+  try {
+    const user = await User.findOne({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: { [Op.gt]: Date.now() }
+      }
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (err) {
+    console.error('Error resetting password:', err);
+    res.status(500).json({ message: 'Error resetting password', error: err.message });
+  }
+});
+
 
 app.post('/change-password', authenticateToken, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
@@ -691,7 +778,6 @@ app.post('/receipts/approve', authenticateToken, async (req, res) => {
   }
 });
 
-const nodemailer = require('nodemailer');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });

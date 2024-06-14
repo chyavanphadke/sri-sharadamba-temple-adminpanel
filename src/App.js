@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
+import ForgotPassword from './components/ForgotPassword'; // Import the ForgotPassword component
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -16,6 +17,7 @@ const App = () => (
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/reset-password/:token" element={<ForgotPassword />} /> {/* Add this route */}
       <Route
         path="/dashboard/*"
         element={

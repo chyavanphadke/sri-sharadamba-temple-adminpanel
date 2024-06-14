@@ -29,16 +29,19 @@
   width: 100%;
 }
 
-.signup-form-button {
-  background-color: #40bfff;
-  color: white;
-  width: 25%;
-  margin-left: auto;
-  text-align: center;
-  border-radius: 5px;
+.extra-buttons {
+  display: flex;
+  justify-content: space-between;
 }
 
-.signup-form-button:hover {
+.signup-form-button,
+.forgot-password-button {
+  width: 48%;
+  text-align: center;
+}
+
+.signup-form-button:hover,
+.forgot-password-button:hover {
   background-color: #40a9ff;
   color: white;
 }
@@ -71,7 +74,12 @@
     margin-bottom: 20px;
   }
 
-  .signup-form-button {
+  .extra-buttons {
+    flex-direction: column;
+  }
+
+  .signup-form-button,
+  .forgot-password-button {
     width: 100%;
     margin-left: 0;
     margin-top: 10px;
