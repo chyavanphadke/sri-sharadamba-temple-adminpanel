@@ -189,7 +189,7 @@ const Reports = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: '0 50px' }}>
+      <Content >
         <div className="site-layout-content">
           <h2>Reports Page</h2>
           <Row gutter={16}>

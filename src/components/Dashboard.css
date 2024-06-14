@@ -1,15 +1,33 @@
 /* src/components/Dashboard.css */
 
 .custom-sider {
-    background-color: #001529; /* Change to your desired color */
+  background-color: #001529; /* Change to your desired color */
+}
+
+.header {
+  background: #001529; /* Keep the header color consistent with the sidebar */
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.site-layout-background {
+  background: #fff;
+}
+
+.menu-toggle {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  /* Styles for mobile devices */
+  .menu-toggle {
+    display: inline-block;
   }
-  
-  .header {
-    background: #001529; /* Keep the header color consistent with the sidebar */
-    padding: 0;
-  }
-  
-  .site-layout-background {
-    background: #fff;
-  }
-  
+}
+
+/* Hide the zero-width trigger with higher specificity */
+.ant-layout-sider-zero-width-trigger,
+.ant-layout-sider-zero-width-trigger-left {
+  display: none !important;
+}

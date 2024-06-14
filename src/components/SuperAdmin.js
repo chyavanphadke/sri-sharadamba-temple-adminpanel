@@ -113,7 +113,7 @@ const SuperAdmin = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: '0 50px' }}>
+      <Content >
         <div className="site-layout-content">
           <h2>Super Admin Page</h2>
           <Input

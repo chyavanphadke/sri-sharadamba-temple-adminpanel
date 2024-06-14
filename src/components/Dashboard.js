@@ -1,7 +1,8 @@
-// src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Breadcrumb, Button } from 'antd';
 import {
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
   UserOutlined,
   LaptopOutlined,
   NotificationOutlined,
@@ -14,7 +15,7 @@ import Reports from './Reports';
 import Receipts from './Receipts';
 import Settings from './Settings';
 import { jwtDecode } from 'jwt-decode'; // Correct the import statement
-import './Dashboard.css'; // Import the CSS file
+import './Dashboard.css';
 
 const { Header, Content, Sider } = Layout;
 
@@ -35,6 +36,10 @@ const Dashboard = () => {
   const handleSignOut = () => {
     localStorage.removeItem('token');
     navigate('/');
+  };
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
   };
 
   const menuItems = [
@@ -70,7 +75,10 @@ const Dashboard = () => {
     <Layout style={{ minHeight: '100vh' }}>
       <Header className="header">
         <div className="logo" />
-        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
+        <Button className="menu-toggle" type="primary" onClick={toggleCollapsed}>
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </Button>
+        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']} style={{ flex: 1 }}>
           <Menu.Item key="1">Welcome, {username}</Menu.Item>
           <Menu.Item key="2" style={{ marginLeft: 'auto' }}>
             <Button type="link" onClick={handleSignOut} style={{ color: 'white' }}>
@@ -80,7 +88,15 @@ const Dashboard = () => {
         </Menu>
       </Header>
       <Layout>
-        <Sider className="custom-sider" width={200} collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+        <Sider
+          className="custom-sider"
+          width={200}
+          collapsible
+          collapsed={collapsed}
+          onCollapse={(value) => setCollapsed(value)}
+          breakpoint="lg"
+          collapsedWidth="0"
+        >
           <Menu
             mode="inline"
             defaultSelectedKeys={['1']}

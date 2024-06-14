@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
-import { jwtDecode } from 'jwt-decode'; // Correctly import jwtDecode
+import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 
 const { Content } = Layout;
@@ -25,14 +25,14 @@ const Home = () => {
 
   const token = localStorage.getItem('token');
 
-  const axiosInstance = axios.create({
+  const axiosInstance = useMemo(() => axios.create({
     baseURL: 'http://localhost:5001',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+  }), [token]);
 
-  const fetchDevotees = async () => {
+  const fetchDevotees = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get('/devotees');
@@ -44,18 +44,18 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [axiosInstance]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/services');
       setServices(response.data);
     } catch (error) {
       message.error('Failed to load services');
     }
-  };
+  }, [axiosInstance]);
 
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
       console.log('Fetched payment methods:', response.data); // Log fetched payment methods
@@ -63,13 +63,13 @@ const Home = () => {
     } catch (error) {
       message.error('Failed to load payment methods');
     }
-  };
+  }, [axiosInstance]);
 
   useEffect(() => {
     fetchDevotees();
     fetchServices();
     fetchPaymentMethods();
-  }, []); // Removed dependencies array to avoid unnecessary warnings
+  }, [fetchDevotees, fetchServices, fetchPaymentMethods]);
 
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
@@ -259,7 +259,7 @@ const Home = () => {
     } else {
       fetchDevotees();
     }
-  }, 300), [axiosInstance]);
+  }, 300), [axiosInstance, fetchDevotees]);
 
   const handleSearchChange = (e) => {
     debounceSearch(e.target.value);
@@ -283,7 +283,7 @@ const Home = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: '0 50px' }}>
+      <Content>
         <div className="site-layout-content">
           <h2>Home Page</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
@@ -297,14 +297,16 @@ const Home = () => {
           <div style={{ marginTop: 16 }}>
             <p>Total Devotees in the Database: {totalDevotees}</p>
           </div>
-          <Table
-            columns={columns}
-            dataSource={devotees}
-            loading={loading}
-            rowKey="DevoteeId"
-            pagination={{ pageSize: 10 }}
-            className="custom-table"
-          />
+          <div className="custom-table">
+            <Table
+              columns={columns}
+              dataSource={devotees}
+              loading={loading}
+              rowKey="DevoteeId"
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }} // Make the table scrollable on smaller screens
+            />
+          </div>
         </div>
       </Content>
       <Modal

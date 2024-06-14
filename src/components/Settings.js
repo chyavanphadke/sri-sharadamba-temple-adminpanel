@@ -98,7 +98,7 @@ const Settings = () => {
 
   return (
     <Layout>
-      <Content style={{ padding: '0 50px' }}>
+      <Content >
         <div className="site-layout-content">
           <h2>Settings</h2>
           <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
