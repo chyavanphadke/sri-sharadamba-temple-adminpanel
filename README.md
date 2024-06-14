@@ -63,6 +63,10 @@ ADD COLUMN `reason_for_access` VARCHAR(45) NULL AFTER `super_user`,
 ADD COLUMN `old_users` BIT(1) NULL AFTER `reason_for_access`,
 ADD COLUMN `createdAt` DATETIME NULL AFTER `old_users`,
 ADD COLUMN `updatedAt` DATETIME NULL AFTER `createdAt`,
+ADD COLUMN `email` VARCHAR(255) NULL AFTER `updatedAt`,
+ADD COLUMN `encryptedPassword` VARCHAR(255) NULL AFTER `email`,
+ADD COLUMN `passwordResetToken` VARCHAR(255) NULL AFTER `encryptedPassword`,
+ADD COLUMN `passwordResetExpires` DATETIME NULL AFTER `passwordResetToken`,
 CHANGE COLUMN `password` `password` VARCHAR(255) NOT NULL DEFAULT '',
 CHANGE COLUMN `usertype` `usertype` VARCHAR(50) NOT NULL DEFAULT 'FD';
 UPDATE user SET old_users = 1 WHERE userid = 'anilv';
