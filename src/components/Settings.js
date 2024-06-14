@@ -1,4 +1,3 @@
-// src/components/Settings.js
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table } from 'antd';
 import axios from 'axios';
@@ -98,15 +97,17 @@ const Settings = () => {
 
   return (
     <Layout>
-      <Content >
+      <Content>
         <div className="site-layout-content">
           <h2>Settings</h2>
-          <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
-            Change Password
-          </Button>
-          <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
-            Modify Services
-          </Button>
+          <div className="buttons-container">
+            <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
+              Change Password
+            </Button>
+            <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
+              Modify Services
+            </Button>
+          </div>
 
           <Modal
             title="Change Password"
@@ -144,7 +145,7 @@ const Settings = () => {
             visible={serviceModalVisible}
             onCancel={() => setServiceModalVisible(false)}
             onOk={handleServiceSave}
-            width={800}  // Set the width of the modal
+            width={800} // Set the width of the modal
           >
             <Table
               columns={serviceColumns}
