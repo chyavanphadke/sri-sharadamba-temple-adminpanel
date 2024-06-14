@@ -19,7 +19,19 @@ const Receipts = () => {
   const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
-  const [activeTab, setActiveTab] = useState('pending'); // New state for active tab
+  const [activeTab, setActiveTab] = useState('pending');
+
+  const fetchPaymentMethod = async (paymentMethodId) => {
+    try {
+      //console.log(`Fetching payment method for ID: ${paymentMethodId}`);
+      const response = await axios.get(`http://localhost:5001/payment-method/${paymentMethodId}`);
+      //console.log(`Fetched payment method: ${response.data.MethodName}`);
+      return response.data.MethodName;
+    } catch (error) {
+      console.error('Error fetching payment method:', error);
+      return '';
+    }
+  };
 
   const fetchPendingReceipts = async (search = '') => {
     setLoading(true);
@@ -27,7 +39,18 @@ const Receipts = () => {
       const response = await axios.get('http://localhost:5001/receipts/pending', {
         params: { search }
       });
-      setPendingReceipts(response.data);
+      //console.log('Pending receipts response:', response.data);
+      const data = await Promise.all(response.data.map(async receipt => {
+        if (receipt.PaymentMethod) {
+          const methodName = await fetchPaymentMethod(receipt.PaymentMethod);
+          receipt.ModeOfPayment = methodName === 'Check' ? `${methodName} (${receipt.CheckNumber})` : methodName;
+        } else {
+          receipt.ModeOfPayment = '';
+        }
+        //console.log('Processed pending receipt:', receipt);
+        return receipt;
+      }));
+      setPendingReceipts(data);
     } catch (error) {
       message.error('Failed to load pending receipts');
     } finally {
@@ -41,7 +64,18 @@ const Receipts = () => {
       const response = await axios.get('http://localhost:5001/receipts/approved', {
         params: { search }
       });
-      setApprovedReceipts(response.data);
+      //console.log('Approved receipts response:', response.data);
+      const data = await Promise.all(response.data.map(async receipt => {
+        if (receipt.PaymentMethod) {
+          const methodName = await fetchPaymentMethod(receipt.PaymentMethod);
+          receipt.ModeOfPayment = methodName === 'Check' ? `${methodName} (${receipt.CheckNumber})` : methodName;
+        } else {
+          receipt.ModeOfPayment = '';
+        }
+        //console.log('Processed approved receipt:', receipt);
+        return receipt;
+      }));
+      setApprovedReceipts(data);
     } catch (error) {
       message.error('Failed to load approved receipts');
     } finally {
@@ -56,7 +90,7 @@ const Receipts = () => {
 
   const handleApprove = async (activityId) => {
     try {
-      const token = localStorage.getItem('token'); // Retrieve token from local storage
+      const token = localStorage.getItem('token');
       await axios.post('http://localhost:5001/receipts/approve', { activityId }, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -125,7 +159,7 @@ const Receipts = () => {
     { title: 'Name', dataIndex: 'Name', key: 'Name' },
     { title: 'Service', dataIndex: 'Service', key: 'Service' },
     { title: 'Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text) },
-    { title: 'Check Number', dataIndex: 'CheckNumber', key: 'CheckNumber' },
+    { title: 'Mode of Payment', dataIndex: 'ModeOfPayment', key: 'ModeOfPayment' },
     { title: 'Amount', dataIndex: 'Amount', key: 'Amount' },
     { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy' },
     {
@@ -145,10 +179,10 @@ const Receipts = () => {
     { title: 'Service', dataIndex: 'Service', key: 'Service' },
     { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text) },
     { title: 'Approved Date', dataIndex: 'ApprovedDate', key: 'ApprovedDate', render: (text) => formatDate(text) },
-    { title: 'Check Number', dataIndex: 'CheckNumber', key: 'CheckNumber' },
+    { title: 'Mode of Payment', dataIndex: 'ModeOfPayment', key: 'ModeOfPayment' },
     { title: 'Amount', dataIndex: 'Amount', key: 'Amount' },
     { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy' },
-    { title: 'Email', dataIndex: 'Email', key: 'Email' }, // Add Email to the table columns
+    { title: 'Email', dataIndex: 'Email', key: 'Email' },
     {
       title: 'Actions',
       key: 'actions',
@@ -161,7 +195,7 @@ const Receipts = () => {
           <Button className="ant-btn-download" onClick={() => {
             setCurrentRecord(record);
             setIsPrintModalVisible(true);
-            console.log("Download button clicked for record:", record);
+            //console.log("Download button clicked for record:", record);
           }} style={{ marginLeft: 8 }}>Download</Button>
           <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
         </>
@@ -227,33 +261,33 @@ const Receipts = () => {
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
-    console.log("Download modal confirmed for record:", currentRecord);
+    //console.log("Download modal confirmed for record:", currentRecord);
 
     const doc = generatePDF(currentRecord);
     const fileName = `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`;
     doc.save(fileName);
 
-    console.log("PDF generated and download triggered");
+    //console.log("PDF generated and download triggered");
   };
 
   const handlePrint = (record) => {
     const doc = generatePDF(record);
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob);
-    console.log("PDF generated and print dialog opened");
+    //console.log("PDF generated and print dialog opened");
   };
 
   const handleEmail = async () => {
     setIsEmailModalVisible(false);
-    console.log("Email modal confirmed for record:", currentRecord);
+    //console.log("Email modal confirmed for record:", currentRecord);
 
     const doc = generatePDF(currentRecord);
     const pdfBlob = doc.output('blob');
 
     const formData = new FormData();
     formData.append('email', currentRecord.Email);
-    formData.append('Name', currentRecord.Name); // Include Name
-    formData.append('ActivityDate', formatDate(currentRecord.ActivityDate)); // Include ActivityDate
+    formData.append('Name', currentRecord.Name);
+    formData.append('ActivityDate', formatDate(currentRecord.ActivityDate));
     formData.append('pdf', new Blob([pdfBlob], { type: 'application/pdf' }), `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`);
 
     try {

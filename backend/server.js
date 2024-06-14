@@ -657,10 +657,10 @@ app.get('/services/upcoming-count', async (req, res) => {
   }
 });
 
+// Fetch pending receipts
 app.get('/receipts/pending', async (req, res) => {
   try {
     const { search } = req.query;
-
     const whereClause = {
       '$Receipt.activityid$': { [Op.is]: null },
       PrintDate: { [Op.is]: null }
@@ -696,6 +696,7 @@ app.get('/receipts/pending', async (req, res) => {
       CheckNumber: activity.CheckNumber,
       Amount: activity.Amount,
       AssistedBy: activity.AssistedBy.username,
+      PaymentMethod: activity.PaymentMethod
     }));
 
     res.status(200).json(pendingReceipts);
@@ -705,6 +706,7 @@ app.get('/receipts/pending', async (req, res) => {
   }
 });
 
+// Fetch approved receipts
 app.get('/receipts/approved', async (req, res) => {
   try {
     const { search } = req.query;
@@ -725,7 +727,7 @@ app.get('/receipts/approved', async (req, res) => {
         {
           model: Activity,
           include: [
-            { model: Devotee, attributes: ['FirstName', 'LastName', 'Email'] }, // Include Email attribute
+            { model: Devotee, attributes: ['FirstName', 'LastName', 'Email'] },
             { model: Service, attributes: ['Service'] },
             { model: User, as: 'AssistedBy', attributes: ['username'] }
           ]
@@ -737,13 +739,14 @@ app.get('/receipts/approved', async (req, res) => {
     const approvedReceipts = receipts.map(receipt => ({
       ReceiptId: receipt.receiptid,
       Name: `${receipt.Activity.Devotee.FirstName} ${receipt.Activity.Devotee.LastName}`,
-      Email: receipt.Activity.Devotee.Email, // Include Email in the response
+      Email: receipt.Activity.Devotee.Email,
       Service: receipt.servicetype,
       ActivityDate: receipt.Activity.ActivityDate,
       ApprovedDate: receipt.approvaldate,
       CheckNumber: receipt.Activity.CheckNumber,
       Amount: receipt.Activity.Amount,
       AssistedBy: receipt.Activity.AssistedBy.username,
+      PaymentMethod: receipt.Activity.PaymentMethod
     }));
 
     res.status(200).json(approvedReceipts);
@@ -752,6 +755,21 @@ app.get('/receipts/approved', async (req, res) => {
     res.status(500).json({ message: 'Error fetching approved receipts', error: err.message });
   }
 });
+
+// Fetch payment method by ID
+app.get('/payment-method/:id', async (req, res) => {
+  try {
+    const paymentMethod = await ModeOfPayment.findByPk(req.params.id);
+    if (!paymentMethod) {
+      return res.status(404).json({ message: 'Payment method not found' });
+    }
+    res.status(200).json(paymentMethod);
+  } catch (err) {
+    console.error('Error fetching payment method:', err);
+    res.status(500).json({ message: 'Error fetching payment method', error: err.message });
+  }
+});
+
 
 app.post('/receipts/approve', authenticateToken, async (req, res) => {
   const { activityId } = req.body;
