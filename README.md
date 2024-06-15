@@ -1,4 +1,4 @@
-## Design Plan
+# Design Plan
 
 Here are the architectural plans:
 
@@ -19,9 +19,9 @@ Here are the architectural plans:
 </p>
 
 
-## Changes to the DB:
+# Changes to the DB:
 
-# Modify User Table:
+## Modify User Table:
 ```
 ALTER TABLE `seva`.`user` 
 ADD COLUMN `approved` BIT(1) NULL AFTER `su`,
@@ -42,7 +42,7 @@ UPDATE user SET old_users = 1 WHERE userid = 'omdhimahi';
 UPDATE user SET old_users = 1 WHERE userid = 'sharada';
 ```
 
-# Create ModeOfPayment Table:
+## Create ModeOfPayment Table:
 ```
 CREATE TABLE ModeOfPayment (
   PaymentMethodId INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,7 +58,7 @@ INSERT INTO ModeOfPayment (MethodName) VALUES ('PayPal');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Zelle');
 ```
 
-# Create devotee Table:
+## Create devotee Table:
 ```
 ALTER TABLE `seva`.`devotee` 
 MODIFY `DOB` datetime DEFAULT NULL,
@@ -78,9 +78,9 @@ MODIFY `Star` varchar(100) DEFAULT NULL;
 ```
 
 
-## Installation:
+# Installation:
 
-# Frontend:
+## Frontend:
 ```
 npm install
 npm install antd @ant-design/icons
@@ -94,7 +94,7 @@ npm start
 ```
 
 
-# Backend:
+## Backend:
 ```
 npm install
 npm install express body-parser sqlite3
