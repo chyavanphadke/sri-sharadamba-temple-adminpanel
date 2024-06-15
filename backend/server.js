@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const moment = require('moment'); // Import moment for date manipulations
 const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt } = require('./models');
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
@@ -160,7 +159,6 @@ app.post('/reset-password/:token', async (req, res) => {
     res.status(500).json({ message: 'Error resetting password', error: err.message });
   }
 });
-
 
 app.post('/change-password', authenticateToken, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
@@ -337,7 +335,7 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
     if (!devotee) {
       return res.status(404).json({ message: 'Devotee not found' });
     }
-// Manually delete related records in the Activity table
+    // Manually delete related records in the Activity table
     await Activity.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await Family.destroy({ where: { DevoteeId: devotee.DevoteeId }, transaction });
     await devotee.destroy({ transaction });
@@ -377,6 +375,26 @@ app.put('/services', async (req, res) => {
     await transaction.rollback();
     console.error('Error updating services:', err);
     res.status(500).json({ message: 'Error updating services', error: err.message });
+  }
+});
+
+// Add this endpoint to handle the addition of new services
+app.post('/services', async (req, res) => {
+  const { Service, Rate, Comment, Active, DisplayFamily, Temple, SvcCategoryId } = req.body;
+  try {
+    const newService = await Service.create({
+      Service,
+      Rate,
+      Comment: Comment || '',
+      Active: Active || true,
+      DisplayFamily: DisplayFamily || false,
+      Temple: Temple || 0,
+      SvcCategoryId: SvcCategoryId || null,
+    });
+    res.status(201).json(newService);
+  } catch (error) {
+    console.error('Error adding service:', error);
+    res.status(500).json({ message: 'Failed to add service' });
   }
 });
 
@@ -468,15 +486,13 @@ app.get('/reports', authenticateToken, async (req, res) => {
       'Check Number': activity.CheckNumber
     }));
 
-    res.status(200).json(reportData);
+    res.status(207).json(reportData);
   } catch (err) {
     console.error('Error fetching reports:', err);
     res.status(500).json({ message: 'Error fetching reports', error: err.message });
   }
 });
 // End of updated code for reports page
-
-
 
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {
@@ -516,7 +532,6 @@ app.get('/calendar/activities', async (req, res) => {
     res.status(500).json({ message: 'Error fetching activities for calendar', error: err.message });
   }
 });
-
 
 app.put('/calendar/activities/:id/complete', async (req, res) => {
   try {
@@ -716,7 +731,7 @@ app.get('/receipts/approved', async (req, res) => {
             { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.Phone$': { [Op.like]: `%${search}%` } },
-            { '$Activity.Devotee.Email$': { [Op.like]: `%${search}%` } }
+            { '$Activity.Devotee.Email$': { [Op.like]: `%{search}%` } }
           ]
         }
       : {};

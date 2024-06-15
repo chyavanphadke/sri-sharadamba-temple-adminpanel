@@ -11,7 +11,7 @@ const sequelize = new Sequelize(config[env].database, config[env].username, conf
 const User = sequelize.define('User', {
   userid: {
     type: DataTypes.STRING,
-    defaultValue: () => uuidv4(), // Automatically generate UUIDs
+    defaultValue: () => uuidv4(),
     primaryKey: true,
   },
   username: {
@@ -189,10 +189,25 @@ const Service = sequelize.define('Service', {
     type: DataTypes.FLOAT,
     allowNull: false
   },
+  Comment: {
+    type: DataTypes.STRING,
+  },
   Active: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true
+  },
+  DisplayFamily: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  Temple: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  SvcCategoryId: {
+    type: DataTypes.INTEGER,
+    defaultValue: 3
   }
 }, {
   timestamps: false,

@@ -1,5 +1,6 @@
+// src/components/Settings.js
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Layout, message, Modal, Table } from 'antd';
+import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
 import axios from 'axios';
 import './Settings.css'; // Import CSS file for styling
 
@@ -8,7 +9,10 @@ const { Content } = Layout;
 const Settings = () => {
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
+  const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
   const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -18,7 +22,9 @@ const Settings = () => {
   const fetchServices = async () => {
     try {
       const response = await axios.get('http://localhost:5001/services');
-      setServices(response.data);
+      const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
+      setServices(sortedServices);
+      setFilteredServices(sortedServices);
     } catch (error) {
       message.error('Failed to load services');
     }
@@ -58,6 +64,30 @@ const Settings = () => {
     }
   };
 
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    if (term.length >= 3) {
+      const filtered = services.filter(service =>
+        service.Service.toLowerCase().includes(term.toLowerCase())
+      );
+      setFilteredServices(filtered);
+    } else {
+      setFilteredServices(services);
+    }
+  };
+
+  const handleAddService = async (values) => {
+    try {
+      await axios.post('http://localhost:5001/services', values);
+      message.success('Service added successfully');
+      setNewServiceModalVisible(false);
+      fetchServices();
+    } catch (error) {
+      message.error('Failed to add service');
+    }
+  };
+
   const serviceColumns = [
     {
       title: 'Service',
@@ -67,6 +97,7 @@ const Settings = () => {
         <Input
           value={text}
           onChange={(e) => onServiceChange(index, 'Service', e.target.value)}
+          style={{ width: '80%' }}
         />
       ),
     },
@@ -78,6 +109,7 @@ const Settings = () => {
         <Input
           value={text}
           onChange={(e) => onServiceChange(index, 'Rate', e.target.value)}
+          style={{ width: '80%' }}
         />
       ),
     },
@@ -86,8 +118,7 @@ const Settings = () => {
       dataIndex: 'Active',
       key: 'Active',
       render: (text, record, index) => (
-        <Input
-          type="checkbox"
+        <Checkbox
           checked={text}
           onChange={(e) => onServiceChange(index, 'Active', e.target.checked)}
         />
@@ -100,14 +131,12 @@ const Settings = () => {
       <Content>
         <div className="site-layout-content">
           <h2>Settings</h2>
-          <div className="buttons-container">
-            <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
-              Change Password
-            </Button>
-            <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
-              Modify Services
-            </Button>
-          </div>
+          <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
+            Change Password
+          </Button>
+          <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
+            Modify Services
+          </Button>
 
           <Modal
             title="Change Password"
@@ -145,14 +174,55 @@ const Settings = () => {
             visible={serviceModalVisible}
             onCancel={() => setServiceModalVisible(false)}
             onOk={handleServiceSave}
-            width={800} // Set the width of the modal
+            width={800}
           >
+            <Input.Search
+              placeholder="Search services"
+              value={searchTerm}
+              onChange={handleSearch}
+              style={{ marginBottom: '10px', width: '300px' }}
+            />
+            <Button type="primary" onClick={() => setNewServiceModalVisible(true)} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+              Add New Service
+            </Button>
             <Table
               columns={serviceColumns}
-              dataSource={services}
+              dataSource={filteredServices}
               rowKey="ServiceId"
               pagination={false}
+              size="small"
             />
+          </Modal>
+
+          <Modal
+            title="Add New Service"
+            visible={newServiceModalVisible}
+            onCancel={() => setNewServiceModalVisible(false)}
+            footer={null}
+          >
+            <Form
+              name="add_service"
+              className="add-service-form"
+              onFinish={handleAddService}
+            >
+              <Form.Item
+                name="Service"
+                rules={[{ required: true, message: 'Please input the service name!' }]}
+              >
+                <Input placeholder="Service Name" />
+              </Form.Item>
+              <Form.Item
+                name="Rate"
+                rules={[{ required: true, message: 'Please input the rate!' }]}
+              >
+                <Input placeholder="Rate" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Add Service
+                </Button>
+              </Form.Item>
+            </Form>
           </Modal>
         </div>
       </Content>

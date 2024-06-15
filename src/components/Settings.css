@@ -27,6 +27,16 @@
   gap: 10px;
 }
 
+.services-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ant-table td, .ant-table th {
+  padding: 8px; /* Reduce padding for table cells */
+}
+
 @media (max-width: 768px) {
   .site-layout-content {
     padding: 12px;
