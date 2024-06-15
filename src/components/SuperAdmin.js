@@ -1,14 +1,17 @@
-// src/components/SuperAdmin.js
 import React, { useEffect, useState, useCallback } from 'react';
-import { Layout, Table, Button, message, Input } from 'antd';
+import { Layout, Table, Button, message, Input, Modal, Select } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 
 const { Content } = Layout;
+const { Option } = Select;
 
 const SuperAdmin = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState('');
+  const [modalAction, setModalAction] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -60,12 +63,24 @@ const SuperAdmin = () => {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        message.success(`User usertype updated to ${action}`);
+        message.success(`User access level updated to ${action}`);
       }
       fetchUsers();
     } catch (error) {
       message.error(`Failed to ${action} user`);
     }
+  };
+
+  const handleAccessLevelChange = (userid, username, accessLevel) => {
+    setModalContent(`You want to provide ${accessLevel} access to ${username}?`);
+    setModalAction(() => () => handleAction(userid, accessLevel));
+    setIsModalVisible(true);
+  };
+
+  const handleDeleteUser = (userid, username) => {
+    setModalContent(`Are you sure you want to delete user ${username}?`);
+    setModalAction(() => () => handleAction(userid, 'delete'));
+    setIsModalVisible(true);
   };
 
   const debounceSearch = useCallback(_.debounce(async (value) => {
@@ -96,16 +111,24 @@ const SuperAdmin = () => {
 
   const columns = [
     { title: 'Username', dataIndex: 'username', key: 'username' },
-    { title: 'Usertype', dataIndex: 'usertype', key: 'usertype' },
-    { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => (text ? 'Yes' : 'No') },
+    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: 'Access Level', dataIndex: 'usertype', key: 'usertype', render: (text, record) => (
+        <Select
+          defaultValue={text}
+          onChange={(value) => handleAccessLevelChange(record.userid, record.username, value)}
+        >
+          <Option value="User">User</Option>
+          <Option value="Admin">Admin</Option>
+          <Option value="Super Admin">Super Admin</Option>
+        </Select>
+      )
+    },
+    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text || 'N/A' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
           <Button onClick={() => handleAction(record.userid, 'approve')} disabled={record.approved} style={{ marginRight: 8 }}>Approve</Button>
-          <Button onClick={() => handleAction(record.userid, 'delete')} danger style={{ marginRight: 8 }}>Delete</Button>
-          <Button onClick={() => handleAction(record.userid, 'User')} style={{ marginRight: 8 }}>Make User</Button>
-          <Button onClick={() => handleAction(record.userid, 'Admin')} style={{ marginRight: 8 }}>Make Admin</Button>
-          <Button onClick={() => handleAction(record.userid, 'Super Admin')}>Make Super Admin</Button>
+          <Button onClick={() => handleDeleteUser(record.userid, record.username)} danger style={{ marginRight: 8 }}>Delete</Button>
         </>
       )
     }
@@ -113,7 +136,7 @@ const SuperAdmin = () => {
 
   return (
     <Layout>
-      <Content >
+      <Content>
         <div className="site-layout-content">
           <h2>Super Admin Page</h2>
           <Input
@@ -122,6 +145,17 @@ const SuperAdmin = () => {
             style={{ width: 400, marginBottom: 16 }}
           />
           <Table columns={columns} dataSource={users} loading={loading} rowKey="userid" pagination={{ pageSize: 10 }} />
+          <Modal
+            title="Confirmation"
+            visible={isModalVisible}
+            onOk={() => {
+              modalAction();
+              setIsModalVisible(false);
+            }}
+            onCancel={() => setIsModalVisible(false)}
+          >
+            <p>{modalContent}</p>
+          </Modal>
         </div>
       </Content>
     </Layout>
