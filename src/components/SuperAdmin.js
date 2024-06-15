@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Layout, Table, Button, message, Input, Modal, Select } from 'antd';
+import { Layout, Table, Button, message, Input, Modal, Select, Row, Col } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 
@@ -139,12 +139,23 @@ const SuperAdmin = () => {
       <Content>
         <div className="site-layout-content">
           <h2>Super Admin Page</h2>
-          <Input
-            placeholder="Search users"
-            onChange={handleSearchChange}
-            style={{ width: 400, marginBottom: 16 }}
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Input
+                placeholder="Search users"
+                onChange={handleSearchChange}
+                style={{ width: '100%' }}
+              />
+            </Col>
+          </Row>
+          <Table 
+            columns={columns} 
+            dataSource={users} 
+            loading={loading} 
+            rowKey="userid" 
+            pagination={{ pageSize: 10 }} 
+            scroll={{ x: '100%' }} // Make table horizontally scrollable on smaller screens
           />
-          <Table columns={columns} dataSource={users} loading={loading} rowKey="userid" pagination={{ pageSize: 10 }} />
           <Modal
             title="Confirmation"
             visible={isModalVisible}
