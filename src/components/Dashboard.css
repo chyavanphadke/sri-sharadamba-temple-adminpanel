@@ -1,7 +1,7 @@
 /* src/components/Dashboard.css */
 
 .custom-sider {
-  background-color: #001529; /* Change to your desired color */
+  background-color: #001529; /* Match the background color with the header */
 }
 
 .header {
@@ -70,13 +70,21 @@
   display: none !important;
 }
 
-/* Increase the font size of the tabs */
+/* Increase the font size and padding of the tabs */
 .ant-menu-item {
-  font-size: 16px; /* Increase font size to your desired value */
+  font-size: 18px; /* Increase font size to your desired value */
+  color: white !important; /* Change the text color to white */
+  padding: 30px 24px; /* Further increase padding to adjust height */
 }
 
 .custom-icon {
-  width: 16px; /* Adjust size as needed */
-  height: 16px; /* Adjust size as needed */
+  width: 24px; /* Adjust size as needed */
+  height: 24px; /* Adjust size as needed */
   margin-right: 8px;
+  filter: invert(100%); /* Change icon color to white */
+}
+
+.ant-menu-item-selected {
+  background-color: #3788EB !important; /* Set selected tab color to blue */
+  color: white !important; /* Ensure text color remains white */
 }

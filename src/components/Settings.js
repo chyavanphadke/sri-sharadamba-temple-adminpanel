@@ -1,4 +1,3 @@
-// src/components/Settings.js
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
 import axios from 'axios';
@@ -10,13 +9,20 @@ const Settings = () => {
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [headerColor, setHeaderColor] = useState('#001529');
+  const [sidebarColor, setSidebarColor] = useState('#001529');
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchServices();
+    const storedHeaderColor = localStorage.getItem('headerColor');
+    const storedSidebarColor = localStorage.getItem('sidebarColor');
+    if (storedHeaderColor) setHeaderColor(storedHeaderColor);
+    if (storedSidebarColor) setSidebarColor(storedSidebarColor);
   }, []);
 
   const fetchServices = async () => {
@@ -88,6 +94,18 @@ const Settings = () => {
     }
   };
 
+  const handleChangeColor = () => {
+    localStorage.setItem('headerColor', headerColor);
+    localStorage.setItem('sidebarColor', sidebarColor);
+    window.location.reload();
+  };
+
+  const handleResetColors = () => {
+    localStorage.removeItem('headerColor');
+    localStorage.removeItem('sidebarColor');
+    window.location.reload();
+  };
+
   const serviceColumns = [
     {
       title: 'Service',
@@ -136,6 +154,9 @@ const Settings = () => {
           </Button>
           <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
             Modify Services
+          </Button>
+          <Button type="primary" onClick={() => setThemeModalVisible(true)} style={{ marginLeft: '10px' }}>
+            Change Theme Colors
           </Button>
 
           <Modal
@@ -221,6 +242,37 @@ const Settings = () => {
                 <Button type="primary" htmlType="submit">
                   Add Service
                 </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal
+            title="Change Theme Colors"
+            visible={themeModalVisible}
+            onCancel={() => setThemeModalVisible(false)}
+            footer={[
+              <Button key="reset" onClick={handleResetColors}>
+                Reset to Default
+              </Button>,
+              <Button key="submit" type="primary" onClick={handleChangeColor}>
+                Change Color
+              </Button>,
+            ]}
+          >
+            <Form layout="vertical">
+              <Form.Item label="Header Color">
+                <Input
+                  type="color"
+                  value={headerColor}
+                  onChange={(e) => setHeaderColor(e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item label="Sidebar Color">
+                <Input
+                  type="color"
+                  value={sidebarColor}
+                  onChange={(e) => setSidebarColor(e.target.value)}
+                />
               </Form.Item>
             </Form>
           </Modal>

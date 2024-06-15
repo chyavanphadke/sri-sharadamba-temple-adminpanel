@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Breadcrumb, Button } from 'antd';
-import {
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
-} from '@ant-design/icons';
+import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { Route, Routes, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Home from './Home';
 import SuperAdmin from './SuperAdmin';
@@ -25,15 +22,21 @@ const { Header, Content, Sider } = Layout;
 const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [username, setUsername] = useState('');
+  const [headerColor, setHeaderColor] = useState('#001529');
+  const [sidebarColor, setSidebarColor] = useState('#001529');
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedHeaderColor = localStorage.getItem('headerColor');
+    const storedSidebarColor = localStorage.getItem('sidebarColor');
     if (token) {
       const decodedToken = jwtDecode(token);
       setUsername(capitalizeFirstLetter(decodedToken.username));
     }
+    if (storedHeaderColor) setHeaderColor(storedHeaderColor);
+    if (storedSidebarColor) setSidebarColor(storedSidebarColor);
   }, []);
 
   const capitalizeFirstLetter = (string) => {
@@ -80,7 +83,7 @@ const Dashboard = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header className="header">
+      <Header className="header" style={{ backgroundColor: headerColor }}>
         <Button className="menu-toggle" type="primary" onClick={toggleCollapsed}>
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </Button>
@@ -105,13 +108,14 @@ const Dashboard = () => {
           onCollapse={(value) => setCollapsed(value)}
           breakpoint="lg"
           collapsedWidth="0"
+          style={{ backgroundColor: sidebarColor }}
         >
           <Menu
             mode="inline"
             selectedKeys={[location.pathname]}
             defaultOpenKeys={['sub1']}
-            style={{ height: '100%', borderRight: 0 }}
-            items={menuItems}
+            style={{ height: '100%', borderRight: 0, backgroundColor: sidebarColor }}
+            items={menuItems.map((item) => ({ ...item, style: { color: 'white' } }))}
           />
         </Sider>
         <Layout style={{ padding: '0 24px 24px' }}>
