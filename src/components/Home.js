@@ -22,6 +22,7 @@ const Home = () => {
   const [sevaForm] = Form.useForm();
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedService, setSelectedService] = useState('');
 
   const token = localStorage.getItem('token');
 
@@ -233,7 +234,6 @@ const Home = () => {
       }
     }
   };
-  
 
   const handleCancel = () => {
     setIsModalVisible(false);
@@ -278,6 +278,14 @@ const Home = () => {
 
   const handleSearchChange = (e) => {
     debounceSearch(e.target.value);
+  };
+
+  const disabledDate = (current) => {
+    // Only allow selecting Saturdays if the selected service is "Annadan"
+    if (selectedService === 'Annadan') {
+      return current && current.day() !== 6; // 6 corresponds to Saturday
+    }
+    return false;
   };
 
   const columns = [
@@ -535,6 +543,7 @@ const Home = () => {
                   onChange={(value) => {
                     const service = services.find(s => s.Service === value);
                     sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
+                    setSelectedService(value); // Update the selected service
                   }}
                   showSearch
                   filterOption={(input, option) =>
@@ -572,7 +581,7 @@ const Home = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} disabledDate={disabledDate} />
               </Form.Item>
             </Col>
             <Col span={12}>

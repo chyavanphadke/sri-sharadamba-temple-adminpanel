@@ -46,12 +46,12 @@ const Dashboard = () => {
   };
 
   const menuItems = [
-    { key: '1', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link> },
-    { key: '2', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link> },
-    { key: '3', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link> },
-    { key: '4', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link> },
-    { key: '5', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link> },
-    { key: '6', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link> },
+    { key: '/dashboard/home', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link> },
+    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link> },
+    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link> },
+    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link> },
+    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link> },
+    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link> },
   ];
 
   const getBreadcrumbItems = () => {
@@ -81,7 +81,7 @@ const Dashboard = () => {
         <Button className="menu-toggle" type="primary" onClick={toggleCollapsed}>
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </Button>
-        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']} style={{ flex: 1 }}>
+        <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} style={{ flex: 1 }}>
           <Menu.Item key="1">Welcome, {username}</Menu.Item>
           <Menu.Item key="2" style={{ marginLeft: 'auto' }}>
             <Button type="link" onClick={handleSignOut} style={{ color: 'white' }}>
@@ -102,7 +102,7 @@ const Dashboard = () => {
         >
           <Menu
             mode="inline"
-            defaultSelectedKeys={['1']}
+            selectedKeys={[location.pathname]}
             defaultOpenKeys={['sub1']}
             style={{ height: '100%', borderRight: 0 }}
             items={menuItems}
