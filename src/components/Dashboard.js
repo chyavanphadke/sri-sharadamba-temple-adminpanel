@@ -32,9 +32,13 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
     if (token) {
       const decodedToken = jwtDecode(token);
-      setUsername(decodedToken.username);
+      setUsername(capitalizeFirstLetter(decodedToken.username));
     }
   }, []);
+
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
@@ -77,18 +81,20 @@ const Dashboard = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header className="header">
-        <div className="logo" />
         <Button className="menu-toggle" type="primary" onClick={toggleCollapsed}>
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </Button>
-        <Menu theme="dark" mode="horizontal" selectedKeys={[location.pathname]} style={{ flex: 1 }}>
-          <Menu.Item key="1">Welcome, {username}</Menu.Item>
-          <Menu.Item key="2" style={{ marginLeft: 'auto' }}>
-            <Button type="link" onClick={handleSignOut} style={{ color: 'white' }}>
-              Sign out
-            </Button>
-          </Menu.Item>
-        </Menu>
+        <div className="header-left">
+          <span className="welcome-text">Welcome, {username}</span>
+        </div>
+        <div className="title">
+          Sri Sharadamba Temple, Milpitas
+        </div>
+        <div className="header-right">
+          <Button type="primary" onClick={handleSignOut} className="sign-out-button">
+            Sign out
+          </Button>
+        </div>
       </Header>
       <Layout>
         <Sider

@@ -86,6 +86,8 @@ INSERT INTO ModeOfPayment (MethodName) VALUES ('Check');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Credit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Debit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Online Transfer');
+INSERT INTO ModeOfPayment (MethodName) VALUES ('PayPal');
+INSERT INTO ModeOfPayment (MethodName) VALUES ('Zelle');
 ```
 
 # Create devotee Table:

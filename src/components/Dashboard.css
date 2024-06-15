@@ -9,6 +9,36 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
+  justify-content: space-between; /* Ensure space between logo/menu toggle and title */
+}
+
+.title {
+  color: white;
+  font-size: 22px; /* Increase font size to your desired value */
+  font-weight: bold;
+  text-align: center;
+  flex: 1; /* Center the title */
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+}
+
+.header-right {
+  margin-left: auto;
+}
+
+.welcome-text {
+  color: white;
+  font-size: 18px; /* Increase font size to your desired value */
+  margin-right: 20px; /* Adjust spacing as needed */
+}
+
+.sign-out-button {
+  color: white;
+  border-radius: 8px; /* Add curved corners */
 }
 
 .site-layout-background {
@@ -23,6 +53,14 @@
   /* Styles for mobile devices */
   .menu-toggle {
     display: inline-block;
+  }
+
+  .welcome-text {
+    display: none; /* Hide welcome text on mobile devices */
+  }
+
+  .title {
+    font-size: 12px; /* Decrease font size for the title on mobile devices */
   }
 }
 
