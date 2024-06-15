@@ -696,6 +696,7 @@ app.get('/receipts/pending', async (req, res) => {
         { model: Devotee, attributes: ['FirstName', 'LastName'] },
         { model: Service, attributes: ['Service'] },
         { model: User, as: 'AssistedBy', attributes: ['username'] },
+        { model: ModeOfPayment, attributes: ['MethodName'] }, // Include ModeOfPayment to get MethodName
         { model: Receipt, attributes: [] }
       ],
       raw: true,
@@ -708,10 +709,9 @@ app.get('/receipts/pending', async (req, res) => {
       Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
       Service: activity.Service.Service,
       Date: activity.ActivityDate,
-      CheckNumber: activity.CheckNumber,
+      PaymentMethod: activity.ModeOfPayment.MethodName === 'Check' ? `Check (${activity.CheckNumber})` : activity.ModeOfPayment.MethodName,
       Amount: activity.Amount,
       AssistedBy: activity.AssistedBy.username,
-      PaymentMethod: activity.PaymentMethod
     }));
 
     res.status(200).json(pendingReceipts);
@@ -731,7 +731,7 @@ app.get('/receipts/approved', async (req, res) => {
             { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.Phone$': { [Op.like]: `%${search}%` } },
-            { '$Activity.Devotee.Email$': { [Op.like]: `%{search}%` } }
+            { '$Activity.Devotee.Email$': { [Op.like]: `%${search}%` } }
           ]
         }
       : {};
@@ -744,7 +744,8 @@ app.get('/receipts/approved', async (req, res) => {
           include: [
             { model: Devotee, attributes: ['FirstName', 'LastName', 'Email'] },
             { model: Service, attributes: ['Service'] },
-            { model: User, as: 'AssistedBy', attributes: ['username'] }
+            { model: User, as: 'AssistedBy', attributes: ['username'] },
+            { model: ModeOfPayment, attributes: ['MethodName'] } // Include ModeOfPayment to get MethodName
           ]
         }
       ],
@@ -758,10 +759,9 @@ app.get('/receipts/approved', async (req, res) => {
       Service: receipt.servicetype,
       ActivityDate: receipt.Activity.ActivityDate,
       ApprovedDate: receipt.approvaldate,
-      CheckNumber: receipt.Activity.CheckNumber,
+      PaymentMethod: receipt.Activity.ModeOfPayment.MethodName === 'Check' ? `Check (${receipt.Activity.CheckNumber})` : receipt.Activity.ModeOfPayment.MethodName,
       Amount: receipt.Activity.Amount,
       AssistedBy: receipt.Activity.AssistedBy.username,
-      PaymentMethod: receipt.Activity.PaymentMethod
     }));
 
     res.status(200).json(approvedReceipts);
