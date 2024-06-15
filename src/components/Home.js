@@ -196,7 +196,21 @@ const Home = () => {
 
   const handleOk = async (values) => {
     try {
-      const payload = { ...values, family: familyMembers };
+      const payload = {
+        FirstName: values.FirstName,
+        LastName: values.LastName,
+        Phone: values.Phone || null,
+        AltPhone: values.AltPhone || null,
+        Address: values.Address || null,
+        City: values.City || null,
+        State: values.State || null,
+        Zip: values.Zip || null,
+        Email: values.Email || null,
+        Gotra: values.Gotra || null,
+        Star: values.Star || null,
+        DOB: values.DOB ? values.DOB.format('YYYY-MM-DD') : null,
+        family: familyMembers
+      };
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
@@ -219,6 +233,7 @@ const Home = () => {
       }
     }
   };
+  
 
   const handleCancel = () => {
     setIsModalVisible(false);
@@ -320,75 +335,85 @@ const Home = () => {
           form={form}
           initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
           onFinish={handleOk}
+          labelCol={{ span: 24 }}
+          wrapperCol={{ span: 24 }}
         >
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="FirstName" rules={[{ required: true, message: 'Please input the first name!' }]}>
+              <Form.Item
+                name="FirstName"
+                label="First Name"
+                rules={[{ required: true, message: 'Please input the first name!' }]}
+              >
                 <Input placeholder="First Name" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="LastName" rules={[{ required: true, message: 'Please input the last name!' }]}>
+              <Form.Item
+                name="LastName"
+                label="Last Name"
+                rules={[{ required: true, message: 'Please input the last name!' }]}
+              >
                 <Input placeholder="Last Name" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Phone" rules={[{ required: true, message: 'Please input the phone number!' }]}>
+              <Form.Item name="Phone" label="Phone Number">
                 <Input placeholder="Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="AltPhone">
+              <Form.Item name="AltPhone" label="Alternate Phone Number">
                 <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Address">
+              <Form.Item name="Address" label="Address">
                 <Input placeholder="Address" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="City">
+              <Form.Item name="City" label="City">
                 <Input placeholder="City" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="State">
+              <Form.Item name="State" label="State">
                 <Input placeholder="State" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="Zip">
+              <Form.Item name="Zip" label="Zip Code">
                 <Input placeholder="Zip Code" style={{ height: 50 }} />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Email" rules={[{ required: true, message: 'Please input the email!' }]}>
+              <Form.Item name="Email" label="Email">
                 <Input placeholder="Email" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="DOB">
+              <Form.Item name="DOB" label="Date of Birth">
                 <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Gotra">
+              <Form.Item name="Gotra" label="Gotra">
                 <Input placeholder="Gotra" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="Star">
+              <Form.Item name="Star" label="Star">
                 <Input placeholder="Star" style={{ height: 50 }} />
               </Form.Item>
             </Col>
@@ -409,54 +434,66 @@ const Home = () => {
                 </Row>
                 <Row gutter={16}>
                   <Col span={8}>
-                    <Input
-                      placeholder="First Name"
-                      value={member.FirstName}
-                      onChange={(e) => handleFamilyChange(index, 'FirstName', e.target.value)}
-                      style={{ height: 50 }}
-                    />
+                    <Form.Item label="First Name">
+                      <Input
+                        placeholder="First Name"
+                        value={member.FirstName}
+                        onChange={(e) => handleFamilyChange(index, 'FirstName', e.target.value)}
+                        style={{ height: 50 }}
+                      />
+                    </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <Input
-                      placeholder="Last Name"
-                      value={member.LastName}
-                      onChange={(e) => handleFamilyChange(index, 'LastName', e.target.value)}
-                      style={{ height: 50 }}
-                    />
+                    <Form.Item label="Last Name">
+                      <Input
+                        placeholder="Last Name"
+                        value={member.LastName}
+                        onChange={(e) => handleFamilyChange(index, 'LastName', e.target.value)}
+                        style={{ height: 50 }}
+                      />
+                    </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <Input
-                      placeholder="Relation"
-                      value={member.RelationShip}
-                      onChange={(e) => handleFamilyChange(index, 'RelationShip', e.target.value)}
-                      style={{ height: 50 }}
-                    />
+                    <Form.Item label="Relation">
+                      <Input
+                        placeholder="Relation"
+                        value={member.RelationShip}
+                        onChange={(e) => handleFamilyChange(index, 'RelationShip', e.target.value)}
+                        style={{ height: 50 }}
+                      />
+                    </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16} style={{ marginTop: 16 }}>
                   <Col span={8}>
-                    <Input
-                      placeholder="Gothra"
-                      value={member.Gotra}
-                      onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
-                      style={{ height: 50 }}
-                    />
+                    <Form.Item label="Gothra">
+                      <Input
+                        placeholder="Gothra"
+                        value={member.Gotra}
+                        onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
+                        style={{ height: 50 }}
+                      />
+                    </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <Input
-                      placeholder="Star"
-                      value={member.Star}
-                      onChange={(e) => handleFamilyChange(index, 'Star', e.target.value)}
-                      style={{ height: 50 }}
-                    />
+                    <Form.Item label="Star">
+                      <Input
+                        placeholder="Star"
+                        value={member.Star}
+                        onChange={(e) => handleFamilyChange(index, 'Star', e.target.value)}
+                        style={{ height: 50 }}
+                      />
+                    </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <DatePicker
-                      style={{ width: '100%', height: 50 }}
-                      placeholder="Date of Birth"
-                      value={member.DOB ? moment(member.DOB) : null}
-                      onChange={(date) => handleFamilyChange(index, 'DOB', date)}
-                    />
+                    <Form.Item label="Date of Birth">
+                      <DatePicker
+                        style={{ width: '100%', height: 50 }}
+                        placeholder="Date of Birth"
+                        value={member.DOB ? moment(member.DOB) : null}
+                        onChange={(date) => handleFamilyChange(index, 'DOB', date)}
+                      />
+                    </Form.Item>
                   </Col>
                 </Row>
               </div>
@@ -473,7 +510,7 @@ const Home = () => {
         </Form>
       </Modal>
       <Modal
-        title="Add Seva"
+        title={<span style={{ fontSize: '24px' }}>Add Seva</span>}
         visible={isSevaModalVisible}
         onCancel={handleSevaCancel}
         footer={null}
@@ -482,39 +519,68 @@ const Home = () => {
         <Form
           form={sevaForm}
           onFinish={handleSevaOk}
+          labelCol={{ span: 24 }}
+          wrapperCol={{ span: 24 }}
         >
-          <Form.Item name="Name" label="Name">
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="Service" label="Service" rules={[{ required: true, message: 'Please select a service!' }]}>
-            <Select placeholder="Select a service" onChange={(value) => {
-              const service = services.find(s => s.Service === value);
-              sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
-            }}>
-              {services.map(service => (
-                <Option key={service.ServiceId} value={service.Service}>{service.Service}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="Rate" label="Rate">
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="PaymentMethod" label="Payment Method" rules={[{ required: true, message: 'Please select a payment method!' }]}>
-            <Select placeholder="Select a payment method">
-              {paymentMethods.map(method => (
-                <Option key={method.PaymentMethodId} value={method.MethodName}>{method.MethodName}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="CheckNumber" label="Check Number">
-            <Input disabled={!sevaForm.getFieldValue('PaymentMethod') || sevaForm.getFieldValue('PaymentMethod') !== 'Check'} />
-          </Form.Item>
+          <div>
+            <p style={{ fontWeight: 'bold', fontStyle: 'italic' }}>
+              Adding Seva for {currentDevotee ? `${currentDevotee.FirstName} ${currentDevotee.LastName}` : ''}
+            </p>
+          </div>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="Service" label="Service" rules={[{ required: true, message: 'Please select a service!' }]}>
+                <Select
+                  placeholder="Select a service"
+                  onChange={(value) => {
+                    const service = services.find(s => s.Service === value);
+                    sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
+                  }}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
+                >
+                  {services.map(service => (
+                    <Option key={service.ServiceId} value={service.Service}>{service.Service}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="Rate" label="Rate">
+                <Input disabled />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
+                <Input type="number" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="PaymentMethod" label="Payment Method" rules={[{ required: true, message: 'Please select a payment method!' }]}>
+                <Select placeholder="Select a payment method">
+                  {paymentMethods.map(method => (
+                    <Option key={method.PaymentMethodId} value={method.MethodName}>{method.MethodName}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="CheckNumber" label="Check Number">
+                <Input disabled={!sevaForm.getFieldValue('PaymentMethod') || sevaForm.getFieldValue('PaymentMethod') !== 'Check'} />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="Comments" label="Comments">
             <Input.TextArea />
           </Form.Item>

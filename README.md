@@ -73,6 +73,7 @@ UPDATE user SET old_users = 1 WHERE userid = 'anilv';
 UPDATE user SET old_users = 1 WHERE userid = 'omdhimahi';
 UPDATE user SET old_users = 1 WHERE userid = 'sharada';
 ```
+
 # Create ModeOfPayment Table:
 ```
 CREATE TABLE ModeOfPayment (
@@ -85,4 +86,23 @@ INSERT INTO ModeOfPayment (MethodName) VALUES ('Check');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Credit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Debit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Online Transfer');
+```
+
+# Create devotee Table:
+```
+ALTER TABLE `seva`.`devotee` 
+MODIFY `DOB` datetime DEFAULT NULL,
+MODIFY `LastModified` datetime DEFAULT NULL;
+ALTER TABLE `devotee`
+MODIFY `LastModified` datetime DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE `devotee`
+MODIFY `Phone` varchar(45) DEFAULT NULL,
+MODIFY `AltPhone` varchar(45) DEFAULT NULL,
+MODIFY `Address` varchar(100) DEFAULT NULL,
+MODIFY `City` varchar(45) DEFAULT NULL,
+MODIFY `State` varchar(2) DEFAULT NULL,
+MODIFY `Zip` varchar(15) DEFAULT NULL,
+MODIFY `Email` varchar(100) DEFAULT NULL,
+MODIFY `Gotra` varchar(100) DEFAULT NULL,
+MODIFY `Star` varchar(100) DEFAULT NULL;
 ```

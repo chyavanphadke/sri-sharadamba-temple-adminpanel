@@ -293,7 +293,20 @@ app.post('/devotees', authenticateToken, async (req, res) => {
     if (existingDevotee) {
       return res.status(400).json({ error: 'The email is already registered' });
     }
-    const devotee = await Devotee.create({ FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB }, { transaction });
+    const devotee = await Devotee.create({
+      FirstName,
+      LastName,
+      Phone: Phone || null,
+      AltPhone: AltPhone || null,
+      Address: Address || null,
+      City: City || null,
+      State: State || null,
+      Zip: Zip || null,
+      Email: Email || null,
+      Gotra: Gotra || null,
+      Star: Star || null,
+      DOB: DOB || null
+    }, { transaction });
     for (const member of family) {
       await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }

@@ -85,34 +85,43 @@ const Devotee = sequelize.define('Devotee', {
   },
   Phone: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true // Allow null
   },
   AltPhone: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   Address: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   City: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   State: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   Zip: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   Email: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   Gotra: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   Star: {
     type: DataTypes.STRING,
+    allowNull: true // Allow null
   },
   DOB: {
     type: DataTypes.DATE,
+    allowNull: true // Allow null
   },
   LastModified: {
     type: DataTypes.DATE,
