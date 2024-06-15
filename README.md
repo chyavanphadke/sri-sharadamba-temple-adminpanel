@@ -18,37 +18,8 @@ Here are the architectural plans:
   <img src="Arch/Old_images/20240530_194721.jpg" width="200" />
 </p>
 
-## Installation:
 
-# Frontend:
-```
-npm install
-npm install antd @ant-design/icons
-npm install react-router-dom
-npm install antd axios react-router-dom
-npm install jwt-decode
-npm install lodash
-npm install react-scripts
-
-npm start
-```
-
-
-# Backend:
-```
-npm install
-npm install express body-parser sqlite3
-npm install cors
-npm install express body-parser bcrypt jsonwebtoken mongoose cors
-npm install mysql2
-npm install cors
-
-node server.js
-```
-
-
-## Changed to the DB after importing:
-
+## Changes to the DB:
 
 # Modify User Table:
 ```
@@ -104,4 +75,33 @@ MODIFY `Zip` varchar(15) DEFAULT NULL,
 MODIFY `Email` varchar(100) DEFAULT NULL,
 MODIFY `Gotra` varchar(100) DEFAULT NULL,
 MODIFY `Star` varchar(100) DEFAULT NULL;
+```
+
+
+## Installation:
+
+# Frontend:
+```
+npm install
+npm install antd @ant-design/icons
+npm install react-router-dom
+npm install antd axios react-router-dom
+npm install jwt-decode
+npm install lodash
+npm install react-scripts
+
+npm start
+```
+
+
+# Backend:
+```
+npm install
+npm install express body-parser sqlite3
+npm install cors
+npm install express body-parser bcrypt jsonwebtoken mongoose cors
+npm install mysql2
+npm install cors
+
+node server.js
 ```
