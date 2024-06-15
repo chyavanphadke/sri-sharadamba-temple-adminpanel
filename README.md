@@ -21,32 +21,27 @@ Here are the architectural plans:
 ## Installation:
 
 # Frontend:
+```
 npm install
-
 npm install antd @ant-design/icons
-
 npm install react-router-dom
-
 npm install antd axios react-router-dom
-
 npm install jwt-decode
-
 npm install lodash
-
+npm install react-scripts
+```
 npm start
 
 
 # Backend:
+```
 npm install
-
 npm install express body-parser sqlite3
-
 npm install cors
-
 npm install express body-parser bcrypt jsonwebtoken mongoose cors
-
 npm install mysql2
-
+npm install cors
+```
 node server.js
 
 
