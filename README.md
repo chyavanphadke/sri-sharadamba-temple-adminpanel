@@ -29,8 +29,9 @@ npm install antd axios react-router-dom
 npm install jwt-decode
 npm install lodash
 npm install react-scripts
-```
+
 npm start
+```
 
 
 # Backend:
@@ -41,8 +42,9 @@ npm install cors
 npm install express body-parser bcrypt jsonwebtoken mongoose cors
 npm install mysql2
 npm install cors
-```
+
 node server.js
+```
 
 
 ## Changed to the DB after importing:
