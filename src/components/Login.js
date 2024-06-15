@@ -56,6 +56,8 @@ const Login = () => {
               <Form.Item
                 name="usernameOrEmail"
                 label="Username"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
                 rules={[{ required: true, message: 'Please input your Username or Email!' }]}
               >
                 <Input placeholder="Username or Email" />
@@ -63,6 +65,8 @@ const Login = () => {
               <Form.Item
                 name="password"
                 label="Password"
+                labelCol={{ span: 24 }}
+                wrapperCol={{ span: 24 }}
                 rules={[{ required: true, message: 'Please input your Password!' }]}
               >
                 <Input type="password" placeholder="Password" />
@@ -74,10 +78,10 @@ const Login = () => {
               </Form.Item>
               <Form.Item>
                 <div className="extra-buttons">
-                  <Button type="link" onClick={() => setIsModalVisible(true)} className="forgot-password-button">
+                  <Button type="default" onClick={() => setIsModalVisible(true)} className="forgot-password-button">
                     Forgot Password
                   </Button>
-                  <Button type="link" href="/signup" className="signup-form-button">
+                  <Button type="default" href="/signup" className="signup-form-button">
                     Sign Up
                   </Button>
                 </div>

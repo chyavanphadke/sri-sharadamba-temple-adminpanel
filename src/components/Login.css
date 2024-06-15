@@ -36,8 +36,10 @@
 
 .signup-form-button,
 .forgot-password-button {
-  width: 48%;
+  width: calc(50% - 8px); /* Ensure both buttons have the same width with a small gap */
   text-align: center;
+  border-radius: 5px;
+  border: 1px solid blue; /* Change the outline color to blue */
 }
 
 .signup-form-button:hover,
@@ -84,4 +86,12 @@
     margin-left: 0;
     margin-top: 10px;
   }
+}
+
+.ant-form-item {
+  margin-bottom: 12px; /* Reduce the margin between form items */
+}
+
+.ant-form-item-label {
+  line-height: 1.2; /* Adjust the line height of labels */
 }
