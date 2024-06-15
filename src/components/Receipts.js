@@ -23,9 +23,7 @@ const Receipts = () => {
 
   const fetchPaymentMethod = async (paymentMethodId) => {
     try {
-      //console.log(`Fetching payment method for ID: ${paymentMethodId}`);
       const response = await axios.get(`http://localhost:5001/payment-method/${paymentMethodId}`);
-      //console.log(`Fetched payment method: ${response.data.MethodName}`);
       return response.data.MethodName;
     } catch (error) {
       console.error('Error fetching payment method:', error);
@@ -33,13 +31,12 @@ const Receipts = () => {
     }
   };
 
-  const fetchPendingReceipts = async (search = '') => {
+  const fetchPendingReceipts = async (search = '', page = 1, pageSize = 20) => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5001/receipts/pending', {
-        params: { search }
+        params: { search, page, pageSize, sortBy: 'Date', sortOrder: 'DESC' }
       });
-      //console.log('Pending receipts response:', response.data);
       const data = await Promise.all(response.data.map(async receipt => {
         if (receipt.PaymentMethod) {
           const methodName = await fetchPaymentMethod(receipt.PaymentMethod);
@@ -47,7 +44,6 @@ const Receipts = () => {
         } else {
           receipt.ModeOfPayment = '';
         }
-        //console.log('Processed pending receipt:', receipt);
         return receipt;
       }));
       setPendingReceipts(data);
@@ -58,13 +54,12 @@ const Receipts = () => {
     }
   };
 
-  const fetchApprovedReceipts = async (search = '') => {
+  const fetchApprovedReceipts = async (search = '', page = 1, pageSize = 20) => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5001/receipts/approved', {
-        params: { search }
+        params: { search, page, pageSize, sortBy: 'ApprovedDate', sortOrder: 'DESC' }
       });
-      //console.log('Approved receipts response:', response.data);
       const data = await Promise.all(response.data.map(async receipt => {
         if (receipt.PaymentMethod) {
           const methodName = await fetchPaymentMethod(receipt.PaymentMethod);
@@ -72,7 +67,6 @@ const Receipts = () => {
         } else {
           receipt.ModeOfPayment = '';
         }
-        //console.log('Processed approved receipt:', receipt);
         return receipt;
       }));
       setApprovedReceipts(data);
@@ -195,7 +189,6 @@ const Receipts = () => {
           <Button className="ant-btn-download" onClick={() => {
             setCurrentRecord(record);
             setIsPrintModalVisible(true);
-            //console.log("Download button clicked for record:", record);
           }} style={{ marginLeft: 8 }}>Download</Button>
           <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
         </>
@@ -261,26 +254,19 @@ const Receipts = () => {
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
-    //console.log("Download modal confirmed for record:", currentRecord);
-
     const doc = generatePDF(currentRecord);
     const fileName = `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`;
     doc.save(fileName);
-
-    //console.log("PDF generated and download triggered");
   };
 
   const handlePrint = (record) => {
     const doc = generatePDF(record);
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob);
-    //console.log("PDF generated and print dialog opened");
   };
 
   const handleEmail = async () => {
     setIsEmailModalVisible(false);
-    //console.log("Email modal confirmed for record:", currentRecord);
-
     const doc = generatePDF(currentRecord);
     const pdfBlob = doc.output('blob');
 
@@ -325,7 +311,7 @@ const Receipts = () => {
             dataSource={pendingReceipts}
             loading={loading}
             rowKey="ActivityId"
-            pagination={{ pageSize: 20 }}
+            pagination={{ pageSize: 20, onChange: (page, pageSize) => fetchPendingReceipts(pendingSearch, page, pageSize) }}
           />
         </>
       )}
@@ -341,7 +327,7 @@ const Receipts = () => {
             dataSource={approvedReceipts}
             loading={loading}
             rowKey="ReceiptId"
-            pagination={{ pageSize: 20 }}
+            pagination={{ pageSize: 20, onChange: (page, pageSize) => fetchApprovedReceipts(approvedSearch, page, pageSize) }}
           />
         </>
       )}

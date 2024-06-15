@@ -1,40 +1,49 @@
 .ant-tabs-tab {
-    padding: 5px;
-    border-radius: 5px;
-    font-weight: bold;
-    color: #000;
-  }
-  
-  .ant-tabs-tab-active {
-    background-color: #E6F4EA; /* Light green for "Receipts for Approval" */
-  }
-  
-  .ant-tabs-tab:nth-child(2).ant-tabs-tab-active {
-    background-color: #FFF4E6; /* Light orange for "Approved Receipts" */
-  }
- 
-  
-  .ant-btn:focus, .ant-btn:hover {
-    opacity: 0.9;
-  }
-  
-  .ant-btn-approve {
-    background-color: #ff7b00; /* Solid orange for Approve button */
-  }
-  
-  .ant-btn-edit {
-    background-color: #1976D2; /* Solid blue for Edit button */
-  }
-  
-  .ant-btn-email {
-    background-color: #1976D2; /* Material blue for Email button */
-  }
-  
-  .ant-btn-print {
-    background-color: #388E3C; /* Material green for Print button */
-  }
-  
-  .ant-table-thead > tr > th {
-    font-weight: bold;
-  }
-  
+  padding: 5px;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #000;
+}
+
+.ant-tabs-tab-active {
+  background-color: #E6F4EA; /* Light green for "Receipts for Approval" */
+}
+
+.ant-tabs-tab:nth-child(2).ant-tabs-tab-active {
+  background-color: #FFF4E6; /* Light orange for "Approved Receipts" */
+}
+
+.ant-btn:focus,
+.ant-btn:hover {
+  opacity: 0.9;
+}
+
+.ant-btn-edit,
+.ant-btn-email,
+.ant-btn-print {
+  background-color: #fff; /* White background for outline buttons */
+  border: 1px solid #1976D2; /* Blue border for outline buttons */
+  color: #1976D2; /* text color */
+}
+
+.ant-btn-approve{
+  background-color: #fff; /* White background for outline buttons */
+  border: 1px solid #16b204; /* Blue border for outline buttons */
+  color: #000000; /* text color */
+}
+
+.ant-btn-approve:focus,
+.ant-btn-approve:hover,
+.ant-btn-edit:focus,
+.ant-btn-edit:hover,
+.ant-btn-email:focus,
+.ant-btn-email:hover,
+.ant-btn-print:focus,
+.ant-btn-print:hover {
+  border-color: #005bb5; /* Darker blue border on hover */
+  color: #005bb5; /* Darker blue text on hover */
+}
+
+.ant-table-thead > tr > th {
+  font-weight: bold;
+}
