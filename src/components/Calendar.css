@@ -1,5 +1,5 @@
 .calendar-container {
-  padding: 20px;
+  padding: 0px;
 }
 
 .section-card {
@@ -12,20 +12,43 @@
   border-radius: 20px;
 }
 
+.calendar-card {
+  height: 60vh;
+  margin-bottom: 10px;
+}
+
+.detail-card {
+  height: 35vh;
+  overflow-y: auto; /* Add overflow-y for scrolling if content exceeds height */
+}
+
+.event-details-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-direction: row; /* Default to horizontal layout */
+}
+
+.event-detail-card {
+  margin-bottom: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  max-width: 300px; /* Set maximum width to wrap content */
+  flex: 1 0 30%; /* Adjust flex to display horizontally */
+}
+
+.search-result-card {
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
 .ant-card-body {
   padding: 16px;
 }
 
-.ant-table {
-  table-layout: fixed;
-}
-
-.ant-table-thead > tr > th, .ant-table-tbody > tr > td {
-  padding: 8px;
-}
-
 .react-big-calendar {
-  height: 500px; /* Adjust height as needed */
+  height: calc(50vh - 80px); /* Adjust height to fit viewport */
 }
 
 .react-datepicker-wrapper {
@@ -37,4 +60,50 @@
   padding: 4px 11px;
   border-radius: 2px;
   border: 1px solid #d9d9d9;
+}
+
+.ant-card-body h3 {
+  margin-top: 0; /* Add this line to reduce space above the title */
+}
+
+@media (max-width: 992px) {
+  .calendar-card {
+    height: 50vh;
+  }
+  
+  .detail-card {
+    height: auto; /* Adjust height for smaller screens */
+  }
+
+  .ant-row {
+    flex-direction: column; /* Stack columns vertically on smaller screens */
+  }
+
+  .calendar-row {
+    flex-direction: column-reverse; /* Change order in smaller screens */
+  }
+
+  .event-detail-card {
+    max-width: 100%; /* Adjust max-width for smaller screens */
+  }
+
+  .event-details-container {
+    flex-direction: column; /* Change to vertical layout on smaller screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .order-1 {
+    order: 1;
+  }
+  .order-2 {
+    order: 2;
+  }
+  .order-3 {
+    order: 3;
+  }
+
+  .calendar-row {
+    flex-direction: column;
+  }
 }

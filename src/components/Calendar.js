@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Card, Col, Row, Typography, Modal, Input, Table, message } from 'antd';
+import { Card, Col, Row, Typography, Modal, Input, message, Button, Table } from 'antd';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendar.css';
 
 const { Title } = Typography;
 const { Search } = Input;
+const { confirm } = Modal;
 const localizer = momentLocalizer(moment);
 
 const Calendar = () => {
   const [activities, setActivities] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [currentMonth, setCurrentMonth] = useState(moment().startOf('month'));
+  const [currentMonth, setCurrentMonth] = useState(moment().utc().startOf('month'));
 
   useEffect(() => {
     fetchActivities();
   }, [currentMonth]);
 
   useEffect(() => {
-    // Set current month on initial load
     handleNavigate(new Date());
+    fetchTodaysActivities();
   }, []);
 
   const fetchActivities = async () => {
@@ -37,6 +38,19 @@ const Calendar = () => {
       setActivities(response.data);
     } catch (error) {
       console.error('Error fetching activities:', error);
+    }
+  };
+
+  const fetchTodaysActivities = async () => {
+    try {
+      const today = moment().utc().startOf('day').format('YYYY-MM-DD');
+      const response = await axios.get('http://localhost:5001/calendar/activities/range', {
+        params: { from: today, to: today }
+      });
+      const todaysEvents = response.data;
+      setSearchResults(todaysEvents); // Set today's events in search results
+    } catch (error) {
+      console.error('Error fetching today\'s activities:', error);
     }
   };
 
@@ -60,10 +74,6 @@ const Calendar = () => {
     }
   };
 
-  const handleEventClick = (activity) => {
-    setSelectedActivity(activity);
-  };
-
   const handleDateChange = async (date, activityId) => {
     if (!date) {
       message.error('Invalid date selected');
@@ -72,17 +82,35 @@ const Calendar = () => {
 
     try {
       await axios.put(`http://localhost:5001/calendar/activities/${activityId}`, {
-        ServiceDate: moment(date).format('YYYY-MM-DD')
+        ServiceDate: moment(date).utc().startOf('day').format('YYYY-MM-DD')
       });
       message.success('Service Date updated successfully');
-      fetchActivities();
-      if (selectedActivity) {
-        handleSearch(selectedActivity.DevoteeName);
-      }
+      fetchActivities(); // Re-fetch activities after date change
+      fetchTodaysActivities(); // Re-fetch today's activities
     } catch (error) {
       console.error('Error updating Service Date:', error);
       message.error('Failed to update Service Date');
     }
+  };
+
+  const handleComplete = async (activityId) => {
+    confirm({
+      title: 'Are you sure you want to mark this event as complete?',
+      onOk: async () => {
+        try {
+          await axios.put(`http://localhost:5001/calendar/activities/${activityId}/complete`);
+          message.success('Event marked as complete');
+          fetchActivities(); // Re-fetch activities after completion
+          fetchTodaysActivities(); // Re-fetch today's activities
+        } catch (error) {
+          console.error('Error marking event as complete:', error);
+          message.error('Failed to mark event as complete');
+        }
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
   };
 
   const handleOk = async () => {
@@ -91,7 +119,8 @@ const Calendar = () => {
         await axios.put(`http://localhost:5001/calendar/activities/${selectedActivity.ActivityId}/complete`);
         message.success('Event marked as complete');
         setSelectedActivity(null);
-        fetchActivities();
+        fetchActivities(); // Re-fetch activities after completion
+        fetchTodaysActivities(); // Re-fetch today's activities
       } catch (error) {
         console.error('Error marking event as complete:', error);
         message.error('Failed to mark event as complete');
@@ -104,8 +133,20 @@ const Calendar = () => {
   };
 
   const handleNavigate = (date) => {
-    setCurrentMonth(moment(date).startOf('month'));
+    setCurrentMonth(moment(date).utc().startOf('month'));
   };
+
+  const events = activities.map(activity => ({
+    title: activity.EventName,
+    start: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
+    end: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
+    allDay: true,
+    resource: activity,
+  }));
+
+  const todaysEvents = activities.filter(activity =>
+    moment(activity.ServiceDate).isSame(moment().utc().startOf('day'), 'day')
+  );
 
   const columns = [
     {
@@ -124,7 +165,7 @@ const Calendar = () => {
       key: 'ServiceDate',
       render: (text, record) => (
         <DatePicker
-          selected={new Date(text)}
+          selected={moment.utc(text).tz('America/Los_Angeles').toDate()}
           onChange={(date) => handleDateChange(date, record.ActivityId)}
           dateFormat="yyyy-MM-dd"
         />
@@ -132,32 +173,33 @@ const Calendar = () => {
     },
   ];
 
-  const events = activities.map(activity => ({
-    title: activity.EventName,
-    start: new Date(activity.ServiceDate),
-    end: new Date(activity.ServiceDate),
-    allDay: true,
-    resource: activity,
-  }));
-
   return (
     <div className="calendar-container">
-      <Row gutter={16}>
-        <Col span={17}>
-          <Card className="section-card">
-            <Title level={3}>Events Calendar</Title>
-            <BigCalendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 500 }}
-              onSelectEvent={(event) => handleEventClick(event.resource)}
-              onNavigate={handleNavigate}
-            />
+      <Row gutter={[16, 16]} className="calendar-row">
+        <Col xs={24} lg={17} className="detail-col order-1 order-lg-1">
+          <Card className="section-card detail-card">
+            <Title level={3}>Today's Events in Detail</Title>
+            <div className="event-details-container">
+              {todaysEvents.length === 0 ? (
+                <p>No events for today.</p>
+              ) : (
+                todaysEvents.map(event => (
+                  <Card key={event.ActivityId} className="event-detail-card">
+                    <p><strong>Event Name:</strong> {event.EventName}</p>
+                    <p><strong>Devotee:</strong> {event.DevoteeName}</p>
+                    <p><strong>Ph.:</strong> {event.DevoteePhone}</p>
+                    <p><strong>Gotra:</strong> {event.Gotra}, <strong>Star:</strong> {event.Star}</p>
+                    <p><strong>Family Members:</strong> {event.FamilyMembers.join(', ')}</p>
+                    <Button type="primary" onClick={() => handleComplete(event.ActivityId)}>
+                      Completed
+                    </Button>
+                  </Card>
+                ))
+              )}
+            </div>
           </Card>
         </Col>
-        <Col span={7}>
+        <Col xs={24} lg={7} className="order-2 order-lg-3">
           <Card className="section-card">
             <Title level={3}>Change Seva Date</Title>
             <Search
@@ -166,12 +208,26 @@ const Calendar = () => {
               onSearch={handleSearch}
             />
             <Table
-              dataSource={searchResults}
+              dataSource={searchResults.length ? searchResults : todaysEvents}
               columns={columns}
               rowKey="ActivityId"
               pagination={false}
               size="small"
               style={{ marginTop: 20 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={17} className="order-3 order-lg-2">
+          <Card className="section-card calendar-card">
+            <Title level={3}>Events Calendar</Title>
+            <BigCalendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 'calc(50vh - 80px)' }}
+              onSelectEvent={(event) => setSelectedActivity(event.resource)}
+              onNavigate={handleNavigate}
             />
           </Card>
         </Col>
@@ -181,6 +237,7 @@ const Calendar = () => {
         visible={!!selectedActivity}
         onOk={handleOk}
         onCancel={handleCancel}
+        okText="Completed"
       >
         {selectedActivity && (
           <div>

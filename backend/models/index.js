@@ -327,6 +327,10 @@ const Receipt = sequelize.define('Receipt', {
   approvaldate: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW
+  },
+  emailsentcount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
 }, {
   timestamps: false,

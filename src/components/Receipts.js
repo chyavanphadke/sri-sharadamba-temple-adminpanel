@@ -159,11 +159,12 @@ const Receipts = () => {
           <Button className="ant-btn-email" onClick={() => {
             setCurrentRecord(record);
             setIsEmailModalVisible(true);
-          }}>Email</Button>
+          }}>
+            {record.emailsentcount > 0 ? 'Re-Email' : 'Email'}
+          </Button>
           <Button className="ant-btn-download" onClick={() => {
             setCurrentRecord(record);
             setIsPrintModalVisible(true);
-            console.log("Download button clicked for record:", record);
           }} style={{ marginLeft: 8 }}>Download</Button>
           <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
         </>
@@ -248,16 +249,17 @@ const Receipts = () => {
   const handleEmail = async () => {
     setIsEmailModalVisible(false);
     console.log("Email modal confirmed for record:", currentRecord);
-
+  
     const doc = generatePDF(currentRecord);
     const pdfBlob = doc.output('blob');
-
+  
     const formData = new FormData();
     formData.append('email', currentRecord.Email);
-    formData.append('Name', currentRecord.Name); // Include Name
-    formData.append('ActivityDate', formatDate(currentRecord.ActivityDate)); // Include ActivityDate
+    formData.append('Name', currentRecord.Name);
+    formData.append('ActivityDate', formatDate(currentRecord.ActivityDate));
     formData.append('pdf', new Blob([pdfBlob], { type: 'application/pdf' }), `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`);
-
+    formData.append('receiptid', currentRecord.ReceiptId);  // Add receiptid here
+  
     try {
       await axios.post('http://localhost:5001/send-receipt-email', formData, {
         headers: {
@@ -265,10 +267,11 @@ const Receipts = () => {
         }
       });
       message.success(`Email sent to ${currentRecord.Name}`);
+      fetchApprovedReceipts(approvedSearch); // Refresh the approved receipts data
     } catch (error) {
       message.error('Failed to send receipt via email');
     }
-  };
+  };  
 
   return (
     <div>
@@ -355,5 +358,4 @@ const Receipts = () => {
     </div>
   );
 };
-
 export default Receipts;
