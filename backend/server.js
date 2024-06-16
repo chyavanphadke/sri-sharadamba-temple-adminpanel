@@ -262,6 +262,25 @@ app.get('/devotees', async (req, res) => {
   }
 });
 
+app.get('/devotees/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const devotees = await Devotee.findAll({
+      where: {
+        [Op.or]: [
+          { FirstName: { [Op.like]: `%${query}%` } },
+          { LastName: { [Op.like]: `%${query}%` } }
+        ]
+      },
+      order: [['FirstName', 'ASC']]
+    });
+    res.status(200).json(devotees);
+  } catch (err) {
+    console.error('Error searching devotees:', err);
+    res.status(500).json({ message: 'Error searching devotees', error: err.message });
+  }
+});
+
 app.get('/devotees/:id/family', async (req, res) => {
   try {
     const families = await Family.findAll({ where: { DevoteeId: req.params.id }, order: [['LastModified', 'DESC']] });
@@ -444,68 +463,6 @@ app.post('/activities', async (req, res) => {
     res.status(500).json({ message: 'Error adding activity', error: error.message });
   }
 });
-
-// Updated code for reports page
-app.get('/reports', authenticateToken, async (req, res) => {
-  const { startDate, endDate, service, excludeDonations, paymentMethod, excludeChecks } = req.query;
-
-  const whereClause = {
-    ActivityDate: {
-      [Op.between]: [new Date(startDate), new Date(endDate)]
-    }
-  };
-
-  try {
-    if (service && service !== 'null') {
-      whereClause.ServiceId = service;
-    }
-
-    if (excludeDonations === 'true') {
-      const donationService = await Service.findOne({ where: { Service: 'DONATION' } });
-      if (donationService) {
-        whereClause.ServiceId = { [Op.ne]: donationService.ServiceId };
-      }
-    }
-
-    if (paymentMethod && paymentMethod !== 'null') {
-      whereClause.PaymentMethod = paymentMethod;
-    }
-
-    if (excludeChecks === 'true') {
-      const checkMethod = await ModeOfPayment.findOne({ where: { MethodName: 'Check' } });
-      if (checkMethod) {
-        whereClause.PaymentMethod = { [Op.ne]: checkMethod.PaymentMethodId };
-      }
-    }
-
-    const activities = await Activity.findAll({
-      where: whereClause,
-      include: [
-        { model: Devotee, attributes: ['FirstName', 'LastName', 'Phone'], required: true },
-        { model: Service, attributes: ['Service'], required: true },
-        { model: ModeOfPayment, attributes: ['MethodName'], required: true }
-      ],
-      order: [['ActivityDate', 'DESC']]
-    });
-
-    const reportData = activities.map(activity => ({
-      Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
-      Phone: activity.Devotee.Phone,
-      Service: activity.Service.Service,
-      Amount: activity.Amount,
-      Date: activity.ActivityDate,
-      ServiceDate: activity.ServiceDate,
-      'Payment Method': activity.ModeOfPayment.MethodName,
-      'Check Number': activity.CheckNumber
-    }));
-
-    res.status(207).json(reportData);
-  } catch (err) {
-    console.error('Error fetching reports:', err);
-    res.status(500).json({ message: 'Error fetching reports', error: err.message });
-  }
-});
-// End of updated code for reports page
 
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {
@@ -887,6 +844,140 @@ app.put('/activities/:id', async (req, res) => {
     console.error('Error updating activity:', error);
     res.status(500).json({ message: 'Error updating activity', error: error.message });
   }
+});
+
+
+// Updated code for reports page
+app.get('/reports', authenticateToken, async (req, res) => {
+  const { startDate, endDate, service, paymentMethod, devoteeId } = req.query;
+
+  const whereClause = {
+    ActivityDate: {
+      [Op.between]: [new Date(startDate), new Date(endDate)]
+    }
+  };
+
+  try {
+    if (service && service !== 'null') {
+      whereClause.ServiceId = service;
+    }
+
+    if (paymentMethod && paymentMethod !== 'null') {
+      whereClause.PaymentMethod = paymentMethod;
+    }
+
+    if (devoteeId) {
+      whereClause.DevoteeId = devoteeId;
+    }
+
+    const activities = await Activity.findAll({
+      where: whereClause,
+      include: [
+        { model: Devotee, attributes: ['DevoteeId', 'FirstName', 'LastName', 'Phone'], required: true },
+        { model: Service, attributes: ['Service'], required: true },
+        { model: ModeOfPayment, attributes: ['MethodName'], required: true }
+      ],
+      order: [['ActivityDate', 'DESC']]
+    });
+
+    const reportData = activities.map(activity => ({
+      DevoteeId: activity.Devotee.DevoteeId,
+      Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+      Phone: activity.Devotee.Phone,
+      Service: activity.Service.Service,
+      Amount: activity.Amount,
+      Date: activity.ActivityDate,
+      ServiceDate: activity.ServiceDate,
+      'Payment Method': activity.ModeOfPayment.MethodName,
+    }));
+
+    res.status(200).json(reportData);
+  } catch (err) {
+    console.error('Error fetching reports:', err);
+    res.status(500).json({ message: 'Error fetching reports', error: err.message });
+  }
+});
+
+// End of updated code for reports page
+
+//to search reports with devotee name 
+app.get('/devotees/search', async (req, res) => {
+  const { query } = req.query;
+  try {
+    const devotees = await Devotee.findAll({
+      where: {
+        [Op.or]: [
+          { FirstName: { [Op.like]: `%${query}%` } },
+          { LastName: { [Op.like]: `%${query}%` } }
+        ]
+      },
+      attributes: ['DevoteeId', 'FirstName', 'LastName']
+    });
+    res.status(200).json(devotees);
+  } catch (err) {
+    console.error('Error searching devotees:', err);
+    res.status(500).json({ message: 'Error searching devotees', error: err.message });
+  }
+});
+
+app.get('/devotee/:id', async (req, res) => {
+  try {
+    const devotee = await Devotee.findByPk(req.params.id, {
+      attributes: ['FirstName', 'LastName', 'Email']
+    });
+
+    if (!devotee) {
+      return res.status(404).json({ message: 'Devotee not found' });
+    }
+
+    res.status(200).json(devotee);
+  } catch (error) {
+    console.error('Error fetching devotee details:', error);
+    res.status(500).json({ message: 'Error fetching devotee details', error: error.message });
+  }
+});
+
+app.post('/send-report-email', upload.single('pdf'), (req, res) => {
+  const email = req.body.email;
+  const pdfBuffer = req.file.buffer;
+  const pdfName = req.file.originalname;
+
+  const { Name, startDate, endDate } = req.body;
+
+  // Configure nodemailer transport
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: 'chyavanphadke95@gmail.com',
+      pass: 'dkse hzdh yluv xcvn' // Use App Password here
+    }
+  });
+
+  const mailOptions = {
+    from: 'chyavanphadke95@gmail.com',
+    to: email,
+    subject: `Seva Report between ${startDate} and ${endDate}`,
+    text: `Dear ${Name},
+
+Please find the Report attached to this email.
+
+Sincerely,
+Sringeri Education and Vedic Academy.`,
+    attachments: [
+      {
+        filename: pdfName,
+        content: pdfBuffer
+      }
+    ]
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log(error);
+      return res.status(500).send('Error sending email');
+    }
+    res.send('Email sent: ' + info.response);
+  });
 });
 
 // Sync the database and create a super user
