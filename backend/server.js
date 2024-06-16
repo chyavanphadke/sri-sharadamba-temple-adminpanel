@@ -875,17 +875,26 @@ app.get('/receipts/approved', async (req, res) => {
       order: [['approvaldate', 'DESC']]
     });
 
-    const approvedReceipts = receipts.map(receipt => ({
-      ReceiptId: receipt.receiptid,
-      Name: `${receipt.Activity.Devotee.FirstName} ${receipt.Activity.Devotee.LastName}`,
-      Email: receipt.Activity.Devotee.Email,
-      Service: receipt.servicetype,
-      ActivityDate: receipt.Activity.ActivityDate,
-      ApprovedDate: receipt.approvaldate,
-      PaymentMethod: receipt.Activity.ModeOfPayment.MethodName === 'Check' ? `Check (${receipt.Activity.CheckNumber})` : receipt.Activity.ModeOfPayment.MethodName,
-      Amount: receipt.Activity.Amount,
-      AssistedBy: receipt.Activity.AssistedBy.username,
-    }));
+    const approvedReceipts = receipts.map(receipt => {
+      const activity = receipt.Activity || {};
+      const devotee = activity.Devotee || {};
+      const service = activity.Service || {};
+      const modeOfPayment = activity.ModeOfPayment || {};
+      const assistedBy = activity.AssistedBy || {};
+
+      return {
+        ReceiptId: receipt.receiptid,
+        Name: `${devotee.FirstName || ''} ${devotee.LastName || ''}`,
+        Email: devotee.Email || '',
+        Service: receipt.servicetype,
+        ActivityDate: activity.ActivityDate,
+        ApprovedDate: receipt.approvaldate,
+        PaymentMethod: modeOfPayment.MethodName === 'Check' ? `Check (${activity.CheckNumber})` : modeOfPayment.MethodName,
+        Amount: activity.Amount,
+        AssistedBy: assistedBy.username || '',
+        emailsentcount: receipt.emailsentcount || 0 // Make sure emailsentcount is included
+      };
+    });
 
     res.status(200).json(approvedReceipts);
   } catch (err) {
@@ -938,12 +947,11 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.post('/send-receipt-email', upload.single('pdf'), (req, res) => {
+app.post('/send-receipt-email', upload.single('pdf'), async (req, res) => {
   const email = req.body.email;
   const pdfBuffer = req.file.buffer;
   const pdfName = req.file.originalname;
-
-  const { Name, ActivityDate } = req.body;
+  const { Name, ActivityDate, receiptid } = req.body;  // Destructure receiptid from req.body
 
   // Configure nodemailer transport
   const transporter = nodemailer.createTransport({
@@ -974,14 +982,23 @@ Sringeri Education and Vedic Academy.`,
     ]
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
+  transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
       console.log(error);
       return res.status(500).send('Error sending email');
     }
+
+    // Update emailsentcount in the database
+    const receipt = await Receipt.findOne({ where: { receiptid } });
+    if (receipt) {
+      receipt.emailsentcount += 1;
+      await receipt.save();
+    }
+
     res.send('Email sent: ' + info.response);
   });
 });
+
 
 app.put('/activities/:id', async (req, res) => {
   try {

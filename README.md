@@ -77,6 +77,9 @@ MODIFY `Gotra` varchar(100) DEFAULT NULL,
 MODIFY `Star` varchar(100) DEFAULT NULL;
 ```
 
+## Update receipt table
+ALTER TABLE `seva`.`receipt` 
+ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
 
 # Installation:
 
