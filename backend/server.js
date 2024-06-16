@@ -239,6 +239,111 @@ app.delete('/user/:userid', async (req, res) => {
   }
 });
 
+// Endpoint to get activities for a specific devotee with PrintDate as null
+app.get('/devotees/:id/activities', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { printDateNull } = req.query;
+
+    const whereClause = {
+      DevoteeId: id,
+    };
+
+    if (printDateNull === 'true') {
+      whereClause.PrintDate = {
+        [Op.is]: null
+      };
+    }
+
+    const activities = await Activity.findAll({
+      where: whereClause,
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching activities for devotee:', err);
+    res.status(500).json({ message: 'Error fetching activities for devotee', error: err.message });
+  }
+});
+
+app.put('/calendar/activities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findByPk(id);
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+    const updatedData = req.body;
+    await activity.update(updatedData);
+    res.status(200).json({ message: 'Activity updated successfully' });
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    res.status(500).json({ message: 'Error updating activity', error: error.message });
+  }
+});
+
+// Add this endpoint to handle today's activities
+app.get('/calendar/activities/today', async (req, res) => {
+  try {
+    const today = moment().utc().startOf('day').toDate();
+    const activities = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.eq]: today
+        },
+        PrintDate: {
+          [Op.is]: null
+        },
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    const result = await Promise.all(activities.map(async activity => {
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+      return {
+        ActivityId: activity.ActivityId,
+        ServiceDate: activity.ServiceDate,
+        EventName: activity.Service.Service,
+        DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
+        DevoteeEmail: activity.Devotee.Email,
+        DevoteePhone: activity.Devotee.Phone,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Error fetching today\'s activities:', err);
+    res.status(500).json({ message: 'Error fetching today\'s activities', error: err.message });
+  }
+});
+
 // Devotee Management Routes
 app.get('/devotees', async (req, res) => {
   try {
@@ -578,7 +683,10 @@ app.get('/calendar/activities/range', async (req, res) => {
         },
       },
       include: [
-        { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId'] },
+        { 
+          model: Devotee, 
+          attributes: ['FirstName', 'LastName', 'Email', 'Phone', 'DevoteeId', 'Gotra', 'Star'] 
+        },
         { model: Service, attributes: ['Service'] },
       ],
     });
@@ -595,6 +703,8 @@ app.get('/calendar/activities/range', async (req, res) => {
         DevoteeName: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
         DevoteeEmail: activity.Devotee.Email,
         DevoteePhone: activity.Devotee.Phone,
+        Gotra: activity.Devotee.Gotra,
+        Star: activity.Devotee.Star,
         FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
       };
     }));
