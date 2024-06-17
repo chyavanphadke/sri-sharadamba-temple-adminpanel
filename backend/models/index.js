@@ -337,6 +337,41 @@ const Receipt = sequelize.define('Receipt', {
   freezeTableName: true
 });
 
+const AccessControl = sequelize.define('AccessControl', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  usertype: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  component: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  can_view: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  can_add: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  can_edit: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  can_delete: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -376,5 +411,6 @@ module.exports = {
   Service,
   Activity,
   ModeOfPayment,
-  Receipt
+  Receipt,
+  AccessControl
 };

@@ -8,14 +8,14 @@ import Calendar from './Calendar';
 import Reports from './Reports';
 import Receipts from './Receipts';
 import Settings from './Settings';
-import { jwtDecode } from 'jwt-decode'; // Correct the import statement
+import {jwtDecode} from 'jwt-decode';
 import './Dashboard.css';
-import homeIcon from '../assets/icons/home.png'; // Ensure the correct path to your image
-import CalendarIcon from '../assets/icons/calendar.png'; // Ensure the correct path to your image
-import ReceiptIcon from '../assets/icons/receipt.png'; // Ensure the correct path to your image
-import ReportIcon from '../assets/icons/file.png'; // Ensure the correct path to your image
-import LoginAccessIcon from '../assets/icons/log-in.png'; // Ensure the correct path to your image
-import SettingIcon from '../assets/icons/cogwheel.png'; // Ensure the correct path to your image
+import homeIcon from '../assets/icons/home.png';
+import CalendarIcon from '../assets/icons/calendar.png';
+import ReceiptIcon from '../assets/icons/receipt.png';
+import ReportIcon from '../assets/icons/file.png';
+import LoginAccessIcon from '../assets/icons/log-in.png';
+import SettingIcon from '../assets/icons/cogwheel.png';
 
 const { Header, Content, Sider } = Layout;
 
@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [username, setUsername] = useState('');
   const [headerColor, setHeaderColor] = useState('#001529');
   const [sidebarColor, setSidebarColor] = useState('#001529');
+  const [accessControl, setAccessControl] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,11 +35,32 @@ const Dashboard = () => {
     if (token) {
       const decodedToken = jwtDecode(token);
       setUsername(capitalizeFirstLetter(decodedToken.username));
+      fetchAccessControl(decodedToken.usertype);
     }
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
   }, []);
 
+  const fetchAccessControl = async (userType) => {
+    try {
+      const response = await fetch(`/access-control/${userType}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        setAccessControl(data);
+      } else {
+        const text = await response.text();
+        console.error('Response is not JSON:', text);
+        throw new Error('Response is not JSON');
+      }
+    } catch (error) {
+      console.error('Failed to fetch access control data:', error);
+    }
+  };  
+  
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
@@ -53,13 +75,13 @@ const Dashboard = () => {
   };
 
   const menuItems = [
-    { key: '/dashboard/home', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link> },
-    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link> },
-    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link> },
-    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link> },
-    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link> },
-    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link> },
-  ];
+    { key: '/dashboard/home', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link>, access: accessControl.Home?.can_view },
+    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link>, access: accessControl.Calendar?.can_view },
+    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link>, access: accessControl.Receipts?.can_view },
+    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link>, access: accessControl.Reports?.can_view },
+    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
+    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view },
+  ].filter(item => item.access);
 
   const getBreadcrumbItems = () => {
     const pathSnippets = location.pathname.split('/').filter(i => i);
@@ -133,9 +155,9 @@ const Dashboard = () => {
               <Route path="calendar" element={<Calendar />} />
               <Route path="receipts" element={<Receipts />} />
               <Route path="reports" element={<Reports />} />
-              <Route path="login-access" element={<SuperAdmin />} /> {/* Rename route path */}
+              <Route path="login-access" element={<SuperAdmin />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="/" element={<Navigate to="/dashboard/home" />} /> {/* Default route to /dashboard/home */}
+              <Route path="/" element={<Navigate to="/dashboard/home" />} />
             </Routes>
           </Content>
         </Layout>

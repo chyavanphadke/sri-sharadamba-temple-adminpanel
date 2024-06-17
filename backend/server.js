@@ -3,7 +3,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl } = require('./models');
+
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
 const app = express();
@@ -1106,6 +1107,38 @@ Sringeri Education and Vedic Academy.`,
     res.send('Email sent: ' + info.response);
   });
 });
+
+app.get('/access-control/:userType', async (req, res) => {
+  try {
+    const userType = req.params.userType;
+    console.log(`Fetching access control data for user type: ${userType}`);
+    if (!userType) {
+      return res.status(400).json({ message: 'User type is required' });
+    }
+
+    const accessControl = await AccessControl.findAll({ 
+      where: { usertype: userType },
+      attributes: ['component', 'can_view']
+    });
+
+    if (!accessControl.length) {
+      console.log(`Access control data not found for user type: ${userType}`);
+      return res.status(404).json({ message: 'Access control data not found' });
+    }
+
+    const formattedAccessControl = accessControl.reduce((acc, curr) => {
+      acc[curr.component] = { can_view: curr.can_view };
+      return acc;
+    }, {});
+
+    console.log(`Access control data found: ${JSON.stringify(formattedAccessControl)}`);
+    res.status(200).json(formattedAccessControl);
+  } catch (error) {
+    console.error('Error fetching access control data:', error);
+    res.status(500).json({ message: 'Error fetching access control data', error: error.message });
+  }
+});
+
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {

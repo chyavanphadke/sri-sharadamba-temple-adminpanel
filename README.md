@@ -78,8 +78,55 @@ MODIFY `Star` varchar(100) DEFAULT NULL;
 ```
 
 ## Update receipt table
+```
 ALTER TABLE `seva`.`receipt` 
 ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
+```
+
+## accesscontrol
+```
+-- Drop the existing access_control table if it exists
+DROP TABLE IF EXISTS accesscontrol;
+
+-- Create the new access_control table
+CREATE TABLE accesscontrol (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usertype VARCHAR(50) NOT NULL,
+    component VARCHAR(50) NOT NULL,
+    can_view INT DEFAULT 0,
+    can_add INT DEFAULT 0,
+    can_edit INT DEFAULT 0,
+    can_delete INT DEFAULT 0,
+    UNIQUE KEY (usertype, component)
+);
+
+
+-- Insert initial data into access_control table
+INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can_delete) VALUES
+('User', 'Home', 1, 0, 0, 0),
+('Admin', 'Home', 1, 1, 0, 0),
+('Super Admin', 'Home', 1, 1, 1, 1),
+
+('User', 'Calendar', 0, 0, 0, 0),
+('Admin', 'Calendar', 1, 0, 0, 0),
+('Super Admin', 'Calendar', 1, 1, 1, 1),
+
+('User', 'Receipts', 0, 0, 0, 0),
+('Admin', 'Receipts', 1, 0, 0, 0),
+('Super Admin', 'Receipts', 1, 1, 1, 1),
+
+('User', 'Reports', 1, 0, 0, 0),
+('Admin', 'Reports', 1, 1, 1, 1),
+('Super Admin', 'Reports', 1, 1, 1, 1),
+
+('User', 'Login Access', 0, 0, 0, 0),
+('Admin', 'Login Access', 0, 0, 0, 0),
+('Super Admin', 'Login Access', 1, 1, 1, 1),
+
+('User', 'Settings', 1, 0, 0, 0),
+('Admin', 'Settings', 1, 1, 1, 1),
+('Super Admin', 'Settings', 1, 1, 1, 1);
+```
 
 # Installation:
 
