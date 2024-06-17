@@ -3,7 +3,7 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import './Home.css';
 
 const { Content } = Layout;
@@ -23,7 +23,8 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedService, setSelectedService] = useState('');
-
+  const [accessControl, setAccessControl] = useState({});
+  
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
@@ -32,6 +33,15 @@ const Home = () => {
       Authorization: `Bearer ${token}`,
     },
   }), [token]);
+
+  const fetchAccessControl = async (userType) => {
+    try {
+      const response = await axiosInstance.get(`/access-control/${userType}`);
+      setAccessControl(response.data);
+    } catch (error) {
+      console.error('Failed to fetch access control data:', error);
+    }
+  };
 
   const fetchDevotees = useCallback(async () => {
     setLoading(true);
@@ -59,7 +69,7 @@ const Home = () => {
   const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
-      console.log('Fetched payment methods:', response.data); // Log fetched payment methods
+      console.log('Fetched payment methods:', response.data);
       setPaymentMethods(response.data);
     } catch (error) {
       message.error('Failed to load payment methods');
@@ -67,6 +77,11 @@ const Home = () => {
   }, [axiosInstance]);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      fetchAccessControl(decodedToken.usertype);
+    }
     fetchDevotees();
     fetchServices();
     fetchPaymentMethods();
@@ -103,11 +118,9 @@ const Home = () => {
 
   const handleDeleteDevotee = async (id) => {
     try {
-      // Fetch the number of related activities and family members
       const response = await axiosInstance.get(`/devotees/${id}/related-count`);
       const { activityCount, familyMemberCount } = response.data;
 
-      // Show confirmation modal
       confirm({
         title: 'Are you sure you want to delete this devotee?',
         content: `There are ${activityCount} activities and ${familyMemberCount} family members related to this devotee.`,
@@ -144,11 +157,6 @@ const Home = () => {
       const service = services.find(s => s.Service === values.Service);
       const paymentMethod = paymentMethods.find(pm => pm.MethodName === values.PaymentMethod);
 
-      console.log('Selected service:', service);
-      console.log('Selected payment method:', paymentMethod);
-      console.log('Available payment methods:', paymentMethods);
-      console.log('Selected payment method name:', values.PaymentMethod); // Log the selected payment method name
-
       if (!service) {
         message.error('Selected service not found');
         return;
@@ -160,7 +168,7 @@ const Home = () => {
       }
 
       const token = localStorage.getItem('token');
-      const decodedToken = jwtDecode(token); // Decode the JWT token to get the user details
+      const decodedToken = jwtDecode(token);
       const userId = decodedToken.userid;
 
       const payload = {
@@ -170,21 +178,18 @@ const Home = () => {
         Amount: values.AmountPaid,
         CheckNumber: values.CheckNumber,
         Comments: values.Comments,
-        UserId: userId, // Use the extracted UserId from the token
+        UserId: userId,
         ServiceDate: values.ServiceDate,
       };
 
-      console.log('Sending payload to add activity:', payload); // Log payload
       await axiosInstance.post('/activities', payload);
       message.success('Seva added successfully');
       setIsSevaModalVisible(false);
       sevaForm.resetFields();
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
-        console.error('Error response from server:', error.response.data); // Log server response
         message.error(error.response.data.message);
       } else {
-        console.error('Unexpected error:', error); // Log unexpected errors
         message.error('Failed to add seva');
       }
     }
@@ -281,9 +286,8 @@ const Home = () => {
   };
 
   const disabledDate = (current) => {
-    // Only allow selecting Saturdays if the selected service is "Annadan"
     if (selectedService === 'Annadan') {
-      return current && current.day() !== 6; // 6 corresponds to Saturday
+      return current && current.day() !== 6;
     }
     return false;
   };
@@ -296,9 +300,9 @@ const Home = () => {
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          <Button onClick={() => handleSeva(record)} type="primary">SEVA</Button>
-          <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>
-          <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>
+          {accessControl.Home?.can_add === 1 && <Button onClick={() => handleSeva(record)} type="primary">SEVA</Button>}
+          {accessControl.Home?.can_edit === 1 && <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>}
+          {accessControl.Home?.can_delete === 1 && <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>}
         </>
       )
     }
@@ -315,7 +319,7 @@ const Home = () => {
               onChange={handleSearchChange}
               style={{ width: 400, marginRight: 16, height: 40 }}
             />
-            <Button type="primary" onClick={handleAddDevotee} style={{ height: 40 }}>Add Devotee</Button>
+            {accessControl.Home?.can_add === 1 && <Button type="primary" onClick={handleAddDevotee} style={{ height: 40 }}>Add Devotee</Button>}
           </div>
           <div style={{ marginTop: 16 }}>
             <p>Total Devotees in the Database: {totalDevotees}</p>
@@ -327,7 +331,7 @@ const Home = () => {
               loading={loading}
               rowKey="DevoteeId"
               pagination={{ pageSize: 10 }}
-              scroll={{ x: 'max-content' }} // Make the table scrollable on smaller screens
+              scroll={{ x: 'max-content' }}
             />
           </div>
         </div>
@@ -337,7 +341,7 @@ const Home = () => {
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
-        width={800} // Increased width
+        width={800}
       >
         <Form
           form={form}
@@ -522,7 +526,7 @@ const Home = () => {
         visible={isSevaModalVisible}
         onCancel={handleSevaCancel}
         footer={null}
-        width={800} // Increased width
+        width={800}
       >
         <Form
           form={sevaForm}
@@ -543,7 +547,7 @@ const Home = () => {
                   onChange={(value) => {
                     const service = services.find(s => s.Service === value);
                     sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
-                    setSelectedService(value); // Update the selected service
+                    setSelectedService(value);
                   }}
                   showSearch
                   filterOption={(input, option) =>

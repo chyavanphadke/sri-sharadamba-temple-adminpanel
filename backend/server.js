@@ -1116,28 +1116,31 @@ app.get('/access-control/:userType', async (req, res) => {
       return res.status(400).json({ message: 'User type is required' });
     }
 
-    const accessControl = await AccessControl.findAll({ 
-      where: { usertype: userType },
-      attributes: ['component', 'can_view']
-    });
+    const accessControl = await AccessControl.findAll({ where: { usertype: userType } });
 
-    if (!accessControl.length) {
+    if (!accessControl || accessControl.length === 0) {
       console.log(`Access control data not found for user type: ${userType}`);
       return res.status(404).json({ message: 'Access control data not found' });
     }
 
-    const formattedAccessControl = accessControl.reduce((acc, curr) => {
-      acc[curr.component] = { can_view: curr.can_view };
+    const accessMap = accessControl.reduce((acc, control) => {
+      acc[control.component] = {
+        can_view: control.can_view,
+        can_add: control.can_add,
+        can_edit: control.can_edit,
+        can_delete: control.can_delete
+      };
       return acc;
     }, {});
 
-    console.log(`Access control data found: ${JSON.stringify(formattedAccessControl)}`);
-    res.status(200).json(formattedAccessControl);
+    console.log(`Access control data found: ${JSON.stringify(accessMap)}`);
+    res.status(200).json(accessMap);
   } catch (error) {
     console.error('Error fetching access control data:', error);
     res.status(500).json({ message: 'Error fetching access control data', error: error.message });
   }
 });
+
 
 
 // Sync the database and create a super user
