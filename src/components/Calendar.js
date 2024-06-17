@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { Card, Col, Row, Typography, Modal, Input, message, Button, Table } from 'antd';
 import DatePicker from 'react-datepicker';
@@ -7,6 +7,7 @@ import moment from 'moment-timezone';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendar.css';
+import {jwtDecode} from 'jwt-decode';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -18,6 +19,37 @@ const Calendar = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(moment().utc().startOf('month'));
+  const [accessControl, setAccessControl] = useState({});
+  
+  const token = localStorage.getItem('token');
+
+  const axiosInstance = useMemo(() => axios.create({
+    baseURL: 'http://localhost:5001',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }), [token]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      fetchAccessControl(decodedToken.usertype);
+    }
+  }, []);
+
+  const fetchAccessControl = async (userType) => {
+    try {
+      const response = await axiosInstance.get(`/access-control/${userType}`);
+      if (response.status !== 200) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.data;
+      setAccessControl(data);
+    } catch (error) {
+      console.error('Failed to fetch access control data:', error);
+    }
+  };
 
   useEffect(() => {
     fetchActivities();
@@ -32,7 +64,7 @@ const Calendar = () => {
     try {
       const from = currentMonth.format('YYYY-MM-DD');
       const to = currentMonth.endOf('month').format('YYYY-MM-DD');
-      const response = await axios.get('http://localhost:5001/calendar/activities/range', {
+      const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from, to }
       });
       setActivities(response.data);
@@ -44,7 +76,7 @@ const Calendar = () => {
   const fetchTodaysActivities = async () => {
     try {
       const today = moment().utc().startOf('day').format('YYYY-MM-DD');
-      const response = await axios.get('http://localhost:5001/calendar/activities/range', {
+      const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from: today, to: today }
       });
       const todaysEvents = response.data;
@@ -56,14 +88,14 @@ const Calendar = () => {
 
   const handleSearch = async (value) => {
     try {
-      const response = await axios.get('http://localhost:5001/devotees', {
+      const response = await axiosInstance.get('/devotees', {
         params: { search: value }
       });
       const devotees = response.data;
 
       const activities = await Promise.all(devotees.map(async (devotee) => {
-        const res = await axios.get(`http://localhost:5001/devotees/${devotee.DevoteeId}/activities`, {
-          params: { printDateNull: true } // Only fetch activities with PrintDate as null
+        const res = await axiosInstance.get(`/devotees/${devotee.DevoteeId}/activities`, {
+          params: { printDateNull: true }
         });
         return res.data;
       }));
@@ -81,7 +113,7 @@ const Calendar = () => {
     }
 
     try {
-      await axios.put(`http://localhost:5001/calendar/activities/${activityId}`, {
+      await axiosInstance.put(`/calendar/activities/${activityId}`, {
         ServiceDate: moment(date).utc().startOf('day').format('YYYY-MM-DD')
       });
       message.success('Service Date updated successfully');
@@ -98,7 +130,7 @@ const Calendar = () => {
       title: 'Are you sure you want to mark this event as complete?',
       onOk: async () => {
         try {
-          await axios.put(`http://localhost:5001/calendar/activities/${activityId}/complete`);
+          await axiosInstance.put(`/calendar/activities/${activityId}/complete`);
           message.success('Event marked as complete');
           fetchActivities(); // Re-fetch activities after completion
           fetchTodaysActivities(); // Re-fetch today's activities
@@ -116,7 +148,7 @@ const Calendar = () => {
   const handleOk = async () => {
     if (selectedActivity) {
       try {
-        await axios.put(`http://localhost:5001/calendar/activities/${selectedActivity.ActivityId}/complete`);
+        await axiosInstance.put(`/calendar/activities/${selectedActivity.ActivityId}/complete`);
         message.success('Event marked as complete');
         setSelectedActivity(null);
         fetchActivities(); // Re-fetch activities after completion
@@ -190,9 +222,11 @@ const Calendar = () => {
                     <p><strong>Ph.:</strong> {event.DevoteePhone}</p>
                     <p><strong>Gotra:</strong> {event.Gotra}, <strong>Star:</strong> {event.Star}</p>
                     <p><strong>Family Members:</strong> {event.FamilyMembers.join(', ')}</p>
-                    <Button type="primary" onClick={() => handleComplete(event.ActivityId)}>
-                      Completed
-                    </Button>
+                    {accessControl.Calendar?.can_edit === 1 && (
+                      <Button type="primary" onClick={() => handleComplete(event.ActivityId)}>
+                        Completed
+                      </Button>
+                    )}
                   </Card>
                 ))
               )}
@@ -238,6 +272,7 @@ const Calendar = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         okText="Completed"
+        okButtonProps={{ style: { display: accessControl.Calendar?.can_edit === 1 ? 'inline-block' : 'none' } }}
       >
         {selectedActivity && (
           <div>
