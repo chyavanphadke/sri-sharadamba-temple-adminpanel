@@ -1145,7 +1145,7 @@ app.get('/access-control/:userType', async (req, res) => {
 });
 
 // Add this new route to fetch all access control data
-app.get('/access-controls', async (req, res) => {
+app.get('/access-control', async (req, res) => {
   try {
     const accessControl = await AccessControl.findAll();
     if (!accessControl || accessControl.length === 0) {
@@ -1169,7 +1169,7 @@ app.get('/access-control', async (req, res) => {
   }
 });
 
-app.put('/access-controls', async (req, res) => {
+app.put('/access-control', async (req, res) => {
   try {
     const accessControls = req.body;
 
