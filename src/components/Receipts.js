@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Modal, Form, Input, message } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
 import './Receipts.css';
+import {jwtDecode} from 'jwt-decode';
 
 const { Search } = Input;
 
@@ -19,13 +20,44 @@ const Receipts = () => {
   const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
-  const [activeTab, setActiveTab] = useState('pending'); // New state for active tab
-  const [originalPaymentMethod, setOriginalPaymentMethod] = useState(''); // New state for original payment method
+  const [activeTab, setActiveTab] = useState('pending');
+  const [originalPaymentMethod, setOriginalPaymentMethod] = useState('');
+  const [accessControl, setAccessControl] = useState({});
 
-  const fetchPendingReceipts = async (search = '') => {
+  const token = localStorage.getItem('token');
+
+  const axiosInstance = useMemo(() => axios.create({
+    baseURL: 'http://localhost:5001',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }), [token]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      fetchAccessControl(decodedToken.usertype);
+    }
+  }, []);
+
+  const fetchAccessControl = async (userType) => {
+    try {
+      const response = await axiosInstance.get(`/access-control/${userType}`);
+      if (response.status !== 200) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.data;
+      setAccessControl(data);
+    } catch (error) {
+      console.error('Failed to fetch access control data:', error);
+    }
+  };
+
+  const fetchPendingReceipts = useCallback(async (search = '') => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/receipts/pending', {
+      const response = await axiosInstance.get('/receipts/pending', {
         params: { search }
       });
       setPendingReceipts(response.data);
@@ -34,12 +66,12 @@ const Receipts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [axiosInstance]);
 
-  const fetchApprovedReceipts = async (search = '') => {
+  const fetchApprovedReceipts = useCallback(async (search = '') => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/receipts/approved', {
+      const response = await axiosInstance.get('/receipts/approved', {
         params: { search }
       });
       setApprovedReceipts(response.data);
@@ -48,21 +80,16 @@ const Receipts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [axiosInstance]);
 
   useEffect(() => {
     fetchPendingReceipts(pendingSearch);
     fetchApprovedReceipts(approvedSearch);
-  }, [pendingSearch, approvedSearch]);
+  }, [fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch]);
 
   const handleApprove = async (activityId) => {
     try {
-      const token = localStorage.getItem('token'); // Retrieve token from local storage
-      await axios.post('http://localhost:5001/receipts/approve', { activityId }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await axiosInstance.post('/receipts/approve', { activityId });
       message.success('Receipt approved successfully');
       fetchPendingReceipts(pendingSearch);
       fetchApprovedReceipts(approvedSearch);
@@ -85,7 +112,7 @@ const Receipts = () => {
   const handleEditOk = async () => {
     try {
       const updatedData = form.getFieldsValue();
-      await axios.put(`http://localhost:5001/activities/${currentActivity.ActivityId}`, updatedData);
+      await axiosInstance.put(`/activities/${currentActivity.ActivityId}`, updatedData);
       message.success('Activity updated successfully');
       setIsModalVisible(false);
       fetchPendingReceipts(pendingSearch);
@@ -135,8 +162,12 @@ const Receipts = () => {
       key: 'actions',
       render: (text, record) => (
         <>
-          <Button className="ant-btn-approve" onClick={() => handleApprove(record.ActivityId)}>Approve</Button>
-          <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+          {accessControl.Receipts?.can_approve === 1 && (
+            <Button className="ant-btn-approve" onClick={() => handleApprove(record.ActivityId)}>Approve</Button>
+          )}
+          {accessControl.Receipts?.can_edit === 1 && (
+            <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+          )}
         </>
       )
     }
@@ -156,17 +187,21 @@ const Receipts = () => {
       key: 'actions',
       render: (text, record) => (
         <>
-          <Button className="ant-btn-email" onClick={() => {
-            setCurrentRecord(record);
-            setIsEmailModalVisible(true);
-          }}>
-            {record.emailsentcount > 0 ? 'Re-Email' : 'Email'}
-          </Button>
-          <Button className="ant-btn-download" onClick={() => {
-            setCurrentRecord(record);
-            setIsPrintModalVisible(true);
-          }} style={{ marginLeft: 8 }}>Download</Button>
-          <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
+          {accessControl.Receipts?.can_email === 1 && (
+            <>
+              <Button className="ant-btn-email" onClick={() => {
+                setCurrentRecord(record);
+                setIsEmailModalVisible(true);
+              }}>
+                {record.emailsentcount > 0 ? 'Re-Email' : 'Email'}
+              </Button>
+              <Button className="ant-btn-download" onClick={() => {
+                setCurrentRecord(record);
+                setIsPrintModalVisible(true);
+              }} style={{ marginLeft: 8 }}>Download</Button>
+              <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
+            </>
+          )}
         </>
       )
     }
@@ -261,13 +296,13 @@ const Receipts = () => {
     formData.append('receiptid', currentRecord.ReceiptId);  // Add receiptid here
   
     try {
-      await axios.post('http://localhost:5001/send-receipt-email', formData, {
+      await axiosInstance.post('/send-receipt-email', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
       message.success(`Email sent to ${currentRecord.Name}`);
-      fetchApprovedReceipts(approvedSearch); // Refresh the approved receipts data
+      fetchApprovedReceipts(approvedSearch);
     } catch (error) {
       message.error('Failed to send receipt via email');
     }

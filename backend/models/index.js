@@ -366,6 +366,14 @@ const AccessControl = sequelize.define('AccessControl', {
   can_delete: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  can_approve: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  can_email: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
 }, {
   timestamps: false,

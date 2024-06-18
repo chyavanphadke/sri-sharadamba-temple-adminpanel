@@ -1128,7 +1128,10 @@ app.get('/access-control/:userType', async (req, res) => {
         can_view: control.can_view,
         can_add: control.can_add,
         can_edit: control.can_edit,
-        can_delete: control.can_delete
+        can_delete: control.can_delete,
+        can_approve: control.can_approve,
+        can_email: control.can_email
+
       };
       return acc;
     }, {});
