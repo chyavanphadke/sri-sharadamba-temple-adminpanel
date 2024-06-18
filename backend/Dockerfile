@@ -13,11 +13,8 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Copy the config directory
-COPY ../config ./config
-
 # Expose the port the server runs on
-EXPOSE 5000
+EXPOSE 5001
 
 # Start the server
 CMD ["node", "server.js"]
