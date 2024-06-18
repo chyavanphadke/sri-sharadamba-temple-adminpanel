@@ -1144,7 +1144,52 @@ app.get('/access-control/:userType', async (req, res) => {
   }
 });
 
+// Add this new route to fetch all access control data
+app.get('/access-controls', async (req, res) => {
+  try {
+    const accessControl = await AccessControl.findAll();
+    if (!accessControl || accessControl.length === 0) {
+      return res.status(404).json({ message: 'Access control data not found' });
+    }
+    res.status(200).json(accessControl);
+  } catch (error) {
+    console.error('Error fetching access control data:', error);
+    res.status(500).json({ message: 'Error fetching access control data', error: error.message });
+  }
+});
 
+app.put('/access-controls', async (req, res) => {
+  try {
+    const accessControls = req.body;
+
+    if (!Array.isArray(accessControls) || accessControls.length === 0) {
+      return res.status(400).json({ message: 'Invalid access control data' });
+    }
+
+    const updatePromises = accessControls.map(control => {
+      return AccessControl.update(
+        {
+          can_view: control.can_view,
+          can_add: control.can_add,
+          can_edit: control.can_edit,
+          can_delete: control.can_delete,
+          can_approve: control.can_approve,
+          can_email: control.can_email,
+        },
+        {
+          where: { id: control.id }
+        }
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    res.status(200).json({ message: 'Access controls updated successfully' });
+  } catch (error) {
+    console.error('Error updating access controls:', error);
+    res.status(500).json({ message: 'Error updating access controls', error: error.message });
+  }
+});
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {

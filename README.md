@@ -85,47 +85,43 @@ ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
 
 ## accesscontrol
 ```
--- Drop the existing access_control table if it exists
-DROP TABLE IF EXISTS accesscontrol;
+CREATE TABLE `accesscontrol` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `usertype` varchar(255) NOT NULL,
+  `component` varchar(255) NOT NULL,
+  `can_view` int DEFAULT '0',
+  `can_add` int DEFAULT '0',
+  `can_edit` int DEFAULT '0',
+  `can_delete` int DEFAULT '0',
+  `can_approve` int DEFAULT '0',
+  `can_email` int DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Create the new access_control table
-CREATE TABLE accesscontrol (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    usertype VARCHAR(50) NOT NULL,
-    component VARCHAR(50) NOT NULL,
-    can_view INT DEFAULT 0,
-    can_add INT DEFAULT 0,
-    can_edit INT DEFAULT 0,
-    can_delete INT DEFAULT 0,
-    UNIQUE KEY (usertype, component)
-);
+INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can_delete, can_approve, can_email) VALUES
+('User', 'Home', 1, 1, 0, 0, 2, 2),
+('Admin', 'Home', 1, 1, 0, 0, 2, 2),
+('Super Admin', 'Home', 1, 1, 1, 1, 2, 2),
 
+('User', 'Calendar', 0, 0, 0, 0, 2, 2),
+('Admin', 'Calendar', 1, 2, 0, 2, 2, 2),
+('Super Admin', 'Calendar', 1, 2, 1, 2, 2, 2),
 
--- Insert initial data into access_control table
-INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can_delete) VALUES
-('User', 'Home', 1, 0, 0, 0),
-('Admin', 'Home', 1, 1, 0, 0),
-('Super Admin', 'Home', 1, 1, 1, 1),
+('User', 'Receipts', 0, 2, 0, 2, 0, 0),
+('Admin', 'Receipts', 1, 2, 0, 2, 1, 1),
+('Super Admin', 'Receipts', 1, 2, 1, 2, 1, 1),
 
-('User', 'Calendar', 0, 0, 0, 0),
-('Admin', 'Calendar', 1, 0, 0, 0),
-('Super Admin', 'Calendar', 1, 1, 1, 1),
+('User', 'Reports', 0, 2, 2, 2, 2, 2),
+('Admin', 'Reports', 1, 2, 2, 2, 2, 2),
+('Super Admin', 'Reports', 1, 2, 2, 2, 2, 2),
 
-('User', 'Receipts', 0, 0, 0, 0),
-('Admin', 'Receipts', 1, 0, 0, 0),
-('Super Admin', 'Receipts', 1, 1, 1, 1),
+('User', 'Login Access', 0, 2, 2, 2, 2, 2),
+('Admin', 'Login Access', 0, 2, 2, 2, 2, 2),
+('Super Admin', 'Login Access', 1, 2, 2, 2, 2, 2),
 
-('User', 'Reports', 1, 0, 0, 0),
-('Admin', 'Reports', 1, 1, 1, 1),
-('Super Admin', 'Reports', 1, 1, 1, 1),
-
-('User', 'Login Access', 0, 0, 0, 0),
-('Admin', 'Login Access', 0, 0, 0, 0),
-('Super Admin', 'Login Access', 1, 1, 1, 1),
-
-('User', 'Settings', 1, 0, 0, 0),
-('Admin', 'Settings', 1, 1, 1, 1),
-('Super Admin', 'Settings', 1, 1, 1, 1);
+('User', 'Settings', 1, 2, 2, 2, 2, 2),
+('Admin', 'Settings', 1, 2, 2, 2, 2, 2),
+('Super Admin', 'Settings', 1, 2, 2, 2, 2, 2);
 ```
 
 # Installation:

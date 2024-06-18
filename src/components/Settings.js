@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
 import axios from 'axios';
-import './Settings.css'; // Import CSS file for styling
+import './Settings.css';
 
 const { Content } = Layout;
 
@@ -10,11 +10,13 @@ const Settings = () => {
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
+  const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [headerColor, setHeaderColor] = useState('#001529');
   const [sidebarColor, setSidebarColor] = useState('#001529');
+  const [accessControls, setAccessControls] = useState([]);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -33,6 +35,15 @@ const Settings = () => {
       setFilteredServices(sortedServices);
     } catch (error) {
       message.error('Failed to load services');
+    }
+  };
+
+  const fetchAccessControls = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/access-controls');
+      setAccessControls(response.data);
+    } catch (error) {
+      message.error('Failed to load access controls');
     }
   };
 
@@ -106,6 +117,23 @@ const Settings = () => {
     window.location.reload();
   };
 
+  const handleAccessRightChange = (index, field, value) => {
+    const newAccessControls = [...accessControls];
+    newAccessControls[index][field] = value ? 1 : 0;
+    setAccessControls(newAccessControls);
+  };
+
+  const handleAccessRightsSave = async () => {
+    try {
+      await axios.put('http://localhost:5001/access-controls', accessControls);
+      message.success('Access rights updated successfully');
+      setAccessRightsModalVisible(false);
+      fetchAccessControls();
+    } catch (error) {
+      message.error('Failed to update access rights');
+    }
+  };
+
   const serviceColumns = [
     {
       title: 'Service',
@@ -144,6 +172,91 @@ const Settings = () => {
     },
   ];
 
+  const accessRightColumns = [
+    {
+      title: 'User Type',
+      dataIndex: 'usertype',
+      key: 'usertype',
+    },
+    {
+      title: 'Component',
+      dataIndex: 'component',
+      key: 'component',
+    },
+    {
+      title: 'Can View',
+      dataIndex: 'can_view',
+      key: 'can_view',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_view', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+    {
+      title: 'Can Add',
+      dataIndex: 'can_add',
+      key: 'can_add',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_add', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+    {
+      title: 'Can Edit',
+      dataIndex: 'can_edit',
+      key: 'can_edit',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_edit', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+    {
+      title: 'Can Delete',
+      dataIndex: 'can_delete',
+      key: 'can_delete',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_delete', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+    {
+      title: 'Can Approve',
+      dataIndex: 'can_approve',
+      key: 'can_approve',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_approve', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+    {
+      title: 'Can Email',
+      dataIndex: 'can_email',
+      key: 'can_email',
+      render: (text, record, index) => (
+        <Checkbox
+          checked={text === 1}
+          onChange={(e) => handleAccessRightChange(index, 'can_email', e.target.checked)}
+          disabled={text === 2}
+        />
+      ),
+    },
+  ];
+
   return (
     <Layout>
       <Content>
@@ -157,6 +270,9 @@ const Settings = () => {
           </Button>
           <Button type="primary" onClick={() => setThemeModalVisible(true)} style={{ marginLeft: '10px' }}>
             Change Theme Colors
+          </Button>
+          <Button type="primary" onClick={() => { setAccessRightsModalVisible(true); fetchAccessControls(); }} style={{ marginLeft: '10px' }}>
+            Change Access Rights
           </Button>
 
           <Modal
@@ -275,6 +391,22 @@ const Settings = () => {
                 />
               </Form.Item>
             </Form>
+          </Modal>
+
+          <Modal
+            title="Change Access Rights"
+            visible={accessRightsModalVisible}
+            onCancel={() => setAccessRightsModalVisible(false)}
+            onOk={handleAccessRightsSave}
+            width={1000}
+          >
+            <Table
+              columns={accessRightColumns}
+              dataSource={accessControls}
+              rowKey="id"
+              pagination={false}
+              size="small"
+            />
           </Modal>
         </div>
       </Content>
