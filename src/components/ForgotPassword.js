@@ -13,7 +13,7 @@ const ForgotPassword = () => {
 
   const handleResetPassword = async () => {
     try {
-      const response = await axios.post(`http://10.0.0.204:5001/reset-password/${token}`, { newPassword });
+      const response = await axios.post(`http://localhost:5001/reset-password/${token}`, { newPassword });
       message.success(response.data.message);
       navigate('/login');
     } catch (error) {

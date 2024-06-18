@@ -1220,7 +1220,7 @@ sequelize.sync().then(async () => {
     console.log('Super user created');
   }
 
-  app.listen(port, '10.0.0.204', () => {
+  app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
