@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
 import axios from 'axios';
-import './Settings.css';
+import {jwtDecode} from 'jwt-decode';
+import './Settings.css'; // Import CSS file for styling
 
 const { Content } = Layout;
 
@@ -16,8 +17,12 @@ const Settings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [headerColor, setHeaderColor] = useState('#001529');
   const [sidebarColor, setSidebarColor] = useState('#001529');
-  const [accessControls, setAccessControls] = useState([]);
+  const [accessRights, setAccessRights] = useState([]);
   const [form] = Form.useForm();
+
+  const token = localStorage.getItem('token');
+  const decodedToken = jwtDecode(token);
+  const userType = decodedToken.usertype;
 
   useEffect(() => {
     fetchServices();
@@ -38,18 +43,8 @@ const Settings = () => {
     }
   };
 
-  const fetchAccessControls = async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/access-controls');
-      setAccessControls(response.data);
-    } catch (error) {
-      message.error('Failed to load access controls');
-    }
-  };
-
   const onFinishPasswordChange = async (values) => {
     try {
-      const token = localStorage.getItem('token');
       await axios.post('http://localhost:5001/change-password', values, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -117,21 +112,24 @@ const Settings = () => {
     window.location.reload();
   };
 
-  const handleAccessRightChange = (index, field, value) => {
-    const newAccessControls = [...accessControls];
-    newAccessControls[index][field] = value ? 1 : 0;
-    setAccessControls(newAccessControls);
-  };
-
   const handleAccessRightsSave = async () => {
     try {
-      await axios.put('http://localhost:5001/access-controls', accessControls);
+      await axios.put('http://localhost:5001/access-controls', accessRights);
       message.success('Access rights updated successfully');
       setAccessRightsModalVisible(false);
-      fetchAccessControls();
     } catch (error) {
       message.error('Failed to update access rights');
     }
+  };
+
+  const handleAccessChange = (record, field, value) => {
+    const updatedRights = accessRights.map((item) => {
+      if (item.id === record.id) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
+    setAccessRights(updatedRights);
   };
 
   const serviceColumns = [
@@ -172,91 +170,6 @@ const Settings = () => {
     },
   ];
 
-  const accessRightColumns = [
-    {
-      title: 'User Type',
-      dataIndex: 'usertype',
-      key: 'usertype',
-    },
-    {
-      title: 'Component',
-      dataIndex: 'component',
-      key: 'component',
-    },
-    {
-      title: 'Can View',
-      dataIndex: 'can_view',
-      key: 'can_view',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_view', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-    {
-      title: 'Can Add',
-      dataIndex: 'can_add',
-      key: 'can_add',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_add', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-    {
-      title: 'Can Edit',
-      dataIndex: 'can_edit',
-      key: 'can_edit',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_edit', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-    {
-      title: 'Can Delete',
-      dataIndex: 'can_delete',
-      key: 'can_delete',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_delete', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-    {
-      title: 'Can Approve',
-      dataIndex: 'can_approve',
-      key: 'can_approve',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_approve', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-    {
-      title: 'Can Email',
-      dataIndex: 'can_email',
-      key: 'can_email',
-      render: (text, record, index) => (
-        <Checkbox
-          checked={text === 1}
-          onChange={(e) => handleAccessRightChange(index, 'can_email', e.target.checked)}
-          disabled={text === 2}
-        />
-      ),
-    },
-  ];
-
   return (
     <Layout>
       <Content>
@@ -265,15 +178,19 @@ const Settings = () => {
           <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
             Change Password
           </Button>
-          <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
-            Modify Services
-          </Button>
+          {(userType === 'Admin' || userType === 'Super Admin') && (
+            <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
+              Modify Services
+            </Button>
+          )}
           <Button type="primary" onClick={() => setThemeModalVisible(true)} style={{ marginLeft: '10px' }}>
             Change Theme Colors
           </Button>
-          <Button type="primary" onClick={() => { setAccessRightsModalVisible(true); fetchAccessControls(); }} style={{ marginLeft: '10px' }}>
-            Change Access Rights
-          </Button>
+          {userType === 'Super Admin' && (
+            <Button type="primary" onClick={() => setAccessRightsModalVisible(true)} style={{ marginLeft: '10px' }}>
+              Change Access Rights
+            </Button>
+          )}
 
           <Modal
             title="Change Password"
@@ -398,11 +315,89 @@ const Settings = () => {
             visible={accessRightsModalVisible}
             onCancel={() => setAccessRightsModalVisible(false)}
             onOk={handleAccessRightsSave}
-            width={1000}
+            width={800}
           >
             <Table
-              columns={accessRightColumns}
-              dataSource={accessControls}
+              columns={[
+                {
+                  title: 'Component',
+                  dataIndex: 'component',
+                  key: 'component',
+                },
+                {
+                  title: 'View',
+                  dataIndex: 'can_view',
+                  key: 'can_view',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_view', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+                {
+                  title: 'Add',
+                  dataIndex: 'can_add',
+                  key: 'can_add',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_add', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+                {
+                  title: 'Edit',
+                  dataIndex: 'can_edit',
+                  key: 'can_edit',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_edit', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+                {
+                  title: 'Delete',
+                  dataIndex: 'can_delete',
+                  key: 'can_delete',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_delete', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+                {
+                  title: 'Approve',
+                  dataIndex: 'can_approve',
+                  key: 'can_approve',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_approve', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+                {
+                  title: 'Email',
+                  dataIndex: 'can_email',
+                  key: 'can_email',
+                  render: (value, record) => (
+                    <Checkbox
+                      checked={value === 1}
+                      onChange={(e) => handleAccessChange(record, 'can_email', e.target.checked ? 1 : 0)}
+                      disabled={value === 2}
+                    />
+                  ),
+                },
+              ]}
+              dataSource={accessRights}
               rowKey="id"
               pagination={false}
               size="small"
