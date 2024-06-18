@@ -1158,6 +1158,17 @@ app.get('/access-controls', async (req, res) => {
   }
 });
 
+// Add this route to fetch all access control data
+app.get('/access-control', async (req, res) => {
+  try {
+    const accessControl = await AccessControl.findAll();
+    res.status(200).json(accessControl);
+  } catch (error) {
+    console.error('Error fetching access control data:', error);
+    res.status(500).json({ message: 'Error fetching access control data', error: error.message });
+  }
+});
+
 app.put('/access-controls', async (req, res) => {
   try {
     const accessControls = req.body;

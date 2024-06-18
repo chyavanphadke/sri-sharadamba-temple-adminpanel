@@ -18,6 +18,7 @@ const Settings = () => {
   const [headerColor, setHeaderColor] = useState('#001529');
   const [sidebarColor, setSidebarColor] = useState('#001529');
   const [accessRights, setAccessRights] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
   const token = localStorage.getItem('token');
@@ -114,7 +115,7 @@ const Settings = () => {
 
   const handleAccessRightsSave = async () => {
     try {
-      await axios.put('http://localhost:5001/access-controls', accessRights);
+      await axios.put('http://localhost:5001/access-control', accessRights);
       message.success('Access rights updated successfully');
       setAccessRightsModalVisible(false);
     } catch (error) {
@@ -130,6 +131,23 @@ const Settings = () => {
       return item;
     });
     setAccessRights(updatedRights);
+  };
+
+  const fetchAccessControlData = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5001/access-control');
+      setAccessRights(response.data);
+    } catch (error) {
+      message.error('Failed to load access control data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAccessRightsModal = () => {
+    fetchAccessControlData();
+    setAccessRightsModalVisible(true);
   };
 
   const serviceColumns = [
@@ -187,7 +205,7 @@ const Settings = () => {
             Change Theme Colors
           </Button>
           {userType === 'Super Admin' && (
-            <Button type="primary" onClick={() => setAccessRightsModalVisible(true)} style={{ marginLeft: '10px' }}>
+            <Button type="primary" onClick={handleOpenAccessRightsModal} style={{ marginLeft: '10px' }}>
               Change Access Rights
             </Button>
           )}
