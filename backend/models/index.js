@@ -380,6 +380,17 @@ const AccessControl = sequelize.define('AccessControl', {
   freezeTableName: true
 });
 
+const EmailCredential = sequelize.define('EmailCredential', {
+  email: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+  appPassword: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -420,5 +431,6 @@ module.exports = {
   Activity,
   ModeOfPayment,
   Receipt,
-  AccessControl
+  AccessControl,
+  EmailCredential
 };

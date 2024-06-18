@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential } = require('./models');
 
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
@@ -101,18 +101,24 @@ app.post('/forgot-password', async (req, res) => {
     user.passwordResetExpires = Date.now() + 3600000; // Token expires in 1 hour
     await user.save();
 
-    // Send email with the reset token
+    // Fetch email credentials from the database
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(404).json({ message: 'Email credentials not found' });
+    }
+
+    // Configure nodemailer transport with dynamic credentials
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'chyavanphadke95@gmail.com',
-        pass: 'dkse hzdh yluv xcvn' // Use App Password here
+        user: emailCredential.email,
+        pass: emailCredential.appPassword
       }
     });
 
     const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
     const mailOptions = {
-      from: 'chyavanphadke95@gmail.com',
+      from: emailCredential.email,
       to: email,
       subject: 'Password Reset for Sharada Temple, Milpitas',
       text: `You requested a password reset. Please click the following link to reset your password: ${resetUrl}`
@@ -909,19 +915,24 @@ app.post('/send-receipt-email', upload.single('pdf'), async (req, res) => {
   const email = req.body.email;
   const pdfBuffer = req.file.buffer;
   const pdfName = req.file.originalname;
-  const { Name, ActivityDate, receiptid } = req.body;  // Destructure receiptid from req.body
+  const { Name, ActivityDate, receiptid } = req.body;
 
-  // Configure nodemailer transport
+  // Fetch email credentials from the database
+  const emailCredential = await EmailCredential.findOne();
+  if (!emailCredential) {
+    return res.status(500).send('Email credentials not configured');
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-      user: 'chyavanphadke95@gmail.com',
-      pass: 'dkse hzdh yluv xcvn' // Use App Password here
+      user: emailCredential.email,
+      pass: emailCredential.appPassword
     }
   });
 
   const mailOptions = {
-    from: 'chyavanphadke95@gmail.com',
+    from: emailCredential.email,
     to: email,
     subject: `Your Receipt for Donation at Sharada SEVA, Date ${ActivityDate}`,
     text: `Dear ${Name},
@@ -1065,48 +1076,60 @@ app.get('/devotee/:id', async (req, res) => {
   }
 });
 
-app.post('/send-report-email', upload.single('pdf'), (req, res) => {
+app.post('/send-report-email', upload.single('pdf'), async (req, res) => {
   const email = req.body.email;
   const pdfBuffer = req.file.buffer;
   const pdfName = req.file.originalname;
 
   const { Name, startDate, endDate } = req.body;
 
-  // Configure nodemailer transport
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: 'chyavanphadke95@gmail.com',
-      pass: 'dkse hzdh yluv xcvn' // Use App Password here
+  try {
+    // Fetch email credentials from the database
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(404).json({ message: 'Email credentials not found' });
     }
-  });
 
-  const mailOptions = {
-    from: 'chyavanphadke95@gmail.com',
-    to: email,
-    subject: `Seva Report between ${startDate} and ${endDate}`,
-    text: `Dear ${Name},
+    // Configure nodemailer transport with dynamic credentials
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword
+      }
+    });
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject: `Seva Report between ${startDate} and ${endDate}`,
+      text: `Dear ${Name},
 
 Please find the Report attached to this email.
 
 Sincerely,
 Sringeri Education and Vedic Academy.`,
-    attachments: [
-      {
-        filename: pdfName,
-        content: pdfBuffer
-      }
-    ]
-  };
+      attachments: [
+        {
+          filename: pdfName,
+          content: pdfBuffer
+        }
+      ]
+    };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      return res.status(500).send('Error sending email');
-    }
-    res.send('Email sent: ' + info.response);
-  });
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).send('Error sending email');
+      }
+      res.send('Email sent: ' + info.response);
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ message: 'Error sending email', error: error.message });
+  }
 });
+
 
 app.get('/access-control/:userType', async (req, res) => {
   try {
@@ -1202,15 +1225,50 @@ app.put('/access-control', async (req, res) => {
   }
 });
 
+// Fetch email credentials
+app.get('/email-credentials', async (req, res) => {
+  try {
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(404).json({ message: 'Email credentials not found' });
+    }
+    res.status(200).json(emailCredential);
+  } catch (error) {
+    console.error('Error fetching email credentials:', error);
+    res.status(500).json({ message: 'Error fetching email credentials', error: error.message });
+  }
+});
+
+// Update email credentials
+app.put('/email-credentials', async (req, res) => {
+  const { email, appPassword } = req.body;
+  try {
+    let emailCredential = await EmailCredential.findOne();
+    if (emailCredential) {
+      emailCredential.email = email;
+      emailCredential.appPassword = appPassword;
+      await emailCredential.save();
+    } else {
+      emailCredential = await EmailCredential.create({ email, appPassword });
+    }
+    res.status(200).json({ message: 'Email credentials updated successfully' });
+  } catch (error) {
+    console.error('Error updating email credentials:', error);
+    res.status(500).json({ message: 'Error updating email credentials', error: error.message });
+  }
+});
+
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
-  const existingSuperUser = await User.findOne({ where: { username: 'admin' } });
+  const existingSuperUser = await User.findOne({ where: { username: 'aghamya' } });
   if (!existingSuperUser) {
-    const hashedPassword = await bcrypt.hash('maya@111', 10);
+    const hashedPassword = await bcrypt.hash('maya@serenity', 10);
     await User.create({
-      username: 'admin',
+      username: 'aghamya',
       password: hashedPassword,
       usertype: 'Super Admin',
+      email: 'madhu.jan30@gmail.com',
+      old_users: 1,
       approved: true,
       approvedBy: 0,
       active: true,
@@ -1218,6 +1276,16 @@ sequelize.sync().then(async () => {
       reason_for_access: 'Initial super user',
     });
     console.log('Super user created');
+  }
+
+  // Insert default email credentials if not already present
+  const existingEmailCredential = await EmailCredential.findOne();
+  if (!existingEmailCredential) {
+    await EmailCredential.create({
+      email: 'chyavanphadke95@gmail.com',  // Replace with your default email
+      appPassword: 'dkse hzdh yluv xcvn'      // Replace with your default app password
+    });
+    console.log('Default email credentials created');
   }
 
   app.listen(port, () => {

@@ -12,6 +12,7 @@ const Settings = () => {
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
+  const [emailCredentialsModalVisible, setEmailCredentialsModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,6 +20,7 @@ const Settings = () => {
   const [sidebarColor, setSidebarColor] = useState('#001529');
   const [accessRights, setAccessRights] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [form] = Form.useForm();
 
   const token = localStorage.getItem('token');
@@ -145,9 +147,37 @@ const Settings = () => {
     }
   };
 
+  const fetchEmailCredentials = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/email-credentials');
+      setEmailCredentials(response.data);
+    } catch (error) {
+      message.error('Failed to load email credentials');
+    }
+  };
+
   const handleOpenAccessRightsModal = () => {
     fetchAccessControlData();
     setAccessRightsModalVisible(true);
+  };
+
+  const handleOpenEmailCredentialsModal = () => {
+    fetchEmailCredentials();
+    setEmailCredentialsModalVisible(true);
+  };
+
+  const handleEmailCredentialsSave = async () => {
+    try {
+      await axios.put('http://localhost:5001/email-credentials', emailCredentials);
+      message.success('Email credentials updated successfully');
+      setEmailCredentialsModalVisible(false);
+    } catch (error) {
+      message.error('Failed to update email credentials');
+    }
+  };
+
+  const handleEmailChange = (field, value) => {
+    setEmailCredentials({ ...emailCredentials, [field]: value });
   };
 
   const serviceColumns = [
@@ -205,9 +235,14 @@ const Settings = () => {
             Change Theme Colors
           </Button>
           {userType === 'Super Admin' && (
-            <Button type="primary" onClick={handleOpenAccessRightsModal} style={{ marginLeft: '10px' }}>
-              Change Access Rights
-            </Button>
+            <>
+              <Button type="primary" onClick={handleOpenAccessRightsModal} style={{ marginLeft: '10px' }}>
+                Change Access Rights
+              </Button>
+              <Button type="primary" onClick={handleOpenEmailCredentialsModal} style={{ marginLeft: '10px' }}>
+                Email Credentials
+              </Button>
+            </>
           )}
 
           <Modal
@@ -425,6 +460,28 @@ const Settings = () => {
               pagination={false}
               size="small"
             />
+          </Modal>
+
+          <Modal
+            title="Email Credentials"
+            visible={emailCredentialsModalVisible}
+            onCancel={() => setEmailCredentialsModalVisible(false)}
+            onOk={handleEmailCredentialsSave}
+          >
+            <Form layout="vertical">
+              <Form.Item label="Email">
+                <Input
+                  value={emailCredentials.email}
+                  onChange={(e) => handleEmailChange('email', e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item label="App Password">
+                <Input.Password
+                  value={emailCredentials.appPassword}
+                  onChange={(e) => handleEmailChange('appPassword', e.target.value)}
+                />
+              </Form.Item>
+            </Form>
           </Modal>
         </div>
       </Content>
