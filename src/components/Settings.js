@@ -35,7 +35,7 @@ const Settings = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/services');
+      const response = await axios.get('http://10.0.0.204:5001/services');
       const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
       setServices(sortedServices);
       setFilteredServices(sortedServices);
@@ -46,7 +46,7 @@ const Settings = () => {
 
   const onFinishPasswordChange = async (values) => {
     try {
-      await axios.post('http://localhost:5001/change-password', values, {
+      await axios.post('http://10.0.0.204:5001/change-password', values, {
         headers: { Authorization: `Bearer ${token}` },
       });
       message.success('Password changed successfully');
@@ -68,7 +68,7 @@ const Settings = () => {
 
   const handleServiceSave = async () => {
     try {
-      await axios.put('http://localhost:5001/services', services);
+      await axios.put('http://10.0.0.204:5001/services', services);
       message.success('Services updated successfully');
       setServiceModalVisible(false);
       fetchServices();
@@ -92,7 +92,7 @@ const Settings = () => {
 
   const handleAddService = async (values) => {
     try {
-      await axios.post('http://localhost:5001/services', values);
+      await axios.post('http://10.0.0.204:5001/services', values);
       message.success('Service added successfully');
       setNewServiceModalVisible(false);
       fetchServices();
@@ -115,7 +115,7 @@ const Settings = () => {
 
   const handleAccessRightsSave = async () => {
     try {
-      await axios.put('http://localhost:5001/access-control', accessRights);
+      await axios.put('http://10.0.0.204:5001/access-control', accessRights);
       message.success('Access rights updated successfully');
       setAccessRightsModalVisible(false);
     } catch (error) {
@@ -136,7 +136,7 @@ const Settings = () => {
   const fetchAccessControlData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/access-control');
+      const response = await axios.get('http://10.0.0.204:5001/access-control');
       setAccessRights(response.data);
     } catch (error) {
       message.error('Failed to load access control data');
@@ -337,6 +337,11 @@ const Settings = () => {
           >
             <Table
               columns={[
+                {
+                  title: 'User Type',
+                  dataIndex: 'usertype',
+                  key: 'usertype',
+                },
                 {
                   title: 'Component',
                   dataIndex: 'component',

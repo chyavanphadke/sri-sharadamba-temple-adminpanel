@@ -44,7 +44,7 @@ const Dashboard = () => {
   const fetchAccessControl = async (userType) => {
     try {
       console.log(`Fetching access control data for user type: ${userType}`);
-      const response = await fetch(`http://localhost:5001/access-control/${encodeURIComponent(userType)}`);
+      const response = await fetch(`http://10.0.0.204:5001/access-control/${encodeURIComponent(userType)}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

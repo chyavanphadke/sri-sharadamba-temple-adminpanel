@@ -15,7 +15,7 @@ const Login = () => {
 
   const onFinish = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5001/login', values);
+      const response = await axios.post('http://10.0.0.204:5001/login', values);
       localStorage.setItem('token', response.data.token);
       message.success('Login successful');
       navigate('/dashboard/home');
@@ -30,7 +30,7 @@ const Login = () => {
 
   const handleForgotPassword = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/forgot-password', { email: forgotPasswordEmail });
+      const response = await axios.post('http://10.0.0.204:5001/forgot-password', { email: forgotPasswordEmail });
       message.success(response.data.message);
       setIsModalVisible(false);
       setEmailError('');

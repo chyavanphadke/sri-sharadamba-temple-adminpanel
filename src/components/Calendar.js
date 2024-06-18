@@ -24,7 +24,7 @@ const Calendar = () => {
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: 'http://10.0.0.204:5001',
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -224,7 +224,7 @@ const Calendar = () => {
                     <p><strong>Family Members:</strong> {event.FamilyMembers.join(', ')}</p>
                     {accessControl.Calendar?.can_edit === 1 && (
                       <Button type="primary" onClick={() => handleComplete(event.ActivityId)}>
-                        Completed
+                        Mark Seva as Completed
                       </Button>
                     )}
                   </Card>

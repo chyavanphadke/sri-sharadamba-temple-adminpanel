@@ -20,7 +20,7 @@ const SuperAdmin = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/user', {
+      const response = await axios.get('http://10.0.0.204:5001/user', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -44,21 +44,21 @@ const SuperAdmin = () => {
       }
 
       if (action === 'approve') {
-        await axios.put(`http://localhost:5001/user/${userid}/approve`, {}, {
+        await axios.put(`http://10.0.0.204:5001/user/${userid}/approve`, {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         message.success('User approved');
       } else if (action === 'delete') {
-        await axios.delete(`http://localhost:5001/user/${userid}`, {
+        await axios.delete(`http://10.0.0.204:5001/user/${userid}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         message.success('User deleted');
       } else {
-        await axios.put(`http://localhost:5001/user/${userid}/usertype`, { usertype: action }, {
+        await axios.put(`http://10.0.0.204:5001/user/${userid}/usertype`, { usertype: action }, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -87,7 +87,7 @@ const SuperAdmin = () => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/user?search=${value}`, {
+        const response = await axios.get(`http://10.0.0.204:5001/user?search=${value}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

@@ -28,7 +28,7 @@ const Home = () => {
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: 'http://10.0.0.204:5001',
     headers: {
       Authorization: `Bearer ${token}`,
     },
