@@ -1,7 +1,31 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const config = require('../../config/config.json');
 const { v4: uuidv4 } = require('uuid');
 const env = process.env.NODE_ENV || 'development';
+
+const config = {
+  development: {
+    username: "root",
+    password: "maya@111",
+    database: "seva",
+    host: "127.0.0.1",
+    dialect: "mysql"
+  },
+  test: {
+    username: "root",
+    password: "maya@111",
+    database: "seva",
+    host: "127.0.0.1",
+    dialect: "mysql"
+  },
+  production: {
+    username: "root",
+    password: "maya@111",
+    database: "seva",
+    host: "127.0.0.1",
+    dialect: "mysql"
+  }
+};
+
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
   dialect: config[env].dialect,

@@ -1,18 +1,36 @@
-version: '3.8'
-
+version: '3'
 services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.frontend
     ports:
       - "3000:3000"
     depends_on:
       - backend
+    restart: always
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
     ports:
       - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=maya@111
+      - DB_NAME=seva
+    depends_on:
+      - mysql
+    restart: always
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: maya@111
+      MYSQL_DATABASE: seva
+    ports:
+      - "3307:3306"
+    restart: always
