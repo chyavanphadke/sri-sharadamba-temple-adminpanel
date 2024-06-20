@@ -18,7 +18,7 @@ services:
       - "5001:5001"
     environment:
       - NODE_ENV=production
-      - DB_HOST=mysql
+      - DB_HOST=localhost  # Replace with your Windows host IP
       - DB_USER=root
       - DB_PASSWORD=maya@111
       - DB_NAME=seva
