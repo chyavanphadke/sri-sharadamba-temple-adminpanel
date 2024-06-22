@@ -16,7 +16,29 @@ function replaceInFile(filePath, searchValue, replaceValue) {
   });
 }
 
+function replaceLineInFile(filePath, searchValue, replaceValue) {
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(`Error reading file ${filePath}:`, err);
+      return;
+    }
+    const result = data.replace(searchValue, replaceValue);
+    fs.writeFile(filePath, result, 'utf8', (err) => {
+      if (err) console.error(`Error writing file ${filePath}:`, err);
+      else console.log(`Replaced line in file ${filePath}`);
+    });
+  });
+}
+
 function replaceLocalhost(ipAddress) {
+  const localhost5001 = 'localhost:5001';
+  const localhostDBHost = 'DB_HOST=localhost';
+  const localhostIndexJs = /host:\s*process\.env\.DB_HOST\s*\|\|\s*'localhost',/g;
+
+  const ip5001 = `${ipAddress}:5001`;
+  const ipDBHost = `DB_HOST=${ipAddress}`;
+  const ipIndexJs = `host: process.env.DB_HOST || '${ipAddress}',`;
+
   const filesToReplace = [
     path.join(__dirname, 'docker-compose.yml'),
     path.join(__dirname, 'backend', 'server.js'),
@@ -36,10 +58,18 @@ function replaceLocalhost(ipAddress) {
         filesToReplace.push(path.join(componentsDir, file));
       });
 
-    // Replace "localhost" with IP address in all specified files
+    // Replace "localhost:5001" with IP address and port in all specified files
     filesToReplace.forEach(filePath => {
-      replaceInFile(filePath, 'localhost', ipAddress);
+      replaceInFile(filePath, localhost5001, ip5001);
     });
+
+    // Replace "DB_HOST=localhost" with IP address in docker-compose.yml
+    const dockerComposePath = path.join(__dirname, 'docker-compose.yml');
+    replaceInFile(dockerComposePath, localhostDBHost, ipDBHost);
+
+    // Replace "host: process.env.DB_HOST || 'localhost'," with IP address in backend/models/index.js
+    const indexJsPath = path.join(__dirname, 'backend', 'models', 'index.js');
+    replaceLineInFile(indexJsPath, localhostIndexJs, ipIndexJs);
   });
 }
 
@@ -50,3 +80,5 @@ if (ipv4Address) {
 } else {
   console.log('IPv4 Address not found');
 }
+
+module.exports = replaceLocalhost;
