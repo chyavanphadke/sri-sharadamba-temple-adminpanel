@@ -29,6 +29,12 @@ const config = {
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
   dialect: config[env].dialect,
+  pool: {
+    max: 20,
+    min: 0,
+    acquire: 60000,
+    idle: 10000
+  }
 });
 
 // Define User model

@@ -90,6 +90,10 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ('Admin', 'Home', 1, 1, 0, 0, 2, 2),
 ('Super Admin', 'Home', 1, 1, 1, 1, 2, 2),
 
+('User', 'DevoteeList', 1, 1, 0, 0, 2, 2),
+('Admin', 'DevoteeList', 1, 1, 0, 0, 2, 2),
+('Super Admin', 'DevoteeList', 1, 1, 1, 1, 2, 2),
+
 ('User', 'Calendar', 0, 0, 0, 0, 2, 2),
 ('Admin', 'Calendar', 1, 2, 0, 2, 2, 2),
 ('Super Admin', 'Calendar', 1, 2, 1, 2, 2, 2),
@@ -109,6 +113,7 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ('User', 'Settings', 1, 2, 2, 2, 2, 2),
 ('Admin', 'Settings', 1, 2, 2, 2, 2, 2),
 ('Super Admin', 'Settings', 1, 2, 2, 2, 2, 2);
+
 
 
 ALTER TABLE `seva`.`receipt`;

@@ -130,6 +130,9 @@ const Settings = () => {
     }
   };
   
+  
+
+
 
   const handleNewServiceModalOpen = () => {
     form.resetFields();
@@ -447,14 +450,14 @@ const Settings = () => {
             <Table
               columns={[
                 {
+                  title: 'Pages',
+                  dataIndex: 'component',
+                  key: 'component',
+                },
+                {
                   title: 'User Type',
                   dataIndex: 'usertype',
                   key: 'usertype',
-                },
-                {
-                  title: 'Component',
-                  dataIndex: 'component',
-                  key: 'component',
                 },
                 {
                   title: 'View',
