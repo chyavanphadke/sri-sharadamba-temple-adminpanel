@@ -30,6 +30,35 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Fetch all users with their details
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ['userid', 'username']
+    });
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ message: 'Error fetching users', error: err.message });
+  }
+});
+
+// Fetch user by userid
+app.get('/user/:userid', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.userid, {
+      attributes: ['username']
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details', error: error.message });
+  }
+});
+
 // Authentication Routes
 app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
@@ -199,22 +228,30 @@ app.get('/user', async (req, res) => {
   }
 });
 
-app.put('/user/:userid/approve', async (req, res) => {
+app.put('/user/:userid/approve', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.userid);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    const approver = await User.findByPk(req.user.userid); // Fetch the approver's details using the authenticated user's ID
+    if (!approver) {
+      return res.status(404).json({ message: 'Approver not found' });
+    }
+
     user.approved = true;
     user.active = true;
-    user.approvedBy = '9a64e1bd-3fe3-4912-92fa-a8a5d01106e1';
+    user.approvedBy = approver.userid; // Set approvedBy to the approver's username
     await user.save();
+
     res.status(200).json({ message: 'User approved successfully' });
   } catch (err) {
     console.error('Error approving user:', err);
     res.status(500).json({ message: 'Error approving user', error: err.message });
   }
 });
+
 
 app.put('/user/:userid/usertype', async (req, res) => {
   const { usertype } = req.body;
@@ -522,23 +559,34 @@ app.put('/services', async (req, res) => {
   }
 });
 
-// Add this endpoint to handle the addition of new services
+// Add new service
 app.post('/services', async (req, res) => {
-  const { Service, Rate, Comment, Active, DisplayFamily, Temple, SvcCategoryId } = req.body;
+  const { Service, Rate, comments, Active, DisplayFamily, Temple, SvcCategoryId } = req.body;
+
+  // Validate input
+  if (!Service || !Rate) {
+    console.error('Validation error: Service name and rate are required');
+    return res.status(400).json({ message: 'Service name and rate are required' });
+  }
+
+  // Set default values for fields that were not provided
+  const newService = {
+    Service,
+    Rate: parseFloat(Rate),
+    comments: comments || null,
+    Active: Active !== undefined ? Active : true,
+    DisplayFamily: DisplayFamily !== undefined ? DisplayFamily : false,
+    Temple: Temple !== undefined ? Temple : 0,
+    SvcCategoryId: SvcCategoryId || null,
+  };
+
   try {
-    const newService = await Service.create({
-      Service,
-      Rate,
-      Comment: Comment || '',
-      Active: Active || true,
-      DisplayFamily: DisplayFamily || false,
-      Temple: Temple || 0,
-      SvcCategoryId: SvcCategoryId || null,
-    });
-    res.status(201).json(newService);
+    console.log('Creating service with data:', newService);
+    const createdService = await Service.create(newService);
+    res.status(201).json(createdService);
   } catch (error) {
-    console.error('Error adding service:', error);
-    res.status(500).json({ message: 'Failed to add service' });
+    console.error('Error adding service:', error); // Log the error
+    res.status(500).json({ message: 'Failed to add service', error: error.message });
   }
 });
 
@@ -1287,6 +1335,42 @@ sequelize.sync().then(async () => {
     });
     console.log('Default email credentials created');
   }
+
+  let emailText = [
+    "Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.",
+    "Your donation will go a long way in helping us accomplish our goal of creating a modern facility",
+    "to support the religious, social and cultural needs of our community.",
+    "May god blessings always with you and your family.",
+    "Sincerely,",
+    "Sringeri Education and Vedic Academy.",
+    "No goods or services were provided for this donation."
+  ];
+  
+  // Endpoint to get email text
+  app.get('/email-text', (req, res) => {
+    res.status(200).json(emailText);
+  });
+  
+  // Endpoint to update email text
+  app.put('/email-text', (req, res) => {
+    emailText = req.body;
+    res.status(200).json({ message: 'Email text updated successfully' });
+  });
+  
+  // Endpoint to reset email text
+  app.put('/email-text/reset', (req, res) => {
+    emailText = [
+      "Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.",
+      "Your donation will go a long way in helping us accomplish our goal of creating a modern facility",
+      "to support the religious, social and cultural needs of our community.",
+      "May god blessings always with you and your family.",
+      "Sincerely,",
+      "Sringeri Education and Vedic Academy.",
+      "No goods or services were provided for this donation."
+    ];
+    res.status(200).json({ message: 'Email text reset to default' });
+  });
+  
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

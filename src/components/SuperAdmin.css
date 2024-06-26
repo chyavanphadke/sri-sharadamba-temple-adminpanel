@@ -1,0 +1,53 @@
+.superadmin-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .superadmin-form {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 400px; /* Increase the width as needed */
+  }
+  
+  .superadmin-form-button {
+    width: 300%;
+  }
+  
+  .custom-dropdown .ant-select-dropdown-menu-item {
+    min-width: 500px; /* Adjust as needed */
+    white-space: nowrap; /* Ensure text doesn't wrap */
+    overflow: visible; /* Ensure text is not truncated */
+  }
+  .superadmin-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .superadmin-form {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 400px; /* Increase the width as needed */
+  }
+  
+  .superadmin-form-button {
+    width: 300%;
+  }
+  
+  .custom-dropdown .ant-select-dropdown-menu-item {
+    min-width: 150px; /* Adjust as needed */
+    white-space: nowrap; /* Ensure text doesn't wrap */
+    overflow: visible; /* Ensure text is not truncated */
+  }
+  
+  .custom-dropdown .ant-select-dropdown-menu-item:hover {
+    background-color: #f0f0f0; /* Add hover effect if needed */
+  }
+  

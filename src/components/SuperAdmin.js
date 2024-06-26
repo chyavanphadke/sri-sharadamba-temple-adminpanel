@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Table, Button, message, Input, Modal, Select, Row, Col } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
+import './SuperAdmin.css'; // Ensure this is the correct path to your CSS file
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -12,9 +13,11 @@ const SuperAdmin = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState('');
   const [modalAction, setModalAction] = useState(null);
+  const [userMap, setUserMap] = useState({});
 
   useEffect(() => {
     fetchUsers();
+    fetchUserMap();
   }, []);
 
   const fetchUsers = async () => {
@@ -32,6 +35,26 @@ const SuperAdmin = () => {
       message.error('Failed to load users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserMap = async () => {
+    try {
+      console.log('Fetching user map...');
+      const response = await axios.get('http://localhost:5001/users', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      console.log('User map response:', response.data);
+      const userMap = response.data.reduce((acc, user) => {
+        acc[user.userid] = user.username;
+        return acc;
+      }, {});
+      setUserMap(userMap);
+    } catch (error) {
+      console.error('Failed to load user map:', error);
+      message.error('Failed to load user map');
     }
   };
 
@@ -116,6 +139,8 @@ const SuperAdmin = () => {
         <Select
           defaultValue={text}
           onChange={(value) => handleAccessLevelChange(record.userid, record.username, value)}
+          dropdownClassName="custom-dropdown"
+          dropdownStyle={{ minWidth: '150px' }} // Ensuring dropdown width to avoid truncation
         >
           <Option value="User">User</Option>
           <Option value="Admin">Admin</Option>
@@ -123,7 +148,8 @@ const SuperAdmin = () => {
         </Select>
       )
     },
-    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text || 'N/A' },
+    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => userMap[text] || 'N/A' },
+    { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => text ? 'Yes' : 'No' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>

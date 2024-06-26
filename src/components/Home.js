@@ -3,7 +3,7 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 
 const { Content } = Layout;
@@ -17,14 +17,29 @@ const Home = () => {
   const [isSevaModalVisible, setIsSevaModalVisible] = useState(false);
   const [totalDevotees, setTotalDevotees] = useState(0);
   const [currentDevotee, setCurrentDevotee] = useState(null);
-  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
+  const [familyMembers, setFamilyMembers] = useState([]);
   const [form] = Form.useForm();
   const [sevaForm] = Form.useForm();
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedService, setSelectedService] = useState('');
   const [accessControl, setAccessControl] = useState({});
-  
+  const [formKey, setFormKey] = useState(0); // Add a unique key for the form
+  const [formData, setFormData] = useState({
+    FirstName: '',
+    LastName: '',
+    Phone: '',
+    AltPhone: '',
+    Address: '',
+    City: '',
+    State: '',
+    Zip: '',
+    Email: '',
+    Gotra: '',
+    Star: '',
+    DOB: null,
+  });
+
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
@@ -89,8 +104,22 @@ const Home = () => {
 
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
-    form.resetFields();
-    setFamilyMembers([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
+    setFamilyMembers([]); // Start with no family members
+    setFormData({
+      FirstName: '',
+      LastName: '',
+      Phone: '',
+      AltPhone: '',
+      Address: '',
+      City: '',
+      State: '',
+      Zip: '',
+      Email: '',
+      Gotra: '',
+      Star: '',
+      DOB: null,
+    });
+    setFormKey(prevKey => prevKey + 1); // Force form re-render by changing key
     setIsModalVisible(true);
   };
 
@@ -342,10 +371,11 @@ const Home = () => {
         onCancel={handleCancel}
         footer={null}
         width={800}
+        key={formKey} // Add the key to force remount
       >
         <Form
           form={form}
-          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
+          initialValues={formData}
           onFinish={handleOk}
           labelCol={{ span: 24 }}
           wrapperCol={{ span: 24 }}
@@ -432,6 +462,11 @@ const Home = () => {
           </Row>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
+            {familyMembers.length === 0 && ( // Check if there are no family members
+              <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
+                + Add Family Member
+              </Button>
+            )}
             {familyMembers.map((member, index) => (
               <div key={index} style={{ marginBottom: 16 }}>
                 <Row gutter={16}>
@@ -478,9 +513,9 @@ const Home = () => {
                 </Row>
                 <Row gutter={16} style={{ marginTop: 16 }}>
                   <Col span={8}>
-                    <Form.Item label="Gothra">
+                    <Form.Item label="Gotra">
                       <Input
-                        placeholder="Gothra"
+                        placeholder="Gotra"
                         value={member.Gotra}
                         onChange={(e) => handleFamilyChange(index, 'Gotra', e.target.value)}
                         style={{ height: 50 }}
@@ -510,9 +545,11 @@ const Home = () => {
                 </Row>
               </div>
             ))}
-            <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
-              + Add Family Member
-            </Button>
+            {familyMembers.length > 0 && ( // Show the button only if there are family members
+              <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
+                + Add Family Member
+              </Button>
+            )}
           </div>
           <Form.Item>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>

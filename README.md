@@ -19,9 +19,7 @@ Here are the architectural plans:
 </p>
 
 
-# Changes to the DB:
-
-## Modify User Table:
+# Modify to the DB:
 ```
 ALTER TABLE `seva`.`user` 
 ADD COLUMN `approved` BIT(1) NULL AFTER `su`,
@@ -40,10 +38,7 @@ CHANGE COLUMN `usertype` `usertype` VARCHAR(50) NOT NULL DEFAULT 'FD';
 UPDATE user SET old_users = 1 WHERE userid = 'anilv';
 UPDATE user SET old_users = 1 WHERE userid = 'omdhimahi';
 UPDATE user SET old_users = 1 WHERE userid = 'sharada';
-```
 
-## Create ModeOfPayment Table:
-```
 CREATE TABLE ModeOfPayment (
   PaymentMethodId INT AUTO_INCREMENT PRIMARY KEY,
   MethodName VARCHAR(255) NOT NULL
@@ -56,10 +51,9 @@ INSERT INTO ModeOfPayment (MethodName) VALUES ('Debit Card');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Online Transfer');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('PayPal');
 INSERT INTO ModeOfPayment (MethodName) VALUES ('Zelle');
-```
 
-## Create devotee Table:
-```
+
+
 ALTER TABLE `seva`.`devotee` 
 MODIFY `DOB` datetime DEFAULT NULL,
 MODIFY `LastModified` datetime DEFAULT NULL;
@@ -75,16 +69,9 @@ MODIFY `Zip` varchar(15) DEFAULT NULL,
 MODIFY `Email` varchar(100) DEFAULT NULL,
 MODIFY `Gotra` varchar(100) DEFAULT NULL,
 MODIFY `Star` varchar(100) DEFAULT NULL;
-```
 
-## Update receipt table
-```
-ALTER TABLE `seva`.`receipt` 
-ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
-```
 
-## accesscontrol
-```
+
 CREATE TABLE `accesscontrol` (
   `id` int NOT NULL AUTO_INCREMENT,
   `usertype` varchar(255) NOT NULL,
@@ -122,6 +109,10 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ('User', 'Settings', 1, 2, 2, 2, 2, 2),
 ('Admin', 'Settings', 1, 2, 2, 2, 2, 2),
 ('Super Admin', 'Settings', 1, 2, 2, 2, 2, 2);
+
+
+ALTER TABLE `seva`.`receipt`;
+ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
 ```
 
 # Installation:

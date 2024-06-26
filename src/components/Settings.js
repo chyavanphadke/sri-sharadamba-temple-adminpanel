@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
 import axios from 'axios';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import './Settings.css'; // Import CSS file for styling
 
 const { Content } = Layout;
@@ -13,6 +13,7 @@ const Settings = () => {
   const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
   const [emailCredentialsModalVisible, setEmailCredentialsModalVisible] = useState(false);
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +22,7 @@ const Settings = () => {
   const [accessRights, setAccessRights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
+  const [emailText, setEmailText] = useState([]);
   const [form] = Form.useForm();
 
   const token = localStorage.getItem('token');
@@ -33,6 +35,7 @@ const Settings = () => {
     const storedSidebarColor = localStorage.getItem('sidebarColor');
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
+    fetchEmailText();
   }, []);
 
   const fetchServices = async () => {
@@ -43,6 +46,16 @@ const Settings = () => {
       setFilteredServices(sortedServices);
     } catch (error) {
       message.error('Failed to load services');
+    }
+  };
+
+  const fetchEmailText = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/email-text');
+      setEmailText(response.data);
+      form.setFieldsValue({ emailText: response.data.join('\n') });
+    } catch (error) {
+      message.error('Failed to load email text');
     }
   };
 
@@ -94,13 +107,42 @@ const Settings = () => {
 
   const handleAddService = async (values) => {
     try {
-      await axios.post('http://localhost:5001/services', values);
+      console.log('Sending request to add service:', values); // Log the values being sent
+  
+      const newService = {
+        Service: values.Service,
+        Rate: parseFloat(values.Rate),
+        Comments: ' ',
+        Active: true,
+        DisplayFamily: false,
+        Temple: 0,
+        SvcCategoryId: 0,
+      };
+  
+      await axios.post('http://localhost:5001/services', newService);
+      console.log('Service added successfully:'); // Log the response
       message.success('Service added successfully');
       setNewServiceModalVisible(false);
       fetchServices();
     } catch (error) {
+      console.error('Error adding service:', error); // Log the error
       message.error('Failed to add service');
     }
+  };
+  
+
+  const handleNewServiceModalOpen = () => {
+    form.resetFields();
+    setNewServiceModalVisible(true);
+  };
+
+  const handleNewServiceModalCancel = () => {
+    setNewServiceModalVisible(false);
+    form.resetFields();
+  };
+
+  const handleClearForm = () => {
+    form.resetFields();
   };
 
   const handleChangeColor = () => {
@@ -180,6 +222,28 @@ const Settings = () => {
     setEmailCredentials({ ...emailCredentials, [field]: value });
   };
 
+  const handleSaveEmailText = async () => {
+    try {
+      const updatedText = form.getFieldValue('emailText').split('\n');
+      await axios.put('http://localhost:5001/email-text', updatedText);
+      message.success('Email text updated successfully');
+      setEmailModalVisible(false);
+      fetchEmailText(); // Refresh the text after saving
+    } catch (error) {
+      message.error('Failed to update email text');
+    }
+  };
+
+  const handleResetEmailText = async () => {
+    try {
+      await axios.put('http://localhost:5001/email-text/reset');
+      message.success('Email text reset to default');
+      fetchEmailText(); // Refresh the text after resetting
+    } catch (error) {
+      message.error('Failed to reset email text');
+    }
+  };
+
   const serviceColumns = [
     {
       title: 'Service',
@@ -242,6 +306,9 @@ const Settings = () => {
               <Button type="primary" onClick={handleOpenEmailCredentialsModal} style={{ marginLeft: '10px' }}>
                 Email Credentials
               </Button>
+              <Button type="primary" onClick={() => setEmailModalVisible(true)} style={{ marginLeft: '10px' }}>
+                Edit Email Text
+              </Button>
             </>
           )}
 
@@ -289,7 +356,7 @@ const Settings = () => {
               onChange={handleSearch}
               style={{ marginBottom: '10px', width: '300px' }}
             />
-            <Button type="primary" onClick={() => setNewServiceModalVisible(true)} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+            <Button type="primary" onClick={handleNewServiceModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
               Add New Service
             </Button>
             <Table
@@ -304,13 +371,14 @@ const Settings = () => {
           <Modal
             title="Add New Service"
             visible={newServiceModalVisible}
-            onCancel={() => setNewServiceModalVisible(false)}
+            onCancel={handleNewServiceModalCancel}
             footer={null}
           >
             <Form
               name="add_service"
               className="add-service-form"
               onFinish={handleAddService}
+              form={form}
             >
               <Form.Item
                 name="Service"
@@ -325,8 +393,14 @@ const Settings = () => {
                 <Input placeholder="Rate" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button type="default" onClick={handleClearForm} style={{ marginRight: '10px' }}>
+                  Clear
+                </Button>
+                <Button type="primary" htmlType="submit" style={{ marginRight: '10px' }}>
                   Add Service
+                </Button>
+                <Button type="default" onClick={handleNewServiceModalCancel}>
+                  Cancel
                 </Button>
               </Form.Item>
             </Form>
@@ -480,6 +554,27 @@ const Settings = () => {
                   value={emailCredentials.appPassword}
                   onChange={(e) => handleEmailChange('appPassword', e.target.value)}
                 />
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal
+            title="Edit Email Text"
+            visible={emailModalVisible}
+            onOk={handleSaveEmailText}
+            onCancel={() => setEmailModalVisible(false)}
+            footer={[
+              <Button key="reset" onClick={handleResetEmailText}>
+                Reset to Default
+              </Button>,
+              <Button key="submit" type="primary" onClick={handleSaveEmailText}>
+                Save
+              </Button>,
+            ]}
+          >
+            <Form form={form} layout="horizontal">
+              <Form.Item name="emailText" label="Email Text">
+                <Input.TextArea rows={10} style={{ width: '100%' }} /> 
               </Form.Item>
             </Form>
           </Modal>

@@ -4,7 +4,7 @@ import axios from 'axios';
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
 import './Receipts.css';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const { Search } = Input;
 
@@ -23,6 +23,7 @@ const Receipts = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [originalPaymentMethod, setOriginalPaymentMethod] = useState('');
   const [accessControl, setAccessControl] = useState({});
+  const [pdfText, setPdfText] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -39,6 +40,7 @@ const Receipts = () => {
       const decodedToken = jwtDecode(token);
       fetchAccessControl(decodedToken.usertype);
     }
+    fetchEmailText();
   }, []);
 
   const fetchAccessControl = async (userType) => {
@@ -207,6 +209,15 @@ const Receipts = () => {
     }
   ];
 
+  const fetchEmailText = async () => {
+    try {
+      const response = await axiosInstance.get('/email-text');
+      setPdfText(response.data);
+    } catch (error) {
+      message.error('Failed to load email text');
+    }
+  };
+
   const generatePDF = (record) => {
     const doc = new jsPDF({
       unit: 'in',
@@ -234,15 +245,10 @@ const Receipts = () => {
 
     doc.setFontSize(12);
     doc.text(`Dear ${record ? record.Name : ''},`, 0.5, 3.8);
-    doc.text(`Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.`, 0.5, 4.1);
-    doc.text(`Your donation will go a long way in helping us accomplish our goal of creating a modern facility`, 0.5, 4.4);
-    doc.text(`to support the religious, social and cultural needs of our community.`, 0.5, 4.7);
-    doc.text(`May god blessings always with you and your family.`, 0.5, 5.0);
 
-    doc.text('Sincerely,', 0.5, 5.6);
-    doc.text('Sringeri Education and Vedic Academy.', 0.5, 5.9);
-
-    doc.text('No goods or services were provided for this donation.', 4.25, 6.5, { align: 'center' });
+    pdfText.forEach((line, index) => {
+      doc.text(line, 0.5, 4.1 + index * 0.3); // Adjust the y-coordinate as needed
+    });
 
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.04);
@@ -256,45 +262,36 @@ const Receipts = () => {
     doc.text(`Received from: ${record ? record.Name : ''}`, 0.5, 7.8);
     doc.text(`Donation: $${record ? record.Amount : ''} only`, 0.5, 8.1);
     doc.text(`Receipt No: ${record ? record.ReceiptId : ''}`, 0.5, 8.4);
-
     doc.text(`Your Check No: ${record ? record.CheckNumber : ''}`, 0.5, 9);
-    doc.text(`Date: ${record ? formatDate(record.Date) : ''}`, 0.5, 9.3);
 
     return doc;
   };
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
-    console.log("Download modal confirmed for record:", currentRecord);
-
     const doc = generatePDF(currentRecord);
     const fileName = `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`;
     doc.save(fileName);
-
-    console.log("PDF generated and download triggered");
   };
 
   const handlePrint = (record) => {
     const doc = generatePDF(record);
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob);
-    console.log("PDF generated and print dialog opened");
   };
 
   const handleEmail = async () => {
     setIsEmailModalVisible(false);
-    console.log("Email modal confirmed for record:", currentRecord);
-  
     const doc = generatePDF(currentRecord);
     const pdfBlob = doc.output('blob');
-  
+
     const formData = new FormData();
     formData.append('email', currentRecord.Email);
     formData.append('Name', currentRecord.Name);
     formData.append('ActivityDate', formatDate(currentRecord.ActivityDate));
     formData.append('pdf', new Blob([pdfBlob], { type: 'application/pdf' }), `receipt_${currentRecord.ReceiptId}_${currentRecord.Name}.pdf`);
-    formData.append('receiptid', currentRecord.ReceiptId);  // Add receiptid here
-  
+    formData.append('receiptid', currentRecord.ReceiptId);
+
     try {
       await axiosInstance.post('/send-receipt-email', formData, {
         headers: {
@@ -306,7 +303,7 @@ const Receipts = () => {
     } catch (error) {
       message.error('Failed to send receipt via email');
     }
-  };  
+  };
 
   return (
     <div>
@@ -393,4 +390,5 @@ const Receipts = () => {
     </div>
   );
 };
+
 export default Receipts;
