@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Menu, Breadcrumb, Button } from 'antd';
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { Route, Routes, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
@@ -29,6 +29,7 @@ const Dashboard = () => {
   const [accessControl, setAccessControl] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -41,6 +42,43 @@ const Dashboard = () => {
     }
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
+    startInactivityTimeout();
+
+    // Clean up the timeout on component unmount
+    return () => {
+      clearInactivityTimeout();
+    };
+  }, []);
+
+  const startInactivityTimeout = () => {
+    clearInactivityTimeout();
+    timeoutRef.current = setTimeout(() => {
+      handleSignOut();
+    }, 15 * 60 * 1000); // 15 minutes
+  };
+
+  const clearInactivityTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+
+  const handleUserActivity = () => {
+    startInactivityTimeout();
+  };
+
+  useEffect(() => {
+    // Add event listeners for user activity
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+
+    // Clean up event listeners on component unmount
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+    };
   }, []);
 
   const fetchAccessControl = async (userType) => {

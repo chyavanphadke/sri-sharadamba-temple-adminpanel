@@ -200,7 +200,7 @@ const Home = () => {
                 </Form.Item>
               </Form>
             </div>
-            <div style={{ width: '0.2%', backgroundColor: 'lightgrey' }}></div>
+            <div style={{ width: '0.08%', backgroundColor: 'lightgrey' }}></div>
             <div style={{ width: '49%' }}>
               <h3>Family Members</h3>
               {familyMembers.map((member, index) => (
