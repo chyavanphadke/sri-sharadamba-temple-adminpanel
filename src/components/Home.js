@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout, Input, Button, Form, message, Row, Col, DatePicker } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import './Home.css';
 
 const { Content } = Layout;
@@ -32,12 +32,11 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (token) {
       const decodedToken = jwtDecode(token);
       fetchAccessControl(decodedToken.usertype);
     }
-  }, []);
+  }, [token]);
 
   const handleOk = async (values) => {
     try {
@@ -102,7 +101,7 @@ const Home = () => {
     <Layout>
       <Content>
         <div className="site-layout-content">
-          <h2>New Devotee</h2>
+          <h2>Add a New Devotee</h2>
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', borderTop: '1px solid lightgrey', paddingTop: 16 }}>
             <div style={{ width: '49%' }}>
               <Form
@@ -199,7 +198,7 @@ const Home = () => {
                 </Form.Item>
               </Form>
             </div>
-            <div style={{ width: '0.5%', backgroundColor: 'lightgrey' }}></div>
+            <div style={{ width: '0.08%', backgroundColor: 'lightgrey' }}></div>
             <div style={{ width: '49%' }}>
               <h3>Family Members</h3>
               {familyMembers.map((member, index) => (
