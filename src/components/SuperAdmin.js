@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Table, Button, message, Input, Modal, Select, Row, Col } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
+import {jwtDecode} from 'jwt-decode';
 import './SuperAdmin.css'; // Ensure this is the correct path to your CSS file
 
 const { Content } = Layout;
@@ -14,8 +15,14 @@ const SuperAdmin = () => {
   const [modalContent, setModalContent] = useState('');
   const [modalAction, setModalAction] = useState(null);
   const [userMap, setUserMap] = useState({});
+  const [loggedInUsername, setLoggedInUsername] = useState('');
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      setLoggedInUsername(decodedToken.username.toLowerCase());
+    }
     fetchUsers();
     fetchUserMap();
   }, []);
@@ -144,7 +151,7 @@ const SuperAdmin = () => {
         >
           <Option value="User">User</Option>
           <Option value="Admin">Admin</Option>
-          <Option value="Super Admin">Super Admin</Option>
+          {(loggedInUsername === 'nb' || loggedInUsername === 'aghamya') && <Option value="Super Admin">Super Admin</Option>}
         </Select>
       )
     },
