@@ -479,18 +479,6 @@ const DevoteeList = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Email" label="Email">
-                <Input placeholder="Email" style={{ height: 50 }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="DOB" label="Date of Birth">
-                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
               <Form.Item name="Gotra" label="Gotra">
                 <Input placeholder="Gotra" style={{ height: 50 }} />
               </Form.Item>
@@ -500,6 +488,18 @@ const DevoteeList = () => {
                 <Input placeholder="Star" style={{ height: 50 }} />
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="Email" label="Email">
+                <Input placeholder="Email" style={{ height: 50 }} />
+              </Form.Item>
+            </Col>
+            {/* <Col span={12}>
+              <Form.Item name="DOB" label="Date of Birth">
+                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
+              </Form.Item>
+            </Col> */}
           </Row>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
