@@ -70,7 +70,9 @@ const Home = () => {
       setCurrentDevotee(null);
       setFamilyMembers([]);
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.message) {
+      if (error.response && error.response.data && error.response.data.error === 'The email is already registered') {
+        message.error('Email already registered');
+      } else if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
       } else {
         message.error('Failed to save devotee');
@@ -101,7 +103,7 @@ const Home = () => {
     <Layout>
       <Content>
         <div className="site-layout-content">
-          <h2>Add a New Devotee</h2>
+          <h2>New Devotee</h2>
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', borderTop: '1px solid lightgrey', paddingTop: 16 }}>
             <div style={{ width: '49%' }}>
               <Form
@@ -198,7 +200,7 @@ const Home = () => {
                 </Form.Item>
               </Form>
             </div>
-            <div style={{ width: '0.08%', backgroundColor: 'lightgrey' }}></div>
+            <div style={{ width: '0.2%', backgroundColor: 'lightgrey' }}></div>
             <div style={{ width: '49%' }}>
               <h3>Family Members</h3>
               {familyMembers.map((member, index) => (
