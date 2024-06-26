@@ -114,14 +114,20 @@ const Dashboard = () => {
     setCollapsed(!collapsed);
   };
 
+  const handleMenuClick = () => {
+    if (window.innerWidth <= 992) {
+      setCollapsed(true);
+    }
+  };
+
   const menuItems = [
-    { key: '/dashboard/home', icon: <img src={homeIcon} alt="New Devotee" className="custom-icon" />, label: <Link to="/dashboard/home">New Devotee</Link>, access: accessControl.Home?.can_view },
-    { key: '/dashboard/devotee-list', icon: <img src={DevoteeListIcon} alt="Devotee List" className="custom-icon" />, label: <Link to="/dashboard/devotee-list">Devotee List</Link>, access: accessControl.DevoteeList?.can_view },
-    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link>, access: accessControl.Calendar?.can_view },
-    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link>, access: accessControl.Receipts?.can_view },
-    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link>, access: accessControl.Reports?.can_view },
-    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
-    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view },
+    { key: '/dashboard/home', icon: <img src={homeIcon} alt="New Devotee" className="custom-icon" />, label: <Link to="/dashboard/home" onClick={handleMenuClick}>New Devotee</Link>, access: accessControl.Home?.can_view },
+    { key: '/dashboard/devotee-list', icon: <img src={DevoteeListIcon} alt="Devotee List" className="custom-icon" />, label: <Link to="/dashboard/devotee-list" onClick={handleMenuClick}>Devotee List</Link>, access: accessControl.DevoteeList?.can_view },
+    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar" onClick={handleMenuClick}>Calendar</Link>, access: accessControl.Calendar?.can_view },
+    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts" onClick={handleMenuClick}>Receipts</Link>, access: accessControl.Receipts?.can_view },
+    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports" onClick={handleMenuClick}>Reports</Link>, access: accessControl.Reports?.can_view },
+    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access" onClick={handleMenuClick}>Login Access</Link>, access: accessControl['Login Access']?.can_view },
+    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings" onClick={handleMenuClick}>Settings</Link>, access: accessControl.Settings?.can_view },
   ].filter(item => item.access);
 
   const getBreadcrumbItems = () => {

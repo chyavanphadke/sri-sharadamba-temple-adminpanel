@@ -104,8 +104,8 @@ const Home = () => {
       <Content>
         <div className="site-layout-content">
           <h2>New Devotee</h2>
-          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', borderTop: '1px solid lightgrey', paddingTop: 16 }}>
-            <div style={{ width: '49%' }}>
+          <div className="responsive-container">
+            <div className="form-section">
               <Form
                 form={form}
                 initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
@@ -114,7 +114,7 @@ const Home = () => {
                 wrapperCol={{ span: 24 }}
               >
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item
                       name="FirstName"
                       label="First Name"
@@ -123,7 +123,7 @@ const Home = () => {
                       <Input placeholder="First Name" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item
                       name="LastName"
                       label="Last Name"
@@ -134,74 +134,74 @@ const Home = () => {
                   </Col>
                 </Row>
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Phone" label="Phone Number">
                       <Input placeholder="Phone Number" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="AltPhone" label="Alternate Phone Number">
                       <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Address" label="Address">
                       <Input placeholder="Address" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="City" label="City">
                       <Input placeholder="City" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="State" label="State">
                       <Input placeholder="State" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Zip" label="Zip Code">
                       <Input placeholder="Zip Code" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Email" label="Email">
                       <Input placeholder="Email" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="DOB" label="Date of Birth">
                       <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row gutter={16}>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Gotra" label="Gotra">
                       <Input placeholder="Gotra" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col xs={24} sm={12}>
                     <Form.Item name="Star" label="Star">
                       <Input placeholder="Star" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" style={{ height: 50, width: '50%', fontSize: '18px' }}>
+                  <Button type="primary" htmlType="submit" style={{ height: 50, width: '100%', fontSize: '18px' }}>
                     {currentDevotee ? "Update" : "Add"}
                   </Button>
                 </Form.Item>
               </Form>
             </div>
-            <div style={{ width: '0.08%', backgroundColor: 'lightgrey' }}></div>
-            <div style={{ width: '49%' }}>
+            <div className="divider"></div>
+            <div className="family-section">
               <h3>Family Members</h3>
               {familyMembers.map((member, index) => (
                 <div key={index} style={{ marginBottom: 16 }}>
@@ -217,7 +217,7 @@ const Home = () => {
                   </Row>
                   <Form layout="vertical">
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="First Name">
                           <Input
                             placeholder="First Name"
@@ -227,7 +227,7 @@ const Home = () => {
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Last Name">
                           <Input
                             placeholder="Last Name"
@@ -239,7 +239,7 @@ const Home = () => {
                       </Col>
                     </Row>
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Date of Birth">
                           <DatePicker
                             style={{ width: '100%', height: 50 }}
@@ -249,7 +249,7 @@ const Home = () => {
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Relation">
                           <Input
                             placeholder="Relation"
@@ -261,7 +261,7 @@ const Home = () => {
                       </Col>
                     </Row>
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Gothra">
                           <Input
                             placeholder="Gothra"
@@ -271,7 +271,7 @@ const Home = () => {
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={12}>
+                      <Col xs={24} sm={12}>
                         <Form.Item label="Star">
                           <Input
                             placeholder="Star"
@@ -285,7 +285,7 @@ const Home = () => {
                   </Form>
                 </div>
               ))}
-              <Button type="dashed" onClick={addFamilyMember} style={{ width: '50%', height: 50, fontSize: '18px' }}>
+              <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%', height: 50, fontSize: '18px' }}>
                 + Add Family Member
               </Button>
             </div>

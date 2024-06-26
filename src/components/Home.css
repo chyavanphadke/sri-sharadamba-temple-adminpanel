@@ -5,6 +5,40 @@
   min-height: 280px;
 }
 
+.responsive-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section, .family-section {
+  width: 100%;
+}
+
+.divider {
+  height: 1px;
+  background-color: lightgrey;
+  margin: 16px 0;
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .divider {
+    width: 1px;
+    height: auto;
+    background-color: lightgrey;
+    margin: 0 16px;
+  }
+
+  .form-section, .family-section {
+    width: 49%;
+  }
+}
+
 .custom-table .ant-table {
   border: 1px solid #e8e8e8; /* Add a thin border around the table */
   border-radius: 4px;
