@@ -171,18 +171,6 @@ const Home = () => {
                 </Row>
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
-                    <Form.Item name="Email" label="Email">
-                      <Input placeholder="Email" style={{ height: 50 }} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="DOB" label="Date of Birth">
-                      <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
                     <Form.Item name="Gotra" label="Gotra">
                       <Input placeholder="Gotra" style={{ height: 50 }} />
                     </Form.Item>
@@ -192,6 +180,18 @@ const Home = () => {
                       <Input placeholder="Star" style={{ height: 50 }} />
                     </Form.Item>
                   </Col>
+                </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item name="Email" label="Email">
+                      <Input placeholder="Email" style={{ height: 50 }} />
+                    </Form.Item>
+                  </Col>
+                  {/* <Col xs={24} sm={12}>
+                    <Form.Item name="DOB" label="Date of Birth">
+                      <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
+                    </Form.Item>
+                  </Col> */}
                 </Row>
                 <Form.Item>
                   <Button type="primary" htmlType="submit" style={{ height: 50, width: '100%', fontSize: '18px' }}>
@@ -239,7 +239,7 @@ const Home = () => {
                       </Col>
                     </Row>
                     <Row gutter={16}>
-                      <Col xs={24} sm={12}>
+                      {/* <Col xs={24} sm={12}>
                         <Form.Item label="Date of Birth">
                           <DatePicker
                             style={{ width: '100%', height: 50 }}
@@ -248,7 +248,7 @@ const Home = () => {
                             onChange={(date) => handleFamilyChange(index, 'DOB', date)}
                           />
                         </Form.Item>
-                      </Col>
+                      </Col> */}
                       <Col xs={24} sm={12}>
                         <Form.Item label="Relation">
                           <Input
