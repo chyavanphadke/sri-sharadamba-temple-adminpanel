@@ -435,7 +435,7 @@ Activity.hasOne(Receipt, { foreignKey: 'activityid' });
 Receipt.belongsTo(Activity, { foreignKey: 'activityid' });
 
 Service.hasMany(Receipt, { foreignKey: 'servicetype', as: 'ServiceType' });
-Receipt.belongsTo(Service, { foreignKey: 'servicetype', targetKey: 'Service' });
+Receipt.belongsTo(Service, { foreignKey: 'servicetype', as: 'Service' });
 
 // Sync the models with the database
 sequelize.sync()
