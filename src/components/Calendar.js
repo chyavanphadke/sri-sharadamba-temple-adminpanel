@@ -31,12 +31,11 @@ const Calendar = () => {
   }), [token]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (token) {
       const decodedToken = jwtDecode(token);
       fetchAccessControl(decodedToken.usertype);
     }
-  }, []);
+  }, [token]);
 
   const fetchAccessControl = async (userType) => {
     try {
@@ -67,7 +66,8 @@ const Calendar = () => {
       const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from, to }
       });
-      setActivities(response.data);
+      const filteredActivities = response.data.filter(activity => activity.EventName !== 'DONATION');
+      setActivities(filteredActivities);
     } catch (error) {
       console.error('Error fetching activities:', error);
     }
@@ -79,7 +79,7 @@ const Calendar = () => {
       const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from: today, to: today }
       });
-      const todaysEvents = response.data;
+      const todaysEvents = response.data.filter(activity => activity.EventName !== 'DONATION');
       setSearchResults(todaysEvents); // Set today's events in search results
     } catch (error) {
       console.error('Error fetching today\'s activities:', error);
@@ -97,7 +97,7 @@ const Calendar = () => {
         const res = await axiosInstance.get(`/devotees/${devotee.DevoteeId}/activities`, {
           params: { printDateNull: true }
         });
-        return res.data;
+        return res.data.filter(activity => activity.EventName !== 'DONATION');
       }));
 
       setSearchResults(activities.flat());
@@ -168,17 +168,21 @@ const Calendar = () => {
     setCurrentMonth(moment(date).utc().startOf('month'));
   };
 
-  const events = activities.map(activity => ({
-    title: activity.EventName,
-    start: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
-    end: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
-    allDay: true,
-    resource: activity,
-  }));
+  const events = activities
+    .filter(activity => activity.EventName !== 'DONATION')
+    .map(activity => ({
+      title: activity.EventName,
+      start: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
+      end: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
+      allDay: true,
+      resource: activity,
+    }));
 
-  const todaysEvents = activities.filter(activity =>
-    moment(activity.ServiceDate).isSame(moment().utc().startOf('day'), 'day')
-  );
+  const todaysEvents = activities
+    .filter(activity => 
+      activity.EventName !== 'DONATION' && 
+      moment(activity.ServiceDate).isSame(moment().utc().startOf('day'), 'day')
+    );
 
   const columns = [
     {
