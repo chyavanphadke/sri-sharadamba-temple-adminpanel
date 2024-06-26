@@ -411,25 +411,6 @@ app.get('/devotees', async (req, res) => {
   }
 });
 
-app.get('/devotees/search', async (req, res) => {
-  try {
-    const { query } = req.query;
-    const devotees = await Devotee.findAll({
-      where: {
-        [Op.or]: [
-          { FirstName: { [Op.like]: `%${query}%` } },
-          { LastName: { [Op.like]: `%${query}%` } }
-        ]
-      },
-      order: [['FirstName', 'ASC']]
-    });
-    res.status(200).json(devotees);
-  } catch (err) {
-    console.error('Error searching devotees:', err);
-    res.status(500).json({ message: 'Error searching devotees', error: err.message });
-  }
-});
-
 app.get('/devotees/:id/family', async (req, res) => {
   try {
     const families = await Family.findAll({ where: { DevoteeId: req.params.id }, order: [['LastModified', 'DESC']] });
@@ -1095,10 +1076,13 @@ app.get('/devotees/search', async (req, res) => {
       where: {
         [Op.or]: [
           { FirstName: { [Op.like]: `%${query}%` } },
-          { LastName: { [Op.like]: `%${query}%` } }
+          { LastName: { [Op.like]: `%${query}%` } },
+          { Phone: { [Op.like]: `%${query}%` } },
+          { Email: { [Op.like]: `%${query}%` } }
         ]
       },
-      attributes: ['DevoteeId', 'FirstName', 'LastName']
+      attributes: ['DevoteeId', 'FirstName', 'LastName', 'Email', 'Phone'],
+      order: [['FirstName', 'ASC']]
     });
     res.status(200).json(devotees);
   } catch (err) {
@@ -1106,6 +1090,7 @@ app.get('/devotees/search', async (req, res) => {
     res.status(500).json({ message: 'Error searching devotees', error: err.message });
   }
 });
+
 
 app.get('/devotee/:id', async (req, res) => {
   try {

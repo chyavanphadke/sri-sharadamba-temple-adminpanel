@@ -571,13 +571,13 @@ const Reports = () => {
               </Select>
             </Col>
             <Col>
-              <div>Search by Name</div>
+              <div>Search by Name, Phone, or Email</div>
               <AutoComplete
                 style={{ width: 300, marginRight: 10, marginTop: 10 }}
                 options={devoteeOptions}
                 onSelect={handleDevoteeSelect}
                 onSearch={handleSearchChange}
-                placeholder="Search by Name"
+                placeholder="Search by Name, Phone, or Email"
                 value={selectedDevoteeName} // Update to show selected devotee's name
                 onChange={handleSearchChange}
               />
