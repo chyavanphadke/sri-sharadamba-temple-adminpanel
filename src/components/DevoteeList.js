@@ -16,13 +16,13 @@ const DevoteeList = () => {
   const [totalDevotees, setTotalDevotees] = useState(0);
   const [currentDevotee, setCurrentDevotee] = useState(null);
   const [isSevaModalVisible, setIsSevaModalVisible] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false); // Added for edit devotee modal
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedService, setSelectedService] = useState('');
   const [sevaForm] = Form.useForm();
-  const [form] = Form.useForm(); // Added for edit devotee form
-  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]); // Added for edit devotee
+  const [form] = Form.useForm();
+  const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [accessControl, setAccessControl] = useState({});
 
   const token = localStorage.getItem('token');
@@ -194,6 +194,10 @@ const DevoteeList = () => {
 
   const handleOk = async (values) => {
     try {
+      const filteredFamilyMembers = familyMembers.filter(member => 
+        member.FirstName || member.LastName || member.RelationShip || member.Gotra || member.Star || member.DOB
+      );
+
       const payload = {
         FirstName: values.FirstName,
         LastName: values.LastName,
@@ -207,7 +211,7 @@ const DevoteeList = () => {
         Gotra: values.Gotra || null,
         Star: values.Star || null,
         DOB: values.DOB ? values.DOB.format('YYYY-MM-DD') : null,
-        family: familyMembers
+        family: filteredFamilyMembers
       };
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
@@ -577,7 +581,7 @@ const DevoteeList = () => {
                 </Row>
               </div>
             ))}
-            <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
+            <Button type="dashed" onClick={addFamilyMember} style={{ width: '50%' }}>
               + Add Family Member
             </Button>
           </div>
