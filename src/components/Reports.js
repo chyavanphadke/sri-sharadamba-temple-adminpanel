@@ -488,7 +488,17 @@ const Reports = () => {
       key: 'date',
       render: (text) => moment(text).format('MMMM D, YYYY') // Format the date
     },
-    { title: 'Payment Method', dataIndex: 'Payment Method', key: 'paymentMethod' },
+    { 
+      title: 'Payment Method', 
+      dataIndex: 'Payment Method', 
+      key: 'paymentMethod',
+      render: (text, record) => {
+        if (text === 'Check' && record.CheckNumber && record.CheckNumber.trim()) {
+          return `${text} (${record.CheckNumber})`;
+        }
+        return text;
+      } // Show check number in parentheses if payment method is "Check"
+    },
     {
       title: 'Actions',
       key: 'actions',
