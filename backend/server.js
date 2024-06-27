@@ -1060,6 +1060,7 @@ app.get('/reports', authenticateToken, async (req, res) => {
         { model: Service, attributes: ['Service'], required: true },
         { model: ModeOfPayment, attributes: ['MethodName'], required: true }
       ],
+      attributes: ['ActivityId', 'DevoteeId', 'ServiceId', 'Amount', 'ActivityDate', 'ServiceDate', 'PaymentMethod', 'CheckNumber'],
       order: [['ActivityDate', 'DESC']]
     });
 
@@ -1072,6 +1073,7 @@ app.get('/reports', authenticateToken, async (req, res) => {
       Date: activity.ActivityDate,
       ServiceDate: activity.ServiceDate,
       'Payment Method': activity.ModeOfPayment.MethodName,
+      CheckNumber: activity.CheckNumber // Ensure CheckNumber is included
     }));
 
     res.status(200).json(reportData);
@@ -1080,6 +1082,7 @@ app.get('/reports', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching reports', error: err.message });
   }
 });
+
 
 // End of updated code for reports page
 
