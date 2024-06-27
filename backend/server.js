@@ -262,6 +262,24 @@ app.put('/user/:userid/approve', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/user/:userid/disapprove', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.userid);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.approved = false;
+    user.active = false;
+    user.approvedBy = null; // Clear the approvedBy field or set it to a default value
+    await user.save();
+
+    res.status(200).json({ message: 'User disapproved successfully' });
+  } catch (err) {
+    console.error('Error disapproving user:', err);
+    res.status(500).json({ message: 'Error disapproving user', error: err.message });
+  }
+});
 
 app.put('/user/:userid/usertype', async (req, res) => {
   const { usertype } = req.body;
