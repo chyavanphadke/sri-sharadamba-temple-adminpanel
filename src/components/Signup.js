@@ -12,8 +12,8 @@ const Signup = () => {
 
   const onFinish = async (values) => {
     try {
-      await axios.post('http://localhost:5001/signup', values);
-      message.success('Signup successful. Waiting for Admin approval.', 2, () => {
+      const response = await axios.post('http://localhost:5001/signup', values);
+      message.success(response.data.message, 2, () => {
         navigate('/'); // This callback will be executed after the message duration
       });
     } catch (error) {

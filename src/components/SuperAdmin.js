@@ -155,7 +155,7 @@ const SuperAdmin = () => {
         </Select>
       )
     },
-    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => userMap[text] || 'N/A' },
+    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text === 'Auto Approved' ? 'Auto Approved' : (userMap[text] || 'N/A') },
     { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => text ? 'Yes' : 'No' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (

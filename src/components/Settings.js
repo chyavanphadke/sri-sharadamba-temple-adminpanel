@@ -23,6 +23,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [emailText, setEmailText] = useState([]);
+  const [autoApprove, setAutoApprove] = useState(false);
   const [form] = Form.useForm();
 
   const token = localStorage.getItem('token');
@@ -36,6 +37,7 @@ const Settings = () => {
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
     fetchEmailText();
+    fetchAutoApprove();
   }, []);
 
   const fetchServices = async () => {
@@ -56,6 +58,25 @@ const Settings = () => {
       form.setFieldsValue({ emailText: response.data.join('\n') });
     } catch (error) {
       message.error('Failed to load email text');
+    }
+  };
+
+  const fetchAutoApprove = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/general-configurations');
+      setAutoApprove(response.data.autoApprove);
+    } catch (error) {
+      message.error('Failed to load auto approve setting');
+    }
+  };
+
+  const saveAutoApprove = async (value) => {
+    try {
+      await axios.put('http://localhost:5001/general-configurations', { autoApprove: value });
+      setAutoApprove(value);
+      message.success(value ? 'Auto approve on sign up GRANTED (Access: User)' : 'Auto approve on sign up REMOVED');
+    } catch (error) {
+      message.error('Failed to update general configurations');
     }
   };
 
@@ -107,8 +128,6 @@ const Settings = () => {
 
   const handleAddService = async (values) => {
     try {
-      console.log('Sending request to add service:', values); // Log the values being sent
-  
       const newService = {
         Service: values.Service,
         Rate: parseFloat(values.Rate),
@@ -120,12 +139,10 @@ const Settings = () => {
       };
   
       await axios.post('http://localhost:5001/services', newService);
-      console.log('Service added successfully:'); // Log the response
       message.success('Service added successfully');
       setNewServiceModalVisible(false);
       fetchServices();
     } catch (error) {
-      console.error('Error adding service:', error); // Log the error
       message.error('Failed to add service');
     }
   };
@@ -314,6 +331,14 @@ const Settings = () => {
               </Button>
             </>
           )}
+          <h3 style={{ marginTop: '20px' }}>General Configurations</h3>
+          <Checkbox
+            checked={autoApprove}
+            onChange={(e) => saveAutoApprove(e.target.checked)}
+            style={{ marginTop: '10px' }}
+          >
+            Auto Approve users on Signup
+          </Checkbox>
 
           <Modal
             title="Change Password"

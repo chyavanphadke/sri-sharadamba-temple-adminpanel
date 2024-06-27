@@ -421,6 +421,16 @@ const EmailCredential = sequelize.define('EmailCredential', {
   },
 });
 
+const GeneralConfigurations = sequelize.define('GeneralConfigurations', {
+  autoApprove: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+}, {
+  tableName: 'generalconfigurations',
+  timestamps: false,
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -462,5 +472,6 @@ module.exports = {
   ModeOfPayment,
   Receipt,
   AccessControl,
-  EmailCredential
+  EmailCredential,
+  GeneralConfigurations
 };

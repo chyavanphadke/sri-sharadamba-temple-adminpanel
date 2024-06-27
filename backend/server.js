@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations } = require('./models');
 
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
@@ -69,13 +69,23 @@ app.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({
+    const config = await GeneralConfigurations.findOne();
+
+    const newUser = {
       username,
       email,
       password: hashedPassword,
-      approved: false,
-    });
-    res.status(200).json({ message: 'User signed up successfully. Waiting for Admin approval.' });
+      approved: config && config.autoApprove ? true : false,
+      approvedBy: config && config.autoApprove ? 'Auto Approved' : null,
+    };
+
+    await User.create(newUser);
+
+    const message = config && config.autoApprove 
+      ? 'User signed up successfully. Auto Approved.' 
+      : 'User signed up successfully. Waiting for Admin approval.';
+
+    res.status(200).json({ message });
   } catch (err) {
     console.error('Error signing up:', err);
     res.status(500).json({ message: 'Error signing up', error: err.message });
@@ -1083,6 +1093,25 @@ app.get('/reports', authenticateToken, async (req, res) => {
   }
 });
 
+// General Configurations Routes
+app.get('/general-configurations', async (req, res) => {
+  try {
+    const config = await GeneralConfigurations.findOne();
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching general configurations', error });
+  }
+});
+
+app.put('/general-configurations', async (req, res) => {
+  try {
+    const { autoApprove } = req.body;
+    await GeneralConfigurations.update({ autoApprove }, { where: { id: 1 } });
+    res.json({ message: 'General configurations updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating general configurations', error });
+  }
+});
 
 // End of updated code for reports page
 
