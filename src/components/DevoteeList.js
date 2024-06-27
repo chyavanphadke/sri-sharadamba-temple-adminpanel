@@ -117,7 +117,7 @@ const DevoteeList = () => {
     sevaForm.resetFields();
     sevaForm.setFieldsValue({
       Name: `${devotee.FirstName} ${devotee.LastName}`,
-      AmountPaid: 0,
+      // AmountPaid: 0,
     });
     setIsSevaModalVisible(true);
   };
@@ -349,7 +349,7 @@ const DevoteeList = () => {
                   placeholder="Select a service"
                   onChange={(value) => {
                     const service = services.find(s => s.Service === value);
-                    sevaForm.setFieldsValue({ Rate: service.Rate, AmountPaid: service.Rate });
+                    sevaForm.setFieldsValue({ Expected_Donation: service.Rate, AmountPaid: service.Rate });
                     setSelectedService(value);
                   }}
                   showSearch
@@ -364,7 +364,7 @@ const DevoteeList = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="Expected Donation" label="Expected Donation">
+              <Form.Item name="Expected_Donation" label="Expected Donation">
                 <Input disabled />
               </Form.Item>
             </Col>
@@ -372,7 +372,7 @@ const DevoteeList = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
-                <Input type="number" />
+                  <Input placeholder="Select a payment method" type="number" />
               </Form.Item>
             </Col>
             <Col span={12}>
