@@ -118,6 +118,16 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 
 ALTER TABLE `seva`.`receipt`;
 ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
+
+
+CREATE TABLE `generalconfigurations` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `autoApprove` BIT(1) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+INSERT INTO `generalconfigurations` (autoApprove) VALUES (0);
+
 ```
 
 # Installation:
