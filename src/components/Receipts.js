@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Table, Button, Modal, Form, Input, message } from 'antd';
+import { Table, Button, Modal, Form, Input, message, Row, Col } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
@@ -20,10 +20,10 @@ const Receipts = () => {
   const [isPrintModalVisible, setIsPrintModalVisible] = useState(false);
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
-  const [activeTab, setActiveTab] = useState('pending');
   const [originalPaymentMethod, setOriginalPaymentMethod] = useState('');
   const [accessControl, setAccessControl] = useState({});
   const [pdfText, setPdfText] = useState([]);
+  const [activeTab, setActiveTab] = useState('pending');
 
   const token = localStorage.getItem('token');
 
@@ -33,15 +33,6 @@ const Receipts = () => {
       Authorization: `Bearer ${token}`,
     },
   }), [token]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      fetchAccessControl(decodedToken.usertype);
-    }
-    fetchEmailText();
-  }, []);
 
   const fetchAccessControl = async (userType) => {
     try {
@@ -53,6 +44,15 @@ const Receipts = () => {
       setAccessControl(data);
     } catch (error) {
       console.error('Failed to fetch access control data:', error);
+    }
+  };
+
+  const fetchEmailText = async () => {
+    try {
+      const response = await axiosInstance.get('/email-text');
+      setPdfText(response.data);
+    } catch (error) {
+      message.error('Failed to load email text');
     }
   };
 
@@ -85,9 +85,21 @@ const Receipts = () => {
   }, [axiosInstance]);
 
   useEffect(() => {
-    fetchPendingReceipts(pendingSearch);
-    fetchApprovedReceipts(approvedSearch);
-  }, [fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch]);
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      fetchAccessControl(decodedToken.usertype);
+    }
+    fetchEmailText();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'pending') {
+      fetchPendingReceipts(pendingSearch);
+    } else if (activeTab === 'approved') {
+      fetchApprovedReceipts(approvedSearch);
+    }
+  }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch]);
 
   const handleApprove = async (activityId) => {
     try {
@@ -146,6 +158,16 @@ const Receipts = () => {
     } else if (value.length === 0) {
       fetchApprovedReceipts('');
     }
+  };
+
+  const handleClearPendingSearch = () => {
+    setPendingSearch('');
+    fetchPendingReceipts('');
+  };
+
+  const handleClearApprovedSearch = () => {
+    setApprovedSearch('');
+    fetchApprovedReceipts('');
   };
 
   const formatDate = (date) => {
@@ -208,15 +230,6 @@ const Receipts = () => {
       )
     }
   ];
-
-  const fetchEmailText = async () => {
-    try {
-      const response = await axiosInstance.get('/email-text');
-      setPdfText(response.data);
-    } catch (error) {
-      message.error('Failed to load email text');
-    }
-  };
 
   const generatePDF = (record) => {
     const doc = new jsPDF({
@@ -318,11 +331,17 @@ const Receipts = () => {
       </div>
       {activeTab === 'pending' && (
         <>
-          <Search
-            placeholder="Search by name, phone or email"
-            onChange={handlePendingSearchChange}
-            style={{ marginBottom: '16px' }}
-          />
+          <div style={{ display: 'flex', marginBottom: '16px' }}>
+            <Search
+              placeholder="Search by name, phone or email"
+              value={pendingSearch}
+              onChange={handlePendingSearchChange}
+              style={{ width: '30%' }}
+            />
+            <Button onClick={handleClearPendingSearch} style={{ marginLeft: '8px', borderColor: 'red', color: 'red' }}>
+              Clear
+            </Button>
+          </div>
           <Table
             columns={columnsPending}
             dataSource={pendingReceipts}
@@ -334,11 +353,17 @@ const Receipts = () => {
       )}
       {activeTab === 'approved' && (
         <>
-          <Search
-            placeholder="Search by name, phone or email"
-            onChange={handleApprovedSearchChange}
-            style={{ marginBottom: '16px' }}
-          />
+          <div style={{ display: 'flex', marginBottom: '16px' }}>
+            <Search
+              placeholder="Search by name, phone or email"
+              value={approvedSearch}
+              onChange={handleApprovedSearchChange}
+              style={{ width: '30%' }}
+            />
+            <Button onClick={handleClearApprovedSearch} style={{ marginLeft: '8px', borderColor: 'red', color: 'red' }}>
+              Clear
+            </Button>
+          </div>
           <Table
             columns={columnsApproved}
             dataSource={approvedReceipts}
