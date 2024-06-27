@@ -438,10 +438,22 @@ app.post('/devotees', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;
   const transaction = await sequelize.transaction();
   try {
-    const existingDevotee = await Devotee.findOne({ where: { Email } });
-    if (existingDevotee) {
-      return res.status(400).json({ error: 'The email is already registered' });
+    // Check for existing email if Email is not null or empty
+    if (Email) {
+      const existingDevoteeWithEmail = await Devotee.findOne({ where: { Email } });
+      if (existingDevoteeWithEmail) {
+        return res.status(400).json({ error: 'The email is already registered' });
+      }
     }
+
+    // Check for existing phone if Phone is not null or empty
+    if (Phone) {
+      const existingDevoteeWithPhone = await Devotee.findOne({ where: { Phone } });
+      if (existingDevoteeWithPhone) {
+        return res.status(400).json({ error: 'The phone number is already registered' });
+      }
+    }
+
     const devotee = await Devotee.create({
       FirstName,
       LastName,
@@ -456,9 +468,11 @@ app.post('/devotees', authenticateToken, async (req, res) => {
       Star: Star || null,
       DOB: DOB || null
     }, { transaction });
+
     for (const member of family) {
       await Family.create({ DevoteeId: devotee.DevoteeId, ModifiedBy: req.user.userid, ...member }, { transaction });
     }
+
     await transaction.commit();
     res.status(201).json(devotee);
   } catch (error) {
@@ -467,6 +481,7 @@ app.post('/devotees', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error adding devotee', error: error.message });
   }
 });
+
 
 app.put('/devotees/:id', authenticateToken, async (req, res) => {
   const { FirstName, LastName, Phone, AltPhone, Address, City, State, Zip, Email, Gotra, Star, DOB, family } = req.body;

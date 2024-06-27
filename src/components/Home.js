@@ -72,6 +72,8 @@ const Home = () => {
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error === 'The email is already registered') {
         message.error('Email already registered');
+      } else if (error.response && error.response.data && error.response.data.error === 'The phone number is already registered') {
+        message.error('The phone number is already registered');
       } else if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
       } else {
