@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Menu, Breadcrumb, Button } from 'antd';
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { Route, Routes, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Home from './Home';
+import DevoteeList from './DevoteeList';
 import SuperAdmin from './SuperAdmin';
 import Calendar from './Calendar';
 import Reports from './Reports';
@@ -10,7 +11,8 @@ import Receipts from './Receipts';
 import Settings from './Settings';
 import {jwtDecode} from 'jwt-decode';
 import './Dashboard.css';
-import homeIcon from '../assets/icons/home.png';
+import homeIcon from '../assets/icons/add-user.png';
+import DevoteeListIcon from '../assets/icons/devotee_list.png';
 import CalendarIcon from '../assets/icons/calendar.png';
 import ReceiptIcon from '../assets/icons/receipt.png';
 import ReportIcon from '../assets/icons/file.png';
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const [accessControl, setAccessControl] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -39,11 +42,47 @@ const Dashboard = () => {
     }
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
+    startInactivityTimeout();
+
+    // Clean up the timeout on component unmount
+    return () => {
+      clearInactivityTimeout();
+    };
+  }, []);
+
+  const startInactivityTimeout = () => {
+    clearInactivityTimeout();
+    timeoutRef.current = setTimeout(() => {
+      handleSignOut();
+    }, 15 * 60 * 1000); // 15 minutes
+  };
+
+  const clearInactivityTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+
+  const handleUserActivity = () => {
+    startInactivityTimeout();
+  };
+
+  useEffect(() => {
+    // Add event listeners for user activity
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+
+    // Clean up event listeners on component unmount
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+    };
   }, []);
 
   const fetchAccessControl = async (userType) => {
     try {
-      console.log(`Fetching access control data for user type: ${userType}`);
       const response = await fetch(`http://localhost:5001/access-control/${encodeURIComponent(userType)}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -75,20 +114,28 @@ const Dashboard = () => {
     setCollapsed(!collapsed);
   };
 
+  const handleMenuClick = () => {
+    if (window.innerWidth <= 992) {
+      setCollapsed(true);
+    }
+  };
+
   const menuItems = [
-    { key: '/dashboard/home', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link>, access: accessControl.Home?.can_view },
-    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link>, access: accessControl.Calendar?.can_view },
-    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link>, access: accessControl.Receipts?.can_view },
-    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link>, access: accessControl.Reports?.can_view },
-    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
-    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view },
+    { key: '/dashboard/home', icon: <img src={homeIcon} alt="New Devotee" className="custom-icon" />, label: <Link to="/dashboard/home" onClick={handleMenuClick}>New Devotee</Link>, access: accessControl.Home?.can_view },
+    { key: '/dashboard/devotee-list', icon: <img src={DevoteeListIcon} alt="Devotee List" className="custom-icon" />, label: <Link to="/dashboard/devotee-list" onClick={handleMenuClick}>Devotee List</Link>, access: accessControl.DevoteeList?.can_view },
+    { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar" onClick={handleMenuClick}>Calendar</Link>, access: accessControl.Calendar?.can_view },
+    { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts" onClick={handleMenuClick}>Receipts</Link>, access: accessControl.Receipts?.can_view },
+    { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports" onClick={handleMenuClick}>Reports</Link>, access: accessControl.Reports?.can_view },
+    { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access" onClick={handleMenuClick}>Login Access</Link>, access: accessControl['Login Access']?.can_view },
+    { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings" onClick={handleMenuClick}>Settings</Link>, access: accessControl.Settings?.can_view },
   ].filter(item => item.access);
 
   const getBreadcrumbItems = () => {
     const pathSnippets = location.pathname.split('/').filter(i => i);
     const breadcrumbNameMap = {
       '/dashboard': 'Dashboard',
-      '/dashboard/home': 'Home',
+      '/dashboard/home': 'New Devotee',
+      '/dashboard/devotee-list': 'Devotee List',
       '/dashboard/calendar': 'Calendar',
       '/dashboard/receipts': 'Receipts',
       '/dashboard/reports': 'Reports',
@@ -153,6 +200,7 @@ const Dashboard = () => {
           >
             <Routes>
               <Route path="home" element={<Home />} />
+              <Route path="devotee-list" element={<DevoteeList />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="receipts" element={<Receipts />} />
               <Route path="reports" element={<Reports />} />
