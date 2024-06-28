@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select } from 'antd';
+import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select, AutoComplete } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
@@ -9,6 +9,8 @@ import './Home.css';
 const { Content } = Layout;
 const { Option } = Select;
 const { confirm } = Modal;
+
+const emailDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com"];
 
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
@@ -40,6 +42,7 @@ const Home = () => {
     Star: '',
     DOB: null,
   });
+  const [emailOptions, setEmailOptions] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -316,6 +319,19 @@ const Home = () => {
     debounceSearch(e.target.value);
   };
 
+  const handleEmailChange = (value) => {
+    if (value.includes('@')) {
+      const [localPart, domainPart] = value.split('@');
+      setEmailOptions(
+        emailDomains
+          .filter(domain => domain.includes(domainPart))
+          .map(domain => `${localPart}@${domain}`)
+      );
+    } else {
+      setEmailOptions([]);
+    }
+  };
+
   const disabledDate = (current) => {
     if (selectedService === 'Annadan') {
       return current && current.day() !== 6;
@@ -452,15 +468,28 @@ const Home = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Email" label="Email">
-                <Input placeholder="Email" style={{ height: 50 }} />
+              <Form.Item
+                name="Email"
+                label="Email"
+                rules={[
+                  { 
+                    type: 'email', 
+                    message: 'The input is not valid E-mail!' 
+                  },
+                  { 
+                    required: true, 
+                    message: 'Please input your E-mail!' 
+                  }
+                ]}
+              >
+                <AutoComplete
+                  options={emailOptions.map(email => ({ value: email }))}
+                  onChange={handleEmailChange}
+                  placeholder="Email"
+                  style={{ height: 50 }}
+                />
               </Form.Item>
             </Col>
-            {/* <Col span={12}>
-              <Form.Item name="DOB" label="Date of Birth">
-                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-              </Form.Item>
-            </Col> */}
           </Row>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
@@ -534,16 +563,6 @@ const Home = () => {
                       />
                     </Form.Item>
                   </Col>
-                  {/* <Col span={8}>
-                    <Form.Item label="Date of Birth">
-                      <DatePicker
-                        style={{ width: '100%', height: 50 }}
-                        placeholder="Date of Birth"
-                        value={member.DOB ? moment(member.DOB) : null}
-                        onChange={(date) => handleFamilyChange(index, 'DOB', date)}
-                      />
-                    </Form.Item>
-                  </Col> */}
                 </Row>
               </div>
             ))}
