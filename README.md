@@ -128,6 +128,18 @@ CREATE TABLE `generalconfigurations` (
 
 INSERT INTO `generalconfigurations` (autoApprove) VALUES (0);
 
+
+CREATE TABLE `EditedReceipts` (
+  `EditId` INT AUTO_INCREMENT PRIMARY KEY,
+  `Name` VARCHAR(100) NOT NULL,
+  `OldService` VARCHAR(100) NOT NULL,
+  `NewService` VARCHAR(100) NOT NULL,
+  `OldAmount` DOUBLE NOT NULL,
+  `NewAmount` DOUBLE NOT NULL,
+  `EditedBy` VARCHAR(100) NOT NULL,
+  `EditedOn` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 ```
 
 # Installation:
