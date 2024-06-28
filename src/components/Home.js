@@ -20,6 +20,7 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedService, setSelectedService] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [sevaForm] = Form.useForm();
   const [form] = Form.useForm();
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
@@ -178,6 +179,7 @@ const Home = () => {
       Name: `${devotee.FirstName} ${devotee.LastName}`,
       // AmountPaid: 0,
     });
+    setSelectedPaymentMethod('');
     setIsSevaModalVisible(true);
   };
 
@@ -336,13 +338,6 @@ const Home = () => {
       )
     }
   ];
-
-  useEffect(() => {
-    const paymentMethod = sevaForm.getFieldValue('PaymentMethod');
-    sevaForm.setFieldsValue({
-      CheckNumber: paymentMethod === 'Check' ? undefined : null
-    });
-  }, [sevaForm.getFieldValue('PaymentMethod')]);
 
   return (
     <Layout>
@@ -579,9 +574,7 @@ const Home = () => {
           wrapperCol={{ span: 24 }}
           onValuesChange={(changedValues, allValues) => {
             if (changedValues.PaymentMethod) {
-              sevaForm.setFieldsValue({
-                CheckNumber: allValues.PaymentMethod === 'Check' ? undefined : null
-              });
+              setSelectedPaymentMethod(allValues.PaymentMethod);
             }
           }}
         >
@@ -641,7 +634,7 @@ const Home = () => {
             </Col>
             <Col span={12}>
               <Form.Item name="CheckNumber" label="Check Number">
-                <Input disabled={sevaForm.getFieldValue('PaymentMethod') !== 'Check'} />
+                <Input disabled={selectedPaymentMethod !== 'Check'} />
               </Form.Item>
             </Col>
           </Row>
