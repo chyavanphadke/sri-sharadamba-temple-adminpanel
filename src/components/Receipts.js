@@ -11,6 +11,7 @@ const { Search } = Input;
 const Receipts = () => {
   const [pendingReceipts, setPendingReceipts] = useState([]);
   const [approvedReceipts, setApprovedReceipts] = useState([]);
+  const [editedReceipts, setEditedReceipts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentActivity, setCurrentActivity] = useState(null);
@@ -25,6 +26,7 @@ const Receipts = () => {
   const [pdfText, setPdfText] = useState([]);
   const [activeTab, setActiveTab] = useState('pending');
   const [pageSize, setPageSize] = useState(12);
+  const [userType, setUserType] = useState('');
 
   const token = localStorage.getItem('token');
 
@@ -85,10 +87,23 @@ const Receipts = () => {
     }
   }, [axiosInstance]);
 
+  const fetchEditedReceipts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get('/edited-receipts');
+      setEditedReceipts(response.data);
+    } catch (error) {
+      message.error('Failed to load edited receipts');
+    } finally {
+      setLoading(false);
+    }
+  }, [axiosInstance]);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       const decodedToken = jwtDecode(token);
+      setUserType(decodedToken.usertype);
       fetchAccessControl(decodedToken.usertype);
     }
     fetchEmailText();
@@ -99,8 +114,10 @@ const Receipts = () => {
       fetchPendingReceipts(pendingSearch, pageSize);
     } else if (activeTab === 'approved') {
       fetchApprovedReceipts(approvedSearch, pageSize);
+    } else if (activeTab === 'edited') {
+      fetchEditedReceipts();
     }
-  }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch, pageSize]);
+  }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, fetchEditedReceipts, pendingSearch, approvedSearch, pageSize]);
 
   const handleApprove = async (activityId) => {
     try {
@@ -127,7 +144,20 @@ const Receipts = () => {
   const handleEditOk = async () => {
     try {
       const updatedData = form.getFieldsValue();
+      const originalData = currentActivity;
+
       await axiosInstance.put(`/activities/${currentActivity.ActivityId}`, updatedData);
+
+      // Make an entry in the EditedReceipts table
+      await axiosInstance.post('/edited-receipts', {
+        Name: currentActivity.Name,
+        OldService: originalData.Service,
+        NewService: updatedData.Service,
+        OldAmount: originalData.Amount,
+        NewAmount: updatedData.Amount,
+        EditedBy: jwtDecode(localStorage.getItem('token')).username
+      });
+
       message.success('Activity updated successfully');
       setIsModalVisible(false);
       fetchPendingReceipts(pendingSearch, pageSize);
@@ -241,6 +271,57 @@ const Receipts = () => {
     }
   ];
 
+  const columnsEdited = [
+    { title: 'Name', dataIndex: 'Name', key: 'Name' },
+    { 
+      title: 'Old Service', 
+      dataIndex: 'OldService', 
+      key: 'OldService', 
+      render: (text, record) => (
+        <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
+          {text}
+        </span>
+      ) 
+    },
+    { 
+      title: 'New Service', 
+      dataIndex: 'NewService', 
+      key: 'NewService', 
+      render: (text, record) => (
+        <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
+          {text}
+        </span>
+      ) 
+    },
+    { 
+      title: 'Old Amount', 
+      dataIndex: 'OldAmount', 
+      key: 'OldAmount', 
+      render: (text, record) => (
+        <span style={{ color: record.OldAmount !== record.NewAmount ? 'red' : 'inherit', fontWeight: record.OldAmount !== record.NewAmount ? 'bold' : 'normal' }}>
+          {text}
+        </span>
+      ) 
+    },
+    { 
+      title: 'New Amount', 
+      dataIndex: 'NewAmount', 
+      key: 'NewAmount', 
+      render: (text, record) => (
+        <span style={{ color: record.OldAmount !== record.NewAmount ? 'red' : 'inherit', fontWeight: record.OldAmount !== record.NewAmount ? 'bold' : 'normal' }}>
+          {text}
+        </span>
+      ) 
+    },
+    { title: 'Edited By', dataIndex: 'EditedBy', key: 'EditedBy' },
+    { 
+      title: 'Edited On', 
+      dataIndex: 'EditedOn', 
+      key: 'EditedOn', 
+      render: (text) => moment(text).tz('America/Los_Angeles').format('MMM D, YYYY h:mm A') 
+    },
+  ];
+  
   const generatePDF = (record) => {
     const doc = new jsPDF({
       unit: 'in',
@@ -338,6 +419,11 @@ const Receipts = () => {
         <Button type={activeTab === 'approved' ? 'primary' : 'default'} onClick={() => setActiveTab('approved')} style={{ marginLeft: '8px' }}>
           Approved Receipts
         </Button>
+        {userType === 'Super Admin' && (
+        <Button type={activeTab === 'edited' ? 'primary' : 'default'} onClick={() => setActiveTab('edited')} style={{ marginLeft: '8px' }}>
+          Edited Receipts Log
+        </Button>
+        )}
       </div>
       {activeTab === 'pending' && (
         <>
@@ -392,6 +478,20 @@ const Receipts = () => {
             }}
           />
         </>
+      )}
+      {activeTab === 'edited' && (
+        <Table
+          columns={columnsEdited}
+          dataSource={editedReceipts}
+          loading={loading}
+          rowKey="EditId"
+          pagination={{ 
+            pageSize: pageSize, 
+            pageSizeOptions: ['10', '20', '50', '100'], 
+            showSizeChanger: true, 
+            onShowSizeChange: handlePageSizeChange 
+          }}
+        />
       )}
       <Modal
         title="Edit Activity"

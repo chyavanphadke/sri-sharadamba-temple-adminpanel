@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations } = require('./models');
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts } = require('./models');
 
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
@@ -695,6 +695,36 @@ app.delete('/activities/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting activity:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Route to insert into EditedReceipts
+app.post('/edited-receipts', async (req, res) => {
+  const { Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
+  try {
+    const newEdit = await EditedReceipts.create({
+      Name,
+      OldService,
+      NewService,
+      OldAmount,
+      NewAmount,
+      EditedBy,
+      EditedOn: new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+    });
+    res.status(201).json(newEdit);
+  } catch (error) {
+    console.error('Error creating edited receipt:', error);
+    res.status(500).json({ error: 'Failed to create edited receipt' });
+  }
+});
+
+app.get('/edited-receipts', async (req, res) => {
+  try {
+    const editedReceipts = await EditedReceipts.findAll();
+    res.status(200).json(editedReceipts);
+  } catch (error) {
+    console.error('Error fetching edited receipts:', error);
+    res.status(500).json({ error: 'Failed to fetch edited receipts' });
   }
 });
 

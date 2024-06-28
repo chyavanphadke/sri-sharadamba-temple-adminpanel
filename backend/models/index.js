@@ -431,6 +431,46 @@ const GeneralConfigurations = sequelize.define('GeneralConfigurations', {
   timestamps: false,
 });
 
+const EditedReceipts = sequelize.define('EditedReceipts', {
+  EditId: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  Name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  OldService: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  NewService: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  OldAmount: {
+    type: DataTypes.DOUBLE,
+    allowNull: false
+  },
+  NewAmount: {
+    type: DataTypes.DOUBLE,
+    allowNull: false
+  },
+  EditedBy: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  EditedOn: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.NOW
+  }
+}, {
+  timestamps: false,
+  freezeTableName: true
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -473,5 +513,6 @@ module.exports = {
   Receipt,
   AccessControl,
   EmailCredential,
-  GeneralConfigurations
+  GeneralConfigurations,
+  EditedReceipts
 };
