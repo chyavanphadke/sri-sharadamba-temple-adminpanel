@@ -33,6 +33,7 @@ const Reports = () => {
   const [isEmailAllModalVisible, setIsEmailAllModalVisible] = useState(false); // State for email all modal
   const [emailAll, setEmailAll] = useState(''); // State for email all
   const [emailAllDevoteeName, setEmailAllDevoteeName] = useState(''); // State for email all devotee name
+  const [pageSize, setPageSize] = useState(12);
 
   const token = localStorage.getItem('token');
   
@@ -51,7 +52,7 @@ const Reports = () => {
 
   useEffect(() => {
     generateReport();
-  }, [startDate, endDate, selectedService, selectedPaymentMethod, selectedDevoteeId]);
+  }, [startDate, endDate, selectedService, selectedPaymentMethod, selectedDevoteeId, pageSize]);
 
   const fetchServices = async () => {
     try {
@@ -81,7 +82,8 @@ const Reports = () => {
         endDate: moment(endDate).format('YYYY-MM-DD'),
         service: serviceParam,
         paymentMethod: paymentMethodParam,
-        devoteeId: selectedDevoteeId
+        devoteeId: selectedDevoteeId,
+        pageSize
       };
 
       const response = await axiosInstance.get('/reports', { params });
@@ -515,6 +517,10 @@ const Reports = () => {
     }
   ];
 
+  const handlePageSizeChange = (current, size) => {
+    setPageSize(size);
+  };
+
   return (
     <Layout>
       <Content>
@@ -617,6 +623,12 @@ const Reports = () => {
             dataSource={reportData}
             rowKey={record => record.id}
             style={{ marginTop: 20 }}
+            pagination={{
+              pageSize,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onChange: handlePageSizeChange,
+            }}
           />
         </div>
         <Modal
