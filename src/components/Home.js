@@ -12,6 +12,18 @@ const { confirm } = Modal;
 
 const emailDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com"];
 
+const maskPhoneNumber = (phone) => {
+  if (!phone) return '';
+  return phone.replace(/.(?=.{4})/g, 'X');
+};
+
+const maskEmailAddress = (email) => {
+  if (!email) return '';
+  const [localPart, domainPart] = email.split('@');
+  const maskedLocalPart = localPart.slice(0, 3) + '****';
+  return `${maskedLocalPart}@${domainPart}`;
+};
+
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -342,8 +354,8 @@ const Home = () => {
   const columns = [
     { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName' },
     { title: 'Last Name', dataIndex: 'LastName', key: 'LastName' },
-    { title: 'Phone', dataIndex: 'Phone', key: 'Phone' },
-    { title: 'Email', dataIndex: 'Email', key: 'Email' },
+    { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text) },
+    { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text) },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
