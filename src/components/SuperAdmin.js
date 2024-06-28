@@ -80,6 +80,13 @@ const SuperAdmin = () => {
           }
         });
         message.success('User approved');
+      } else if (action === 'disapprove') {
+        await axios.put(`http://localhost:5001/user/${userid}/disapprove`, {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        message.success('User disapproved');
       } else if (action === 'delete') {
         await axios.delete(`http://localhost:5001/user/${userid}`, {
           headers: {
@@ -160,7 +167,11 @@ const SuperAdmin = () => {
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
-          <Button onClick={() => handleAction(record.userid, 'approve')} disabled={record.approved} style={{ marginRight: 8 }}>Approve</Button>
+          {record.approved ? (
+            <Button onClick={() => handleAction(record.userid, 'disapprove')} style={{ marginRight: 8 }}>Disapprove</Button>
+          ) : (
+            <Button onClick={() => handleAction(record.userid, 'approve')} style={{ marginRight: 8 }} disabled={record.approved}>Approve</Button>
+          )}
           <Button onClick={() => handleDeleteUser(record.userid, record.username)} danger style={{ marginRight: 8 }}>Delete</Button>
         </>
       )

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Table, Button, Modal, Form, Input, message, Row, Col } from 'antd';
+import { Table, Button, Modal, Form, Input, message } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
 import { jsPDF } from 'jspdf';
@@ -24,6 +24,7 @@ const Receipts = () => {
   const [accessControl, setAccessControl] = useState({});
   const [pdfText, setPdfText] = useState([]);
   const [activeTab, setActiveTab] = useState('pending');
+  const [pageSize, setPageSize] = useState(12);
 
   const token = localStorage.getItem('token');
 
@@ -56,11 +57,11 @@ const Receipts = () => {
     }
   };
 
-  const fetchPendingReceipts = useCallback(async (search = '') => {
+  const fetchPendingReceipts = useCallback(async (search = '', pageSize) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get('/receipts/pending', {
-        params: { search }
+        params: { search, pageSize }
       });
       setPendingReceipts(response.data);
     } catch (error) {
@@ -70,11 +71,11 @@ const Receipts = () => {
     }
   }, [axiosInstance]);
 
-  const fetchApprovedReceipts = useCallback(async (search = '') => {
+  const fetchApprovedReceipts = useCallback(async (search = '', pageSize) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get('/receipts/approved', {
-        params: { search }
+        params: { search, pageSize }
       });
       setApprovedReceipts(response.data);
     } catch (error) {
@@ -95,18 +96,18 @@ const Receipts = () => {
 
   useEffect(() => {
     if (activeTab === 'pending') {
-      fetchPendingReceipts(pendingSearch);
+      fetchPendingReceipts(pendingSearch, pageSize);
     } else if (activeTab === 'approved') {
-      fetchApprovedReceipts(approvedSearch);
+      fetchApprovedReceipts(approvedSearch, pageSize);
     }
-  }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch]);
+  }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, pendingSearch, approvedSearch, pageSize]);
 
   const handleApprove = async (activityId) => {
     try {
       await axiosInstance.post('/receipts/approve', { activityId });
       message.success('Receipt approved successfully');
-      fetchPendingReceipts(pendingSearch);
-      fetchApprovedReceipts(approvedSearch);
+      fetchPendingReceipts(pendingSearch, pageSize);
+      fetchApprovedReceipts(approvedSearch, pageSize);
     } catch (error) {
       if (error.response && error.response.status === 401) {
         message.error('You are not authorized to perform this action');
@@ -129,8 +130,8 @@ const Receipts = () => {
       await axiosInstance.put(`/activities/${currentActivity.ActivityId}`, updatedData);
       message.success('Activity updated successfully');
       setIsModalVisible(false);
-      fetchPendingReceipts(pendingSearch);
-      fetchApprovedReceipts(approvedSearch);
+      fetchPendingReceipts(pendingSearch, pageSize);
+      fetchApprovedReceipts(approvedSearch, pageSize);
     } catch (error) {
       message.error('Failed to update activity');
     }
@@ -144,9 +145,9 @@ const Receipts = () => {
     const value = e.target.value;
     setPendingSearch(value);
     if (value.length >= 3) {
-      fetchPendingReceipts(value);
+      fetchPendingReceipts(value, pageSize);
     } else if (value.length === 0) {
-      fetchPendingReceipts('');
+      fetchPendingReceipts('', pageSize);
     }
   };
 
@@ -154,20 +155,29 @@ const Receipts = () => {
     const value = e.target.value;
     setApprovedSearch(value);
     if (value.length >= 3) {
-      fetchApprovedReceipts(value);
+      fetchApprovedReceipts(value, pageSize);
     } else if (value.length === 0) {
-      fetchApprovedReceipts('');
+      fetchApprovedReceipts('', pageSize);
     }
   };
 
   const handleClearPendingSearch = () => {
     setPendingSearch('');
-    fetchPendingReceipts('');
+    fetchPendingReceipts('', pageSize);
   };
 
   const handleClearApprovedSearch = () => {
     setApprovedSearch('');
-    fetchApprovedReceipts('');
+    fetchApprovedReceipts('', pageSize);
+  };
+
+  const handlePageSizeChange = (current, size) => {
+    setPageSize(size);
+    if (activeTab === 'pending') {
+      fetchPendingReceipts(pendingSearch, size);
+    } else if (activeTab === 'approved') {
+      fetchApprovedReceipts(approvedSearch, size);
+    }
   };
 
   const formatDate = (date) => {
@@ -312,7 +322,7 @@ const Receipts = () => {
         }
       });
       message.success(`Email sent to ${currentRecord.Name}`);
-      fetchApprovedReceipts(approvedSearch);
+      fetchApprovedReceipts(approvedSearch, pageSize);
     } catch (error) {
       message.error('Failed to send receipt via email');
     }
@@ -347,7 +357,12 @@ const Receipts = () => {
             dataSource={pendingReceipts}
             loading={loading}
             rowKey="ActivityId"
-            pagination={{ pageSize: 20 }}
+            pagination={{ 
+              pageSize: pageSize, 
+              pageSizeOptions: ['10', '20', '50', '100'], 
+              showSizeChanger: true, 
+              onShowSizeChange: handlePageSizeChange 
+            }}
           />
         </>
       )}
@@ -369,7 +384,12 @@ const Receipts = () => {
             dataSource={approvedReceipts}
             loading={loading}
             rowKey="ReceiptId"
-            pagination={{ pageSize: 20 }}
+            pagination={{ 
+              pageSize: pageSize, 
+              pageSizeOptions: ['10', '20', '50', '100'], 
+              showSizeChanger: true, 
+              onShowSizeChange: handlePageSizeChange 
+            }}
           />
         </>
       )}

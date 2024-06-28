@@ -262,6 +262,24 @@ app.put('/user/:userid/approve', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/user/:userid/disapprove', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.userid);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.approved = false;
+    user.active = false;
+    user.approvedBy = null; // Clear the approvedBy field or set it to a default value
+    await user.save();
+
+    res.status(200).json({ message: 'User disapproved successfully' });
+  } catch (err) {
+    console.error('Error disapproving user:', err);
+    res.status(500).json({ message: 'Error disapproving user', error: err.message });
+  }
+});
 
 app.put('/user/:userid/usertype', async (req, res) => {
   const { usertype } = req.body;
@@ -567,23 +585,23 @@ app.put('/services', async (req, res) => {
 
 // Add new service
 app.post('/services', async (req, res) => {
-  const { Service, Rate, comments, Active, DisplayFamily, Temple, SvcCategoryId } = req.body;
+  const { Service: serviceName, Rate } = req.body;
 
   // Validate input
-  if (!Service || !Rate) {
+  if (!serviceName || !Rate) {
     console.error('Validation error: Service name and rate are required');
     return res.status(400).json({ message: 'Service name and rate are required' });
   }
 
   // Set default values for fields that were not provided
   const newService = {
-    Service,
+    Service: serviceName,
     Rate: parseFloat(Rate),
-    comments: comments || null,
-    Active: Active !== undefined ? Active : true,
-    DisplayFamily: DisplayFamily !== undefined ? DisplayFamily : false,
-    Temple: Temple !== undefined ? Temple : 0,
-    SvcCategoryId: SvcCategoryId || null,
+    Comment: 'Added',
+    Active: true,
+    DisplayFamily: false,
+    Temple: 1,
+    SvcCategoryId: 3,
   };
 
   try {
