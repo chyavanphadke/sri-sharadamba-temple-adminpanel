@@ -9,6 +9,7 @@ import Calendar from './Calendar';
 import Reports from './Reports';
 import Receipts from './Receipts';
 import Settings from './Settings';
+//import ListOfSevas from './ListOfSevas';
 import {jwtDecode} from 'jwt-decode';
 import './Dashboard.css';
 import homeIcon from '../assets/icons/add-user.png';
@@ -18,6 +19,7 @@ import ReceiptIcon from '../assets/icons/receipt.png';
 import ReportIcon from '../assets/icons/file.png';
 import LoginAccessIcon from '../assets/icons/log-in.png';
 import SettingIcon from '../assets/icons/cogwheel.png';
+//import ListOfSevasIcon from '../assets/icons/cogwheel.png';
 
 const { Header, Content, Sider } = Layout;
 
@@ -128,6 +130,7 @@ const Dashboard = () => {
     { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports" onClick={handleMenuClick}>Reports</Link>, access: accessControl.Reports?.can_view },
     { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access" onClick={handleMenuClick}>Login Access</Link>, access: accessControl['Login Access']?.can_view },
     { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings" onClick={handleMenuClick}>Settings</Link>, access: accessControl.Settings?.can_view },
+    //{ key: '/dashboard/list-of-sevas', icon: <img src={ListOfSevasIcon} alt="List of Sevas" className="custom-icon" />, label: <Link to="/dashboard/list-of-sevas" onClick={handleMenuClick}>List of Sevas</Link>, access: accessControl.ListOfSevas?.can_view },
   ].filter(item => item.access);
 
   const getBreadcrumbItems = () => {
@@ -140,7 +143,8 @@ const Dashboard = () => {
       '/dashboard/receipts': 'Receipts',
       '/dashboard/reports': 'Reports',
       '/dashboard/login-access': 'Login Access',
-      '/dashboard/settings': 'Settings'
+      '/dashboard/settings': 'Settings',
+      '/dashboard/list-of-sevas': 'List of Sevas',
     };
     const breadcrumbItems = pathSnippets.map((_, index) => {
       const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -215,4 +219,5 @@ const Dashboard = () => {
   );
 };
 
+//<Route path="list-of-sevas" element={<ListOfSevas />} />
 export default Dashboard;

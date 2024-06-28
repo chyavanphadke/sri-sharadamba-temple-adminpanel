@@ -648,6 +648,56 @@ app.post('/activities', async (req, res) => {
   }
 });
 
+// Get all activities
+app.get('/activities', async (req, res) => {
+  try {
+    const activities = await Activity.findAll();
+    res.json(activities);
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+    res.status(500).send('Failed to fetch activities');
+  }
+});
+
+// Get all devotees
+app.get('/devotees', async (req, res) => {
+  try {
+    const devotees = await Devotee.findAll();
+    res.json(devotees);
+  } catch (error) {
+    console.error('Error fetching devotees:', error);
+    res.status(500).send('Failed to fetch devotees');
+  }
+});
+
+// Get all services
+app.get('/services', async (req, res) => {
+  try {
+    const services = await Service.findAll();
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).send('Failed to fetch services');
+  }
+});
+
+app.delete('/activities/:id', async (req, res) => {
+  try {
+    const activityId = req.params.id;
+    const activity = await Activity.findByPk(activityId);
+
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+
+    await activity.destroy();
+    res.status(200).json({ message: 'Activity deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting activity:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Endpoint to get activities for the calendar
 app.get('/calendar/activities', async (req, res) => {
   try {
