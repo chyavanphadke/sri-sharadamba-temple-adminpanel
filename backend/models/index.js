@@ -5,22 +5,22 @@ const env = process.env.NODE_ENV || 'development';
 const config = {
   development: {
     username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'maya@111',
-    database: process.env.DB_NAME || 'seva',
+    password: process.env.DB_PASSWORD || 'seva@1633',
+    database: process.env.DB_NAME || 'seva_new',
     host: process.env.DB_HOST || 'localhost', // Use the Windows host IP if not set
     dialect: 'mysql'
   },
   test: {
     username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'maya@111',
-    database: process.env.DB_NAME || 'seva',
+    password: process.env.DB_PASSWORD || 'seva@1633',
+    database: process.env.DB_NAME || 'seva_new',
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql'
   },
   production: {
     username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'maya@111',
-    database: process.env.DB_NAME || 'seva',
+    password: process.env.DB_PASSWORD || 'seva@1633',
+    database: process.env.DB_NAME || 'seva_new',
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql'
   }

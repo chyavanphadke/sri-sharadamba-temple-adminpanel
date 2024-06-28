@@ -148,16 +148,6 @@ const Settings = () => {
       message.error('Failed to add service');
     }
   };
-  
-  
-  
-
-
-
-
-  
-
-
 
   const handleNewServiceModalOpen = () => {
     form.resetFields();
@@ -363,14 +353,19 @@ const Settings = () => {
               </Button>
             </>
           )}
-          <h2 style={{ marginTop: '40px' }}>General Configurations</h2>
-          <Checkbox
-            checked={autoApprove}
-            onChange={(e) => saveAutoApprove(e.target.checked)}
-            style={{ marginTop: '10px', fontSize: '20px'}}
-          >
-            Auto Approve users on Signup
-          </Checkbox>
+
+          {userType === 'Super Admin' && (
+            <>
+              <h2 style={{ marginTop: '40px' }}>General Configurations</h2>
+              <Checkbox
+                checked={autoApprove}
+                onChange={(e) => saveAutoApprove(e.target.checked)}
+                style={{ marginTop: '10px', fontSize: '20px'}}
+              >
+                Auto Approve users on Signup
+              </Checkbox>
+            </>
+          )}
 
           <Modal
             title="Change Password"

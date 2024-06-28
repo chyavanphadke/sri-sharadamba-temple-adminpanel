@@ -20,8 +20,8 @@ services:
       - NODE_ENV=production
       - DB_HOST=localhost  # This will be replaced by the script
       - DB_USER=root
-      - DB_PASSWORD=maya@111
-      - DB_NAME=seva
+      - DB_PASSWORD=seva@1633
+      - DB_NAME=seva_new
     depends_on:
       - mysql
     restart: always
@@ -30,8 +30,8 @@ services:
     platform: linux/x86_64
     image: mysql:5.7
     environment:
-      MYSQL_ROOT_PASSWORD: maya@111
-      MYSQL_DATABASE: seva
+      MYSQL_ROOT_PASSWORD: seva@1633
+      MYSQL_DATABASE: seva_new
     ports:
       - "3307:3306"
     restart: always
