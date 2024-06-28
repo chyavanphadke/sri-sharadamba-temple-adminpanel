@@ -363,11 +363,11 @@ const Settings = () => {
               </Button>
             </>
           )}
-          <h3 style={{ marginTop: '20px' }}>General Configurations</h3>
+          <h2 style={{ marginTop: '40px' }}>General Configurations</h2>
           <Checkbox
             checked={autoApprove}
             onChange={(e) => saveAutoApprove(e.target.checked)}
-            style={{ marginTop: '10px' }}
+            style={{ marginTop: '10px', fontSize: '20px'}}
           >
             Auto Approve users on Signup
           </Checkbox>
@@ -590,7 +590,7 @@ const Settings = () => {
                   ),
                 },
               ]}
-              dataSource={accessRights}
+              dataSource={accessRights.filter((record) => record.usertype !== 'Super Admin')}
               rowKey="id"
               pagination={false}
               size="small"
