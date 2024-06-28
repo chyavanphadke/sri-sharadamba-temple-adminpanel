@@ -566,7 +566,7 @@ const Home = () => {
         </Form>
       </Modal>
       <Modal
-        title={<span style={{ fontSize: '24px', fontFamily: 'Courier', fontWeight: 'bold' }}>Add Seva</span>}
+        title={<span style={{ fontSize: '24px', fontWeight: 'bold' }}>Add Seva</span>}
         visible={isSevaModalVisible}
         onCancel={handleSevaCancel}
         footer={null}
@@ -586,7 +586,7 @@ const Home = () => {
           }}
         >
           <div>
-            <p style={{ fontSize: '24px', fontFamily: 'Courier' }}>
+            <p style={{ fontSize: '20px' }}>
               Adding Seva for {currentDevotee ? `${currentDevotee.FirstName} ${currentDevotee.LastName}` : ''}
             </p>
           </div>
