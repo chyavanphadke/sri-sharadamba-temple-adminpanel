@@ -3,6 +3,7 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
+import 'moment-timezone';
 import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 
@@ -210,7 +211,7 @@ const Home = () => {
         CheckNumber: values.CheckNumber,
         Comments: values.Comments,
         UserId: userId,
-        ServiceDate: values.ServiceDate,
+        ServiceDate: moment(values.ServiceDate).tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'), // Convert to PST
       };
 
       await axiosInstance.post('/activities', payload);

@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
 import ForgotPassword from './components/ForgotPassword'; // Import the ForgotPassword component
+import TodaysEvents from './components/TodaysEvents'; // Import the TodaysEvents component
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -18,6 +19,7 @@ const App = () => (
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/reset-password/:token" element={<ForgotPassword />} /> {/* Add this route */}
+      <Route path="/todays-events" element={<TodaysEvents />} /> {/* Add this route */}
       <Route
         path="/dashboard/*"
         element={
