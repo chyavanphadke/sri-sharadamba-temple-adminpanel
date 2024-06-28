@@ -24,6 +24,7 @@ const Settings = () => {
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [emailText, setEmailText] = useState([]);
   const [autoApprove, setAutoApprove] = useState(false);
+  const [tempServices, setTempServices] = useState([]); // Temporary state for services
   const [form] = Form.useForm();
 
   const token = localStorage.getItem('token');
@@ -46,6 +47,7 @@ const Settings = () => {
       const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
       setServices(sortedServices);
       setFilteredServices(sortedServices);
+      setTempServices(sortedServices); // Initialize tempServices with fetched data
     } catch (error) {
       message.error('Failed to load services');
     }
@@ -96,15 +98,15 @@ const Settings = () => {
     }
   };
 
-  const onServiceChange = (index, field, value) => {
-    const newServices = [...services];
-    newServices[index][field] = value;
-    setServices(newServices);
+  const onTempServiceChange = (index, field, value) => {
+    const newTempServices = [...tempServices];
+    newTempServices[index][field] = value;
+    setTempServices(newTempServices);
   };
 
   const handleServiceSave = async () => {
     try {
-      await axios.put('http://localhost:5001/services', services);
+      await axios.put('http://localhost:5001/services', tempServices);
       message.success('Services updated successfully');
       setServiceModalVisible(false);
       fetchServices();
@@ -117,12 +119,12 @@ const Settings = () => {
     const term = e.target.value;
     setSearchTerm(term);
     if (term.length >= 3) {
-      const filtered = services.filter(service =>
+      const filtered = tempServices.filter(service =>
         service.Service.toLowerCase().includes(term.toLowerCase())
       );
       setFilteredServices(filtered);
     } else {
-      setFilteredServices(services);
+      setFilteredServices(tempServices);
     }
   };
 
@@ -137,7 +139,7 @@ const Settings = () => {
         Temple: 0,
         SvcCategoryId: 0,
       };
-  
+
       await axios.post('http://localhost:5001/services', newService);
       message.success('Service added successfully');
       setNewServiceModalVisible(false);
@@ -147,6 +149,12 @@ const Settings = () => {
     }
   };
   
+  
+  
+
+
+
+
   
 
 
@@ -266,37 +274,61 @@ const Settings = () => {
 
   const serviceColumns = [
     {
-      title: 'Service',
-      dataIndex: 'Service',
-      key: 'Service',
-      render: (text, record, index) => (
-        <Input
-          value={text}
-          onChange={(e) => onServiceChange(index, 'Service', e.target.value)}
-          style={{ width: '80%' }}
-        />
-      ),
-    },
-    {
-      title: 'Rate',
-      dataIndex: 'Rate',
-      key: 'Rate',
-      render: (text, record, index) => (
-        <Input
-          value={text}
-          onChange={(e) => onServiceChange(index, 'Rate', e.target.value)}
-          style={{ width: '80%' }}
-        />
-      ),
-    },
-    {
       title: 'Active',
       dataIndex: 'Active',
       key: 'Active',
       render: (text, record, index) => (
         <Checkbox
           checked={text}
-          onChange={(e) => onServiceChange(index, 'Active', e.target.checked)}
+          onChange={(e) => onTempServiceChange(index, 'Active', e.target.checked)}
+        />
+      ),
+    },
+    {
+      title: 'Seva',
+      dataIndex: 'Service',
+      key: 'Service',
+      render: (text, record, index) => (
+        <Input
+          value={text}
+          onChange={(e) => onTempServiceChange(index, 'Service', e.target.value)}
+          style={{ width: '100%' }}
+        />
+      ),
+      onCell: () => ({
+        style: {
+          whiteSpace: 'nowrap',
+          maxWidth: `${Math.max(...tempServices.map(service => service.Service.length))}ch`,
+        },
+      }),
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'Rate',
+      key: 'Rate',
+      render: (text, record, index) => (
+        <Input
+          value={text}
+          onChange={(e) => onTempServiceChange(index, 'Rate', e.target.value)}
+          style={{ width: '100%' }}
+        />
+      ),
+      onCell: () => ({
+        style: {
+          whiteSpace: 'nowrap',
+          maxWidth: `${Math.max(...tempServices.map(service => String(service.Rate).length))}ch`,
+        },
+      }),
+    },
+    {
+      title: 'Excel Sheet',
+      dataIndex: 'ExcelSheet',
+      key: 'ExcelSheet',
+      render: (text, record, index) => (
+        <Input
+          value={record.ExcelSheet || ''}
+          onChange={(e) => onTempServiceChange(index, 'ExcelSheet', e.target.value)}
+          style={{ width: '150px' }}
         />
       ),
     },
@@ -393,6 +425,7 @@ const Settings = () => {
               rowKey="ServiceId"
               pagination={false}
               size="small"
+              scroll={{ x: true }} // Ensure horizontal scrolling if needed
             />
           </Modal>
 

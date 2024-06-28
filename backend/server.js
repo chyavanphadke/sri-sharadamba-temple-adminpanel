@@ -585,23 +585,23 @@ app.put('/services', async (req, res) => {
 
 // Add new service
 app.post('/services', async (req, res) => {
-  const { Service, Rate, comments, Active, DisplayFamily, Temple, SvcCategoryId } = req.body;
+  const { Service: serviceName, Rate } = req.body;
 
   // Validate input
-  if (!Service || !Rate) {
+  if (!serviceName || !Rate) {
     console.error('Validation error: Service name and rate are required');
     return res.status(400).json({ message: 'Service name and rate are required' });
   }
 
   // Set default values for fields that were not provided
   const newService = {
-    Service,
+    Service: serviceName,
     Rate: parseFloat(Rate),
-    comments: comments || null,
-    Active: Active !== undefined ? Active : true,
-    DisplayFamily: DisplayFamily !== undefined ? DisplayFamily : false,
-    Temple: Temple !== undefined ? Temple : 0,
-    SvcCategoryId: SvcCategoryId || null,
+    Comment: 'Added',
+    Active: true,
+    DisplayFamily: false,
+    Temple: 1,
+    SvcCategoryId: 3,
   };
 
   try {
