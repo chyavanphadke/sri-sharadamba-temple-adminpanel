@@ -1436,6 +1436,54 @@ app.put('/email-credentials', async (req, res) => {
   }
 });
 
+// Endpoint to get activities for a specific date
+app.get('/todays-events', async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    const activities = await Activity.findAll({
+      where: {
+        ServiceDate: date
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName', 'Gotra', 'Star', 'DevoteeId'] },
+        { model: Service, attributes: ['Service'] },
+      ],
+    });
+
+    // Group activities by service
+    const groupedActivities = await activities.reduce(async (accPromise, activity) => {
+      const acc = await accPromise;
+      const serviceName = activity.Service.Service;
+      if (!acc[serviceName]) {
+        acc[serviceName] = [];
+      }
+
+      const familyMembers = await Family.findAll({
+        where: { DevoteeId: activity.Devotee.DevoteeId },
+        attributes: ['FirstName', 'LastName'],
+      });
+
+      acc[serviceName].push({
+        SerialNumber: acc[serviceName].length + 1,
+        ActivityId: activity.ActivityId,
+        FirstName: activity.Devotee.FirstName,
+        LastName: activity.Devotee.LastName,
+        Gotra: activity.Devotee.Gotra,
+        Star: activity.Devotee.Star,
+        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+      });
+
+      return acc;
+    }, Promise.resolve({}));
+
+    res.status(200).json(groupedActivities);
+  } catch (err) {
+    console.error('Error fetching activities for date:', err);
+    res.status(500).json({ message: 'Error fetching activities for date', error: err.message });
+  }
+});
+
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
   const existingSuperUser = await User.findOne({ where: { username: 'aghamya' } });

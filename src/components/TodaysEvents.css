@@ -1,0 +1,27 @@
+.todays-events-container .event-card {
+    margin-bottom: 16px;
+  }
+  
+  .todays-events-container .event-detail {
+    margin-bottom: 16px;
+  }
+  
+  @media (min-width: 576px) {
+    .todays-events-container .ant-row {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  
+    .todays-events-container .ant-col {
+      flex: 1 0 33%;
+      max-width: 33%;
+    }
+  }
+  
+  @media (max-width: 575px) {
+    .todays-events-container .ant-col {
+      flex: 1 0 100%;
+      max-width: 100%;
+    }
+  }
+  
