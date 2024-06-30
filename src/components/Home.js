@@ -405,7 +405,7 @@ const Home = () => {
       >
         <Form
           form={form}
-          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
+          initialValues={formData}
           onFinish={handleOk}
           labelCol={{ span: 24 }}
           wrapperCol={{ span: 24 }}
