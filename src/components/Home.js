@@ -57,6 +57,9 @@ const Home = () => {
   });
   const [emailOptions, setEmailOptions] = useState([]);
 
+  const [isDeleteErrorModalVisible, setIsDeleteErrorModalVisible] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
@@ -171,12 +174,17 @@ const Home = () => {
         title: 'Are you sure you want to delete this devotee?',
         content: `There are ${activityCount} activities and ${familyMemberCount} family members related to this devotee.`,
         onOk: async () => {
-          try {
-            await axiosInstance.delete(`/devotees/${id}`);
-            message.success('Devotee deleted');
-            fetchDevotees();
-          } catch (error) {
-            message.error('Failed to delete devotee');
+          if (activityCount > 0) {
+            setDeleteErrorMessage(`Devotee cannot be deleted since ${activityCount} activities are present.`);
+            setIsDeleteErrorModalVisible(true);
+          } else {
+            try {
+              await axiosInstance.delete(`/devotees/${id}`);
+              message.success('Devotee deleted');
+              fetchDevotees();
+            } catch (error) {
+              message.error('Failed to delete devotee');
+            }
           }
         },
         onCancel() {
@@ -346,6 +354,7 @@ const Home = () => {
   };
 
   const disabledDate = (current) => {
+    // Disable all dates except Saturdays if selected service is "Annadan"
     if (selectedService === 'Annadan') {
       return current && current.day() !== 6;
     }
@@ -661,7 +670,7 @@ const Home = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} disabledDate={disabledDate} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -679,6 +688,19 @@ const Home = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        title="Delete Devotee"
+        visible={isDeleteErrorModalVisible}
+        onOk={() => setIsDeleteErrorModalVisible(false)}
+        onCancel={() => setIsDeleteErrorModalVisible(false)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setIsDeleteErrorModalVisible(false)}>
+            OK
+          </Button>,
+        ]}
+      >
+        <p>{deleteErrorMessage}</p>
       </Modal>
     </Layout>
   );
