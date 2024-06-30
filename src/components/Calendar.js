@@ -241,7 +241,7 @@ const Calendar = () => {
           <Card className="section-card">
             <Title level={3}>Change Seva Date</Title>
             <Search
-              placeholder="Search by name, email, or phone"
+              placeholder="Search by Name, Phone, or Email"
               enterButton="Search"
               onSearch={handleSearch}
             />
