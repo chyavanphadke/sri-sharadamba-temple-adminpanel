@@ -25,6 +25,13 @@ const maskEmailAddress = (email) => {
   return `${maskedLocalPart}@${domainPart}`;
 };
 
+const phoneNumberValidator = (_, value) => {
+  if (value && !/^\d{10}$/.test(value)) {
+    return Promise.reject(new Error('Please enter a valid 10-digit phone number'));
+  }
+  return Promise.resolve();
+};
+
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -257,6 +264,24 @@ const Home = () => {
 
   const handleOk = async (values) => {
     try {
+      // Check for existing email if Email is not null or empty
+      if (values.Email) {
+        const emailResponse = await axiosInstance.get(`/devotees?search=${values.Email}`);
+        if (emailResponse.data.length > 0 && (!currentDevotee || currentDevotee.Email !== values.Email)) {
+          message.error('The email is already registered');
+          return;
+        }
+      }
+
+      // Check for existing phone if Phone is not null or empty
+      if (values.Phone) {
+        const phoneResponse = await axiosInstance.get(`/devotees?search=${values.Phone}`);
+        if (phoneResponse.data.length > 0 && (!currentDevotee || currentDevotee.Phone !== values.Phone)) {
+          message.error('The phone number is already registered');
+          return;
+        }
+      }
+
       const payload = {
         FirstName: values.FirstName,
         LastName: values.LastName,
@@ -272,6 +297,7 @@ const Home = () => {
         DOB: values.DOB ? values.DOB.format('YYYY-MM-DD') : null,
         family: familyMembers
       };
+
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
@@ -442,12 +468,28 @@ const Home = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Phone" label="Phone Number">
+              <Form.Item
+                name="Phone"
+                label="Phone Number"
+                rules={[
+                  {
+                    validator: phoneNumberValidator
+                  }
+                ]}
+              >
                 <Input placeholder="Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="AltPhone" label="Alternate Phone Number">
+              <Form.Item
+                name="AltPhone"
+                label="Alternate Phone Number"
+                rules={[
+                  {
+                    validator: phoneNumberValidator
+                  }
+                ]}
+              >
                 <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
@@ -497,10 +539,6 @@ const Home = () => {
                   { 
                     type: 'email', 
                     message: 'The input is not valid E-mail!' 
-                  },
-                  { 
-                    required: true, 
-                    message: 'Please input your E-mail!' 
                   }
                 ]}
               >
