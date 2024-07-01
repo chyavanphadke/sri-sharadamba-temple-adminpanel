@@ -241,7 +241,7 @@ const Home = () => {
         CheckNumber: values.CheckNumber,
         Comments: values.Comments,
         UserId: userId,
-        ServiceDate: moment(values.ServiceDate).tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'), // Convert to PST
+        ServiceDate: values.ServiceDate
       };
 
       await axiosInstance.post('/activities', payload);
