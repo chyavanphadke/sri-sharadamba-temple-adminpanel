@@ -14,7 +14,7 @@ const emailDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "a
 
 const maskPhoneNumber = (phone) => {
   if (!phone) return '';
-  return phone.replace(/.(?=.{4})/g, 'X');
+  return phone.replace(/.(?=.{4})/g, '*');
 };
 
 const maskEmailAddress = (email) => {
