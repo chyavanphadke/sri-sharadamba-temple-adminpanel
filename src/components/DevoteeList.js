@@ -304,7 +304,7 @@ const DevoteeList = () => {
           <h2>Devotee List</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
             <Input
-              placeholder="Search devotees"
+              placeholder="Search Devotees by Name, Phone, or Email"
               onChange={handleSearchChange}
               style={{ width: 400, marginRight: 16, height: 40 }}
             />

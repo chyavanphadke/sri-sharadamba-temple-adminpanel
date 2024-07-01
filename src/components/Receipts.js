@@ -429,7 +429,7 @@ const Receipts = () => {
         <>
           <div style={{ display: 'flex', marginBottom: '16px' }}>
             <Search
-              placeholder="Search by name, phone or email"
+              placeholder="Search by Name, Phone, or Email"
               value={pendingSearch}
               onChange={handlePendingSearchChange}
               style={{ width: '30%' }}
@@ -456,7 +456,7 @@ const Receipts = () => {
         <>
           <div style={{ display: 'flex', marginBottom: '16px' }}>
             <Search
-              placeholder="Search by name, phone or email"
+              placeholder="Search by Name, Phone, or Email"
               value={approvedSearch}
               onChange={handleApprovedSearchChange}
               style={{ width: '30%' }}

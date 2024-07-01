@@ -63,7 +63,14 @@ app.get('/user/:userid', async (req, res) => {
 app.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    const existingUser = await User.findOne({ where: { [Op.or]: [{ username }, { email }] } });
+    const existingUser = await User.findOne({ 
+      where: { 
+        [Op.or]: [
+          { username }, 
+          { email }
+        ] 
+      } 
+    });
     if (existingUser) {
       return res.status(400).json({ message: 'Username or Email already taken' });
     }
@@ -423,6 +430,7 @@ app.get('/devotees', async (req, res) => {
     const whereClause = search
       ? { 
           [Op.or]: [
+            { DevoteeId: { [Op.like]: `%${search}%` } },
             { FirstName: { [Op.like]: `%${search}%` } },
             { LastName: { [Op.like]: `%${search}%` } },
             { Phone: { [Op.like]: `%${search}%` } },
@@ -922,6 +930,7 @@ app.get('/receipts/pending', async (req, res) => {
 
     if (search) {
       whereClause[Op.or] = [
+        { '$Devotee.DevoteeId$': { [Op.like]: `%${search}%` } },
         { '$Devotee.FirstName$': { [Op.like]: `%${search}%` } },
         { '$Devotee.LastName$': { [Op.like]: `%${search}%` } },
         { '$Devotee.Phone$': { [Op.like]: `%${search}%` } },
@@ -1150,6 +1159,7 @@ app.get('/receipts/approved', async (req, res) => {
     const whereClause = search
       ? {
           [Op.or]: [
+            { '$Activity.Devotee.DevoteeId$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.Phone$': { [Op.like]: `%${search}%` } },
@@ -1403,6 +1413,7 @@ app.get('/devotees/search', async (req, res) => {
     const devotees = await Devotee.findAll({
       where: {
         [Op.or]: [
+          { DevoteeId: { [Op.like]: `%${query}%` } },
           { FirstName: { [Op.like]: `%${query}%` } },
           { LastName: { [Op.like]: `%${query}%` } },
           { Phone: { [Op.like]: `%${query}%` } },

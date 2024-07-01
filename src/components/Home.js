@@ -3,7 +3,6 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
-import 'moment-timezone';
 import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 
@@ -15,7 +14,7 @@ const emailDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "a
 
 const maskPhoneNumber = (phone) => {
   if (!phone) return '';
-  return phone.replace(/.(?=.{4})/g, 'X');
+  return phone.replace(/.(?=.{4})/g, '*');
 };
 
 const maskEmailAddress = (email) => {
@@ -23,6 +22,13 @@ const maskEmailAddress = (email) => {
   const [localPart, domainPart] = email.split('@');
   const maskedLocalPart = localPart.slice(0, 3) + '****';
   return `${maskedLocalPart}@${domainPart}`;
+};
+
+const phoneNumberValidator = (_, value) => {
+  if (value && !/^\d{10}$/.test(value)) {
+    return Promise.reject(new Error('Please enter a valid 10-digit phone number'));
+  }
+  return Promise.resolve();
 };
 
 const Home = () => {
@@ -56,6 +62,9 @@ const Home = () => {
     DOB: null,
   });
   const [emailOptions, setEmailOptions] = useState([]);
+
+  const [isDeleteErrorModalVisible, setIsDeleteErrorModalVisible] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   const token = localStorage.getItem('token');
 
@@ -136,6 +145,7 @@ const Home = () => {
       Star: '',
       DOB: null,
     });
+    setEmailOptions([]); // Clear email options
     setFormKey(prevKey => prevKey + 1); // Force form re-render by changing key
     setIsModalVisible(true);
   };
@@ -159,6 +169,7 @@ const Home = () => {
       ...devotee,
       DOB: devotee.DOB ? moment(devotee.DOB) : null
     });
+    setEmailOptions([]); // Clear email options
     setIsModalVisible(true);
   };
 
@@ -171,12 +182,17 @@ const Home = () => {
         title: 'Are you sure you want to delete this devotee?',
         content: `There are ${activityCount} activities and ${familyMemberCount} family members related to this devotee.`,
         onOk: async () => {
-          try {
-            await axiosInstance.delete(`/devotees/${id}`);
-            message.success('Devotee deleted');
-            fetchDevotees();
-          } catch (error) {
-            message.error('Failed to delete devotee');
+          if (activityCount > 0) {
+            setDeleteErrorMessage(`Devotee cannot be deleted since ${activityCount} activities are present.`);
+            setIsDeleteErrorModalVisible(true);
+          } else {
+            try {
+              await axiosInstance.delete(`/devotees/${id}`);
+              message.success('Devotee deleted');
+              fetchDevotees();
+            } catch (error) {
+              message.error('Failed to delete devotee');
+            }
           }
         },
         onCancel() {
@@ -226,7 +242,7 @@ const Home = () => {
         CheckNumber: values.CheckNumber,
         Comments: values.Comments,
         UserId: userId,
-        ServiceDate: moment(values.ServiceDate).tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss'), // Convert to PST
+        ServiceDate: values.ServiceDate
       };
 
       await axiosInstance.post('/activities', payload);
@@ -249,6 +265,24 @@ const Home = () => {
 
   const handleOk = async (values) => {
     try {
+      // Check for existing email if Email is not null or empty
+      if (values.Email) {
+        const emailResponse = await axiosInstance.get(`/devotees?search=${values.Email}`);
+        if (emailResponse.data.length > 0 && (!currentDevotee || currentDevotee.Email !== values.Email)) {
+          message.error('The email is already registered');
+          return;
+        }
+      }
+
+      // Check for existing phone if Phone is not null or empty
+      if (values.Phone) {
+        const phoneResponse = await axiosInstance.get(`/devotees?search=${values.Phone}`);
+        if (phoneResponse.data.length > 0 && (!currentDevotee || currentDevotee.Phone !== values.Phone)) {
+          message.error('The phone number is already registered');
+          return;
+        }
+      }
+
       const payload = {
         FirstName: values.FirstName,
         LastName: values.LastName,
@@ -264,6 +298,7 @@ const Home = () => {
         DOB: values.DOB ? values.DOB.format('YYYY-MM-DD') : null,
         family: familyMembers
       };
+
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
@@ -346,6 +381,7 @@ const Home = () => {
   };
 
   const disabledDate = (current) => {
+    // Disable all dates except Saturdays if selected service is "Annadan"
     if (selectedService === 'Annadan') {
       return current && current.day() !== 6;
     }
@@ -375,7 +411,7 @@ const Home = () => {
           <h2>Home Page</h2>
           <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
             <Input
-              placeholder="Search devotees"
+              placeholder="Search Devotees by Name, Phone, or Email"
               onChange={handleSearchChange}
               style={{ width: 400, marginRight: 16, height: 40 }}
             />
@@ -406,7 +442,7 @@ const Home = () => {
       >
         <Form
           form={form}
-          initialValues={currentDevotee || { FirstName: '', LastName: '', Phone: '', AltPhone: '', Address: '', City: '', State: '', Zip: '', Email: '', Gotra: '', Star: '', DOB: null }}
+          initialValues={formData}
           onFinish={handleOk}
           labelCol={{ span: 24 }}
           wrapperCol={{ span: 24 }}
@@ -433,12 +469,28 @@ const Home = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Phone" label="Phone Number">
+              <Form.Item
+                name="Phone"
+                label="Phone Number"
+                rules={[
+                  {
+                    validator: phoneNumberValidator
+                  }
+                ]}
+              >
                 <Input placeholder="Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="AltPhone" label="Alternate Phone Number">
+              <Form.Item
+                name="AltPhone"
+                label="Alternate Phone Number"
+                rules={[
+                  {
+                    validator: phoneNumberValidator
+                  }
+                ]}
+              >
                 <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
               </Form.Item>
             </Col>
@@ -488,10 +540,6 @@ const Home = () => {
                   { 
                     type: 'email', 
                     message: 'The input is not valid E-mail!' 
-                  },
-                  { 
-                    required: true, 
-                    message: 'Please input your E-mail!' 
                   }
                 ]}
               >
@@ -586,9 +634,11 @@ const Home = () => {
             )}
           </div>
           <Form.Item>
-            <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              {currentDevotee ? "Update" : "Add"}
-            </Button>
+            <div className="custom-button-container">
+              <Button type="primary" htmlType="submit" className="custom-button">
+                {currentDevotee ? "Update" : "Add"}
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
@@ -645,7 +695,7 @@ const Home = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
-                  <Input placeholder="Select a payment method" type="number" />
+                <Input placeholder="Select a payment method" type="number" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -661,7 +711,7 @@ const Home = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} disabledDate={disabledDate} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -679,6 +729,19 @@ const Home = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+      <Modal
+        title="Delete Devotee"
+        visible={isDeleteErrorModalVisible}
+        onOk={() => setIsDeleteErrorModalVisible(false)}
+        onCancel={() => setIsDeleteErrorModalVisible(false)}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setIsDeleteErrorModalVisible(false)}>
+            OK
+          </Button>,
+        ]}
+      >
+        <p>{deleteErrorMessage}</p>
       </Modal>
     </Layout>
   );
