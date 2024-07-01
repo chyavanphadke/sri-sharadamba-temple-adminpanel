@@ -3,8 +3,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts } = require('./models');
-
+const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData } = require('./models');
+const moment = require('moment');
 const { Op } = require('sequelize'); // Make sure this is only declared once
 
 const app = express();
@@ -957,6 +957,189 @@ app.get('/receipts/pending', async (req, res) => {
   } catch (err) {
     console.error('Error fetching pending receipts:', err);
     res.status(500).json({ message: 'Error fetching pending receipts', error: err.message });
+  }
+});
+
+const { google } = require('googleapis');
+const path = require('path');
+const cron = require('node-cron');
+
+const SERVICE_ACCOUNT_FILE = path.join(__dirname, 'service-account.json');
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: SERVICE_ACCOUNT_FILE,
+  scopes: SCOPES,
+});
+
+const sheets = google.sheets({ version: 'v4', auth });
+
+const sheetIds = {
+  SEVA_Vastra_Registration: '1qL4B3eM9he1PfCxAcKosbvHX0cToVOYFmY3uamRtkq0',
+  SEVA_Sankashti_Registration: '1DDvnPGC3hljQoh36idBSC1vp50IYti1h9Nc294uyh2g',
+  SEVA_Pradosham_Registration: '1Fkv6tSulX0Tz8-nhlY93Wq7EqJFWXRjQlH6-cJKpb24',
+  SEVA_Annadhanam_Registration: '1zBbVrsXh_32MxAoV06oQWw6fhghUSp0V3E1tzszqeM8',
+};
+
+const serviceNames = {
+  SEVA_Vastra_Registration: 'Vastra Sponsor',
+  SEVA_Sankashti_Registration: 'Sankata Hara Chaturthi',
+  SEVA_Pradosham_Registration: 'Pradosha Pooja',
+  SEVA_Annadhanam_Registration: 'Annadan',
+};
+
+// Fetch data from Google Sheets and store in SQL
+const fetchDataAndStoreInSQL = async () => {
+  let newEntriesCount = 0;
+  try {
+    const dataPromises = Object.entries(sheetIds).map(async ([name, id]) => {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: id,
+        range: 'Sheet1',
+      });
+      return { name, rows: response.data.values, spreadsheetId: id };
+    });
+
+    const allData = await Promise.all(dataPromises);
+
+    for (const { name, rows, spreadsheetId } of allData) {
+      if (rows && rows.length > 1) {
+        const headers = rows[0];
+        const dataToInsert = [];
+        const rowsToUpdate = [];
+
+        for (let i = 1; i < rows.length; i++) {
+          if (rows[i][0] !== 'Fetched' && rows[i][0] !== 'Existing Devotee' && rows[i][0] !== 'New Devotee') {
+            const entry = {};
+            headers.forEach((header, index) => {
+              entry[header] = rows[i][index];
+            });
+            const parsedDate = moment(entry['Date|date-1'], 'MM/DD/YYYY').format('YYYY-MM-DD');
+
+            // Check if the devotee already exists
+            const existingDevotee = await Devotee.findOne({
+              where: {
+                [Op.or]: [
+                  { Email: entry['Email Address|email-1'] },
+                  { Phone: entry['Phone|phone-1'] },
+                ],
+              },
+            });
+
+            let status = 'New Devotee';
+            let devoteeId = null;
+            if (existingDevotee) {
+              status = 'Existing Devotee';
+              devoteeId = existingDevotee.DevoteeId;
+            }
+
+            console.log(`Inserting entry: seva_id=${entry['Seva ID']}, first_name=${entry['First Name|name-1-first-name']}, service=${serviceNames[name]}`);
+
+            dataToInsert.push({
+              status,
+              devotee_id: devoteeId,
+              seva_id: entry['Seva ID'],
+              first_name: entry['First Name|name-1-first-name'],
+              last_name: entry['Last Name|name-1-last-name'],
+              email: entry['Email Address|email-1'],
+              phone: entry['Phone|phone-1'],
+              date: parsedDate,
+              message: entry['Message to Priest|textarea-1'],
+              payment_status: entry['Payment|radio-1'],
+              card_details: entry['Card Details|stripe-1'],
+              sheet_name: serviceNames[name], // Use the mapped service name
+            });
+            rowsToUpdate.push({ range: `Sheet1!A${i + 1}`, values: [[status]] }); // Update the status in the first column
+          }
+        }
+
+        if (dataToInsert.length > 0) {
+          await ExcelSevaData.bulkCreate(dataToInsert, { ignoreDuplicates: true });
+          newEntriesCount += dataToInsert.length; // Count new entries
+
+          // Update the rows in the Google Sheet to mark them as "Fetched", "New Devotee", or "Existing Devotee"
+          await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              valueInputOption: 'RAW',
+              data: rowsToUpdate,
+            },
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching Google Sheet data:', error);
+  }
+  return newEntriesCount;
+};
+
+// Schedule fetching data every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+  await fetchDataAndStoreInSQL();
+});
+
+// Fetch data initially when server starts
+fetchDataAndStoreInSQL();
+
+// Endpoint to manually fetch data from Google Sheets and store in SQL
+app.get('/api/fetch-data', async (req, res) => {
+  try {
+    const newEntriesCount = await fetchDataAndStoreInSQL();
+    if (newEntriesCount > 0) {
+      res.status(200).json({ message: `${newEntriesCount} entries fetched successfully` });
+    } else {
+      res.status(200).json({ message: 'Fetched successfully, no new entries' });
+    }
+  } catch (error) {
+    res.status(500).send('Error fetching data');
+  }
+});
+
+// Endpoint to fetch data from SQL table
+app.get('/api/excel-seva-data', async (req, res) => {
+  try {
+    const data = await ExcelSevaData.findAll({
+      order: [['createdAt', 'DESC']], // Ensure that new entries are ordered by creation time
+    });
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from SQL:', error);
+    res.status(500).json({ message: 'Error fetching data from SQL', error: error.message });
+  }
+});
+
+// Update payment status
+app.put('/api/update-payment-status/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const entry = await ExcelSevaData.findByPk(id);
+    if (!entry) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+    entry.payment_status = status;
+    await entry.save();
+    res.status(200).json({ message: 'Payment status updated successfully' });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ message: 'Error updating payment status', error: error.message });
+  }
+});
+
+// Delete entry
+app.delete('/api/delete-entry/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const entry = await ExcelSevaData.findByPk(id);
+    if (!entry) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+    await entry.destroy();
+    res.status(200).json({ message: 'Entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    res.status(500).json({ message: 'Error deleting entry', error: error.message });
   }
 });
 

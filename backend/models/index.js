@@ -471,6 +471,59 @@ const EditedReceipts = sequelize.define('EditedReceipts', {
   freezeTableName: true
 });
 
+// Define the ExcelSevaData model
+const ExcelSevaData = sequelize.define('ExcelSevaData', {
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  seva_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  first_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  last_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  date: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  message: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  payment_status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  card_details: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  sheet_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  devotee_id: {
+    type: DataTypes.INTEGER,
+  }
+}, {
+  timestamps: true, // Add timestamps
+});
+
 // Set associations
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -514,5 +567,6 @@ module.exports = {
   AccessControl,
   EmailCredential,
   GeneralConfigurations,
-  EditedReceipts
+  EditedReceipts,
+  ExcelSevaData
 };
