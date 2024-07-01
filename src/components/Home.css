@@ -52,3 +52,17 @@
 .custom-table .ant-table-tbody > tr > td {
   border-bottom: 1px solid #e8e8e8;
 }
+.ant-form-item {
+  margin-bottom: 16px; /* Add space below each form item */
+}
+
+.custom-button {
+  width: 100%; /* Make buttons full width */
+  height: 50px; /* Increase button height */
+}
+
+.custom-button-container {
+  margin-top: 16px; /* Add space above the button container */
+  display: flex;
+  justify-content: center;
+}

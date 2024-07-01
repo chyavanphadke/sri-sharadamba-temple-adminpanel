@@ -634,9 +634,11 @@ const Home = () => {
             )}
           </div>
           <Form.Item>
-            <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              {currentDevotee ? "Update" : "Add"}
-            </Button>
+            <div className="custom-button-container">
+              <Button type="primary" htmlType="submit" className="custom-button">
+                {currentDevotee ? "Update" : "Add"}
+              </Button>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
@@ -693,7 +695,7 @@ const Home = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
-                  <Input placeholder="Select a payment method" type="number" />
+                <Input placeholder="Select a payment method" type="number" />
               </Form.Item>
             </Col>
             <Col span={12}>
