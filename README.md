@@ -90,9 +90,9 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ('Admin', 'Home', 1, 1, 0, 0, 2, 2),
 ('Super Admin', 'Home', 1, 1, 1, 1, 2, 2),
 
-('User', 'DevoteeList', 1, 1, 0, 0, 2, 2),
-('Admin', 'DevoteeList', 1, 1, 0, 0, 2, 2),
-('Super Admin', 'DevoteeList', 1, 1, 1, 1, 2, 2),
+('User', 'exceldata', 0, 2, 2, 2, 2, 2),
+('Admin', 'exceldata', 1, 2, 2, 2, 2, 2),
+('Super Admin', 'exceldata', 1, 2, 2, 2, 2, 2),
 
 ('User', 'Calendar', 0, 0, 0, 0, 2, 2),
 ('Admin', 'Calendar', 1, 2, 0, 2, 2, 2),
@@ -139,6 +139,28 @@ CREATE TABLE `EditedReceipts` (
   `EditedBy` VARCHAR(100) NOT NULL,
   `EditedOn` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+
+CREATE TABLE excelsevadata (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seva_id VARCHAR(255),
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(255),
+    date DATE,
+    message TEXT,
+    payment_status VARCHAR(255),
+    card_details TEXT,
+    sheet_name VARCHAR(255),
+    status VARCHAR(255)
+);
+ALTER TABLE excelsevadata 
+ADD COLUMN createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+ADD COLUMN updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+ALTER TABLE excelsevadata ADD COLUMN `devotee_id` INT DEFAULT NULL;
+ALTER TABLE excelsevadata ADD COLUMN amount DOUBLE;
 
 ```
 
