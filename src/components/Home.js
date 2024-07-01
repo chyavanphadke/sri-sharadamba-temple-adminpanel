@@ -3,7 +3,6 @@ import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicke
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
-import 'moment-timezone';
 import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 
@@ -146,6 +145,7 @@ const Home = () => {
       Star: '',
       DOB: null,
     });
+    setEmailOptions([]); // Clear email options
     setFormKey(prevKey => prevKey + 1); // Force form re-render by changing key
     setIsModalVisible(true);
   };
@@ -169,6 +169,7 @@ const Home = () => {
       ...devotee,
       DOB: devotee.DOB ? moment(devotee.DOB) : null
     });
+    setEmailOptions([]); // Clear email options
     setIsModalVisible(true);
   };
 
