@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Table, Button, message, Popconfirm, Modal, Input } from 'antd';
+import { Layout, Table, Button, message, Popconfirm, Modal, Input, Switch } from 'antd';
 import axios from 'axios';
 
 const { Content } = Layout;
@@ -9,6 +9,7 @@ const OnlineFormsData = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [amount, setAmount] = useState('');
+  const [showPayAtTemple, setShowPayAtTemple] = useState(true);
 
   const fetchAndStoreData = async () => {
     try {
@@ -38,12 +39,13 @@ const OnlineFormsData = () => {
 
   const handlePaid = (record) => {
     setSelectedRecord(record);
+    setAmount(record.amount); // Pre-populate the amount
     setIsModalVisible(true);
   };
 
   const handlePaidSubmit = async () => {
     try {
-      await axios.put(`http://localhost:5001/api/update-payment-status/${selectedRecord.id}`, { status: `Paid ($${amount})` });
+      await axios.put(`http://localhost:5001/api/update-payment-status/${selectedRecord.id}`, { status: `Paid ($${amount})`, amount });
       message.success('Payment status updated to Paid');
       setIsModalVisible(false);
       setAmount('');
@@ -64,6 +66,14 @@ const OnlineFormsData = () => {
       message.error('Error deleting entry.');
     }
   };
+
+  const handleToggleChange = (checked) => {
+    setShowPayAtTemple(checked);
+  };
+
+  const filteredRowData = showPayAtTemple
+    ? rowData.filter((record) => record.payment_status === 'Pay at the Temple')
+    : rowData;
 
   useEffect(() => {
     fetchDataFromSQL();
@@ -122,6 +132,11 @@ const OnlineFormsData = () => {
       key: 'payment_status',
     },
     {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (text, record) => (
@@ -150,8 +165,18 @@ const OnlineFormsData = () => {
   return (
     <Content style={{ padding: '0 24px', minHeight: 280 }}>
       <h1>Online Forms Data</h1>
-      <Button onClick={fetchAndStoreData} style={{ marginBottom: '16px' }}>Fetch Data</Button>
-      <Table columns={columns} dataSource={rowData} rowKey={(record, index) => index} />
+      <div style={{ marginBottom: '16px' }}>
+        <Button onClick={fetchAndStoreData} style={{ backgroundColor: '#1890ff', color: '#fff' }}>Fetch Data</Button>
+        <span style={{ marginLeft: '16px' }}>Show:</span>
+        <Switch
+          checkedChildren="Pay at the Temple"
+          unCheckedChildren="All"
+          checked={showPayAtTemple}
+          onChange={handleToggleChange}
+          style={{ marginLeft: '8px' }}
+        />
+      </div>
+      <Table columns={columns} dataSource={filteredRowData} rowKey={(record, index) => index} />
 
       <Modal
         title="Enter Payment Amount"

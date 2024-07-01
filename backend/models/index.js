@@ -519,6 +519,9 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   },
   devotee_id: {
     type: DataTypes.INTEGER,
+  },
+  amount: {
+    type: DataTypes.DOUBLE
   }
 }, {
   timestamps: true, // Add timestamps

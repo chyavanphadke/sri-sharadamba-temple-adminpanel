@@ -997,6 +997,20 @@ const serviceNames = {
   SEVA_Annadhanam_Registration: 'Annadan',
 };
 
+const serviceIds = {
+  SEVA_Vastra_Registration: 277,
+  SEVA_Sankashti_Registration: 281,
+  SEVA_Pradosham_Registration: 280,
+  SEVA_Annadhanam_Registration: 269,
+};
+
+const defaultAmounts = {
+  SEVA_Vastra_Registration: 0,
+  SEVA_Sankashti_Registration: 51,
+  SEVA_Pradosham_Registration: 51,
+  SEVA_Annadhanam_Registration: 251,
+};
+
 // Fetch data from Google Sheets and store in SQL
 const fetchDataAndStoreInSQL = async () => {
   let newEntriesCount = 0;
@@ -1040,14 +1054,63 @@ const fetchDataAndStoreInSQL = async () => {
             if (existingDevotee) {
               status = 'Existing Devotee';
               devoteeId = existingDevotee.DevoteeId;
+            } else {
+              // Create new devotee
+              const newDevotee = await Devotee.create({
+                LastName: entry['Last Name|name-1-last-name'],
+                FirstName: entry['First Name|name-1-first-name'],
+                Phone: entry['Phone|phone-1'],
+                AltPhone: null,
+                Email: entry['Email Address|email-1'],
+                Address: null,
+                City: null,
+                State: null,
+                Zip: null,
+                MemberTypeId: null,
+                Comments: null,
+                Gotra: null,
+                Star: null,
+                MembershipYear: null,
+                Active: 1,
+                DOB: null,
+              });
+              devoteeId = newDevotee.DevoteeId;
             }
 
-            console.log(`Inserting entry: seva_id=${entry['Seva ID']}, first_name=${entry['First Name|name-1-first-name']}, service=${serviceNames[name]}`);
+            // Determine the service ID and amount based on the service name
+            const serviceId = {
+              SEVA_Vastra_Registration: 277,
+              SEVA_Sankashti_Registration: 281,
+              SEVA_Pradosham_Registration: 280,
+              SEVA_Annadhanam_Registration: 269,
+            }[name];
 
+            const amount = {
+              SEVA_Vastra_Registration: 0,
+              SEVA_Sankashti_Registration: 51,
+              SEVA_Pradosham_Registration: 51,
+              SEVA_Annadhanam_Registration: 251,
+            }[name];
+
+            // Create activity entry
+            const newActivity = await Activity.create({
+              DevoteeId: devoteeId,
+              ServiceId: serviceId,
+              PaymentMethod: 8,
+              Amount: amount,
+              CheckNumber: "",
+              Comments: entry['Message to Priest|textarea-1'],
+              UserId: "online Paid",
+              ActivityDate: moment().format('YYYY-MM-DD HH:mm:ss'),
+              ServiceDate: parsedDate,
+              CheckFile: null,
+            });
+
+            // Insert entry in ExcelSevaData
             dataToInsert.push({
               status,
               devotee_id: devoteeId,
-              seva_id: entry['Seva ID'],
+              seva_id: newActivity.ActivityId,
               first_name: entry['First Name|name-1-first-name'],
               last_name: entry['Last Name|name-1-last-name'],
               email: entry['Email Address|email-1'],
@@ -1056,8 +1119,10 @@ const fetchDataAndStoreInSQL = async () => {
               message: entry['Message to Priest|textarea-1'],
               payment_status: entry['Payment|radio-1'],
               card_details: entry['Card Details|stripe-1'],
-              sheet_name: serviceNames[name], // Use the mapped service name
+              sheet_name: serviceNames[name],
+              amount: amount,
             });
+
             rowsToUpdate.push({ range: `Sheet1!A${i + 1}`, values: [[status]] }); // Update the status in the first column
           }
         }
@@ -1096,9 +1161,9 @@ app.get('/api/fetch-data', async (req, res) => {
   try {
     const newEntriesCount = await fetchDataAndStoreInSQL();
     if (newEntriesCount > 0) {
-      res.status(200).json({ message: `${newEntriesCount} entries fetched successfully` });
+      res.status(200).json({ message: `${newEntriesCount} entries fetched successfully`, newEntriesCount });
     } else {
-      res.status(200).json({ message: 'Fetched successfully, no new entries' });
+      res.status(200).json({ message: 'Fetched successfully, no new entries', newEntriesCount });
     }
   } catch (error) {
     res.status(500).send('Error fetching data');
@@ -1118,17 +1183,12 @@ app.get('/api/excel-seva-data', async (req, res) => {
   }
 });
 
-// Update payment status
+// Endpoint to update payment status
 app.put('/api/update-payment-status/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const entry = await ExcelSevaData.findByPk(id);
-    if (!entry) {
-      return res.status(404).json({ message: 'Entry not found' });
-    }
-    entry.payment_status = status;
-    await entry.save();
+    const { status, amount } = req.body;
+    await ExcelSevaData.update({ payment_status: status, amount }, { where: { id } });
     res.status(200).json({ message: 'Payment status updated successfully' });
   } catch (error) {
     console.error('Error updating payment status:', error);
@@ -1136,19 +1196,102 @@ app.put('/api/update-payment-status/:id', async (req, res) => {
   }
 });
 
-// Delete entry
+// Endpoint to delete an entry
 app.delete('/api/delete-entry/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const entry = await ExcelSevaData.findByPk(id);
-    if (!entry) {
-      return res.status(404).json({ message: 'Entry not found' });
-    }
-    await entry.destroy();
+    await ExcelSevaData.destroy({ where: { id } });
     res.status(200).json({ message: 'Entry deleted successfully' });
   } catch (error) {
     console.error('Error deleting entry:', error);
     res.status(500).json({ message: 'Error deleting entry', error: error.message });
+  }
+});
+
+// Endpoint to fetch data from SQL table
+app.get('/api/excel-seva-data', async (req, res) => {
+  try {
+    const data = await ExcelSevaData.findAll({
+      order: [['createdAt', 'DESC']], // Ensure that new entries are ordered by creation time
+    });
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from SQL:', error);
+    res.status(500).json({ message: 'Error fetching data from SQL', error: error.message });
+  }
+});
+
+// Endpoint to manually fetch data from Google Sheets and store in SQL
+app.get('/api/fetch-data', async (req, res) => {
+  try {
+    const newEntriesCount = await fetchDataAndStoreInSQL();
+    if (newEntriesCount > 0) {
+      res.status(200).json({ message: `${newEntriesCount} entries fetched successfully`, newEntriesCount });
+    } else {
+      res.status(200).json({ message: 'Fetched successfully, no new entries', newEntriesCount });
+    }
+  } catch (error) {
+    res.status(500).send('Error fetching data');
+  }
+});
+
+// Schedule fetching data every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+  await fetchDataAndStoreInSQL();
+});
+
+// Fetch data initially when server starts
+fetchDataAndStoreInSQL();
+
+// Endpoint to manually fetch data from Google Sheets and store in SQL
+app.get('/api/fetch-data', async (req, res) => {
+  try {
+    const newEntriesCount = await fetchDataAndStoreInSQL();
+    if (newEntriesCount > 0) {
+      res.status(200).json({ message: `${newEntriesCount} entries fetched successfully`, newEntriesCount });
+    } else {
+      res.status(200).json({ message: 'Fetched successfully, no new entries', newEntriesCount });
+    }
+  } catch (error) {
+    res.status(500).send('Error fetching data');
+  }
+});
+
+// Endpoint to fetch data from SQL table
+app.get('/api/excel-seva-data', async (req, res) => {
+  try {
+    const data = await ExcelSevaData.findAll({
+      order: [['createdAt', 'DESC']], // Ensure that new entries are ordered by creation time
+    });
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching data from SQL:', error);
+    res.status(500).json({ message: 'Error fetching data from SQL', error: error.message });
+  }
+});
+
+// Endpoint to delete an entry
+app.delete('/api/delete-entry/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ExcelSevaData.destroy({ where: { id } });
+    res.status(200).json({ message: 'Entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    res.status(500).json({ message: 'Error deleting entry', error: error.message });
+  }
+});
+
+// Endpoint to update payment status
+app.put('/api/update-payment-status/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    await ExcelSevaData.update({ payment_status: status }, { where: { id } });
+    res.status(200).json({ message: 'Payment status updated successfully' });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
 });
 
