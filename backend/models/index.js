@@ -522,6 +522,12 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   },
   amount: {
     type: DataTypes.DOUBLE
+  },
+  row_index: {
+    type: Sequelize.INTEGER,
+  },
+  unique_id: {
+    type: DataTypes.STRING
   }
 }, {
   timestamps: true, // Add timestamps

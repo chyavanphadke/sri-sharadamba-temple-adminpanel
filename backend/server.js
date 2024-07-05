@@ -1495,6 +1495,338 @@ app.get('/todays-events', async (req, res) => {
   }
 });
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp start
+
+const { google } = require('googleapis');
+const cron = require('node-cron');
+
+const serviceAccount = require('./service-account.json');
+const auth = new google.auth.GoogleAuth({
+  credentials: serviceAccount,
+  scopes: ['https://www.googleapis.com/auth/spreadsheets']
+});
+const sheets = google.sheets({ version: 'v4', auth });
+
+const sheetServiceMap = {
+  '1qL4B3eM9he1PfCxAcKosbvHX0cToVOYFmY3uamRtkq0': 278,
+  '1DDvnPGC3hljQoh36idBSC1vp50IYti1h9Nc294uyh2g': 281,
+  '1Fkv6tSulX0Tz8-nhlY93Wq7EqJFWXRjQlH6-cJKpb24': 280,
+  '1zBbVrsXh_32MxAoV06oQWw6fhghUSp0V3E1tzszqeM8': 269
+};
+
+async function fetchDataFromSheets() {
+  try {
+    let newEntriesCount = 0;
+    for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: 'Sheet1!A:J'
+      });
+
+      const rows = response.data.values;
+      if (rows.length) {
+        console.log(`Fetched ${rows.length} rows from sheet ${sheetId}`);
+        for (let index = 1; index < rows.length; index++) {
+          const row = rows[index];
+          if (!row[0]) {
+            console.log(`Processing row ${index} from sheet ${sheetId}:`, row);
+            await processRow(row, sheetId, index + 1, serviceId);
+            newEntriesCount++;
+          }
+        }
+      } else {
+        console.log('No data found in sheet:', sheetId);
+      }
+    }
+    return newEntriesCount;
+  } catch (error) {
+    console.error('Error fetching data from Google Sheets:', error);
+    throw error;
+  }
+}
+
+async function processRow(row, sheetId, rowIndex, serviceId) {
+  const [
+    status,
+    sevaId,
+    firstName,
+    lastName,
+    email,
+    phone,
+    date,
+    messageToPriest,
+    paymentStatus,
+    cardDetails
+  ] = row;
+
+  console.log('Processing row with values:', { firstName, lastName, email, phone });
+
+  if (!firstName || !lastName || !email || !phone) {
+    console.error('Required fields are missing:', { firstName, lastName, email, phone });
+    return;
+  }
+
+  const formattedDate = date ? new Date(date).toISOString().split('T')[0] : null;
+
+  const devotee = await findOrCreateDevotee({ firstName, lastName, email, phone });
+
+  let activityId = null;
+  if (paymentStatus === 'Paid') {
+    activityId = await createActivity({
+      devoteeId: devotee.DevoteeId,
+      serviceId,
+      paymentStatus,
+      amount: await getServiceRate(serviceId),
+      serviceDate: formattedDate
+    });
+  }
+
+  const updatedExcelSevaData = await updateExcelSevaData({
+    seva_id: sevaId || activityId || 'Unknown',
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    phone,
+    date: formattedDate,
+    message: messageToPriest || '',
+    payment_status: paymentStatus,
+    card_details: cardDetails || '',
+    sheet_name: sheetId,
+    devotee_id: devotee.DevoteeId,
+    amount: await getServiceRate(serviceId),
+    status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
+    row_index: rowIndex  // Add row_index here to use it later for updates
+  });
+
+  if (rowIndex <= 1000) {
+    await updateSheetStatus(sheetId, rowIndex, devotee.isNew ? 'New Devotee' : 'Existing Devotee');
+    if (paymentStatus === 'Paid') {
+      await updateSheetSevaId(sheetId, rowIndex, sevaId || activityId);
+    }
+  } else {
+    console.error(`Row index ${rowIndex} exceeds Google Sheets limit.`);
+  }
+}
+
+async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
+  try {
+    console.log('Finding or creating devotee with values:', { firstName, lastName, email, phone });
+    let devotee = await Devotee.findOne({ where: { Email: email } });
+    if (!devotee) {
+      devotee = await Devotee.findOne({ where: { Phone: phone } });
+      if (!devotee) {
+        devotee = await Devotee.create({ FirstName: firstName, LastName: lastName, Email: email, Phone: phone });
+        devotee.isNew = true;
+      } else {
+        devotee.isNew = false;
+      }
+    } else {
+      devotee.isNew = false;
+    }
+    return devotee;
+  } catch (error) {
+    console.error('Error finding or creating devotee:', error);
+    throw error;
+  }
+}
+
+async function getServiceRate(serviceId) {
+  try {
+    const service = await Service.findByPk(serviceId);
+    return service ? service.Rate : 0;
+  } catch (error) {
+    console.error('Error getting service rate:', error);
+    throw error;
+  }
+}
+
+async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate }) {
+  try {
+    const activity = await Activity.create({
+      DevoteeId: devoteeId,
+      ServiceId: serviceId,
+      PaymentMethod: paymentStatus === 'Paid' ? 1 : 2,
+      Amount: amount,
+      UserId: 'online Paid',
+      ServiceDate: serviceDate
+    });
+    return activity.ActivityId;
+  } catch (error) {
+    console.error('Error creating activity:', error);
+    throw error;
+  }
+}
+
+async function updateExcelSevaData(data) {
+  try {
+    const entry = await ExcelSevaData.create(data);
+    return entry;
+  } catch (error) {
+    console.error('Error updating excelsevadata:', error);
+    throw error;
+  }
+}
+
+async function updateSheetStatus(sheetId, rowIndex, status) {
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `Sheet1!A${rowIndex}:A${rowIndex}`,
+      valueInputOption: 'RAW',
+      resource: { values: [[status]] }
+    });
+  } catch (error) {
+    console.error('Error updating Google Sheets status:', error);
+    throw error;
+  }
+}
+
+async function updateSheetSevaId(sheetId, rowIndex, sevaId) {
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `Sheet1!B${rowIndex}:B${rowIndex}`,
+      valueInputOption: 'RAW',
+      resource: { values: [[sevaId]] }
+    });
+  } catch (error) {
+    console.error('Error updating Google Sheets Seva ID:', error);
+    throw error;
+  }
+}
+
+app.post('/fetch-sheets-data', async (req, res) => {
+  try {
+    const newEntriesCount = await fetchDataFromSheets();
+    res.status(200).json({ message: `${newEntriesCount} new entries fetched` });
+  } catch (error) {
+    console.error('Error fetching data from Google Sheets:', error);
+    res.status(500).json({ message: 'Error fetching data from Google Sheets', error: error.message });
+  }
+});
+
+// Fetch ExcelSevaData API
+app.get('/excel-seva-data', async (req, res) => {
+  try {
+    const excelSevaData = await ExcelSevaData.findAll();
+    res.status(200).json(excelSevaData);
+  } catch (error) {
+    console.error('Error fetching ExcelSevaData:', error);
+    res.status(500).json({ message: 'Error fetching ExcelSevaData', error: error.message });
+  }
+});
+
+// Example API route for updating payment status
+app.put('/update-payment-status/:id', async (req, res) => {
+  try {
+    const { amount, paymentStatus } = req.body;
+    const entry = await ExcelSevaData.findByPk(req.params.id);
+
+    if (!entry) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    if (paymentStatus === 'Paid') {
+      const activityId = await createActivity({
+        devoteeId: entry.devotee_id,
+        serviceId: sheetServiceMap[entry.sheet_name],
+        paymentStatus,
+        amount,
+        serviceDate: entry.date
+      });
+
+      entry.seva_id = activityId;
+      entry.payment_status = paymentStatus;
+      entry.amount = amount;
+      await entry.save();
+
+      if (entry.row_index <= 1000) {
+        //TO DO: Check if needed
+        //await updateSheetStatus(entry.sheet_name, entry.row_index, 'Paid');
+        //await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
+      } else {
+        console.error(`Row index ${entry.row_index} exceeds Google Sheets limit.`);
+      }
+    } else {
+      await ExcelSevaData.destroy({ where: { id: entry.id } });
+    }
+
+    res.status(200).json({ message: 'Payment status updated successfully' });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({ message: 'Error updating payment status', error: error.message });
+  }
+});
+
+// Example API route for deleting an entry
+app.delete('/delete-entry/:id', async (req, res) => {
+  try {
+    const entry = await ExcelSevaData.findByPk(req.params.id);
+
+    if (!entry) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    await ExcelSevaData.destroy({ where: { id: entry.id } });
+    res.status(200).json({ message: 'Entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting entry:', error);
+    res.status(500).json({ message: 'Error deleting entry', error: error.message });
+  }
+});
+
+// Existing API endpoints for reference
+app.put('/access-control', async (req, res) => {
+  try {
+    const accessControls = req.body;
+
+    if (!Array.isArray(accessControls) || accessControls.length === 0) {
+      return res.status(400).json({ message: 'Invalid access control data' });
+    }
+
+    const updatePromises = accessControls.map(control => {
+      return AccessControl.update(
+        {
+          can_view: control.can_view,
+          can_add: control.can_add,
+          can_edit: control.can_edit,
+          can_delete: control.can_delete,
+          can_approve: control.can_approve,
+          can_email: control.can_email,
+        },
+        {
+          where: { id: control.id }
+        }
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    res.status(200).json({ message: 'Access controls updated successfully' });
+  } catch (error) {
+    console.error('Error updating access controls:', error);
+    res.status(500).json({ message: 'Error updating access controls', error: error.message });
+  }
+});
+
+app.get('/email-credentials', async (req, res) => {
+  try {
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(404).json({ message: 'Email credentials not found' });
+    }
+    res.status(200).json(emailCredential);
+  } catch (error) {
+    console.error('Error fetching email credentials:', error);
+    res.status(500).json({ message: 'Error fetching email credentials', error: error.message });
+  }
+});
+
+cron.schedule('*/5 * * * *', fetchDataFromSheets);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp End
+
+
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
   const existingSuperUser = await User.findOne({ where: { username: 'aghamya' } });

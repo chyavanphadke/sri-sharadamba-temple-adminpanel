@@ -1,0 +1,21 @@
+/* OnlineFormsData.css */
+
+.site-layout-content {
+    padding: 24px;
+    background: #fff;
+  }
+  
+  .ant-table-thead > tr > th {
+    background-color: #fafafa;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .ant-table-tbody > tr > td {
+    text-align: center;
+  }
+  
+  button {
+    margin-bottom: 16px;
+  }
+  

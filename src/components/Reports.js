@@ -475,25 +475,27 @@ const Reports = () => {
   };
 
   const columns = [
-    { title: 'Name', dataIndex: 'Name', key: 'name' },
-    { title: 'Phone', dataIndex: 'Phone', key: 'phone' },
-    { title: 'Service', dataIndex: 'Service', key: 'service' },
+    { title: 'Name', dataIndex: 'Name', key: 'name', align: 'center' },
+    { title: 'Phone', dataIndex: 'Phone', key: 'phone', align: 'center' },
+    { title: 'Service', dataIndex: 'Service', key: 'service', align: 'center' },
     { 
       title: 'Amount', 
       dataIndex: 'Amount', 
       key: 'amount',
+      align: 'center',
       render: (text) => `$${text}` // Format the amount
     },
     { 
       title: 'Date', 
       dataIndex: 'Date', 
       key: 'date',
-      render: (text) => moment(text).format('MMMM D, YYYY') // Format the date
+      render: (text) => moment(text).format('MMMM D, YYYY'), align: 'center' // Format the date
     },
     { 
       title: 'Payment Method', 
       dataIndex: 'Payment Method', 
       key: 'paymentMethod',
+      align: 'center',
       render: (text, record) => {
         if (text === 'Check' && record.CheckNumber && record.CheckNumber.trim()) {
           return `${text} (${record.CheckNumber})`;
@@ -513,7 +515,7 @@ const Reports = () => {
             <Button onClick={() => handleReEmail(record)}>Email</Button>
           </Tooltip>
         </>
-      )
+      ), align: 'center'
     }
   ];
 
