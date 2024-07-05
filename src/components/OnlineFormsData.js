@@ -183,7 +183,7 @@ const OnlineFormsData = () => {
             dataSource={filteredData} 
             loading={loading} 
             rowKey="id" 
-            pagination={{ pageSize: 10 }} 
+            pagination={{ pageSize: 20 }} 
             scroll={{ x: '100%' }} 
           />
           <Modal
