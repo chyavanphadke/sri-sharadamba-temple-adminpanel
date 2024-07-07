@@ -1508,10 +1508,12 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 
 const sheetServiceMap = {
-  '1qL4B3eM9he1PfCxAcKosbvHX0cToVOYFmY3uamRtkq0': 278,
-  '1DDvnPGC3hljQoh36idBSC1vp50IYti1h9Nc294uyh2g': 281,
-  '1Fkv6tSulX0Tz8-nhlY93Wq7EqJFWXRjQlH6-cJKpb24': 280,
-  '1zBbVrsXh_32MxAoV06oQWw6fhghUSp0V3E1tzszqeM8': 269
+  '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
+  '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
+  '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
+  '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
+  '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 283,
+  '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
 };
 
 async function fetchDataFromSheets() {
@@ -1520,17 +1522,27 @@ async function fetchDataFromSheets() {
     for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A:J'
+        range: 'Sheet1!A:M'  // Adjusted to new range
       });
 
       const rows = response.data.values;
+      if (!rows) {
+        console.error(`No data found in sheet: ${sheetId}`);
+        continue;
+      }
+
       if (rows.length) {
         console.log(`Fetched ${rows.length} rows from sheet ${sheetId}`);
+        const headers = rows[0].map(header => header.split('|')[0]); // Extract headers
         for (let index = 1; index < rows.length; index++) {
           const row = rows[index];
           if (!row[0]) {
             console.log(`Processing row ${index} from sheet ${sheetId}:`, row);
-            await processRow(row, sheetId, index + 1, serviceId);
+            const rowData = headers.reduce((acc, header, i) => {
+              acc[header] = row[i];
+              return acc;
+            }, {});
+            await processRow(rowData, sheetId, index + 1, serviceId);
             newEntriesCount++;
           }
         }
@@ -1545,19 +1557,20 @@ async function fetchDataFromSheets() {
   }
 }
 
-async function processRow(row, sheetId, rowIndex, serviceId) {
-  const [
-    status,
-    sevaId,
-    firstName,
-    lastName,
-    email,
-    phone,
-    date,
-    messageToPriest,
-    paymentStatus,
-    cardDetails
-  ] = row;
+async function processRow(rowData, sheetId, rowIndex, serviceId) {
+  const {
+    Status,
+    'Seva ID': sevaId,
+    'First Name': firstName,
+    'Last Name': lastName,
+    'Email Address': email,
+    Phone: phone,
+    Date: date,
+    'Message to Priest': messageToPriest,
+    'Payment Option': paymentStatus,
+    'Card Details': cardDetails,
+    'Donation Amount': amount
+  } = rowData;
 
   console.log('Processing row with values:', { firstName, lastName, email, phone });
 
@@ -1576,8 +1589,9 @@ async function processRow(row, sheetId, rowIndex, serviceId) {
       devoteeId: devotee.DevoteeId,
       serviceId,
       paymentStatus,
-      amount: await getServiceRate(serviceId),
-      serviceDate: formattedDate
+      amount,
+      serviceDate: formattedDate,
+      comments: messageToPriest || ''
     });
   }
 
@@ -1593,7 +1607,7 @@ async function processRow(row, sheetId, rowIndex, serviceId) {
     card_details: cardDetails || '',
     sheet_name: sheetId,
     devotee_id: devotee.DevoteeId,
-    amount: await getServiceRate(serviceId),
+    amount,
     status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
     row_index: rowIndex  // Add row_index here to use it later for updates
   });
@@ -1630,17 +1644,7 @@ async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
   }
 }
 
-async function getServiceRate(serviceId) {
-  try {
-    const service = await Service.findByPk(serviceId);
-    return service ? service.Rate : 0;
-  } catch (error) {
-    console.error('Error getting service rate:', error);
-    throw error;
-  }
-}
-
-async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate }) {
+async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate, comments }) {
   try {
     const activity = await Activity.create({
       DevoteeId: devoteeId,
@@ -1648,7 +1652,8 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
       PaymentMethod: paymentStatus === 'Paid' ? 1 : 2,
       Amount: amount,
       UserId: 'online Paid',
-      ServiceDate: serviceDate
+      ServiceDate: serviceDate,
+      Comments: comments
     });
     return activity.ActivityId;
   } catch (error) {
@@ -1732,7 +1737,8 @@ app.put('/update-payment-status/:id', async (req, res) => {
         serviceId: sheetServiceMap[entry.sheet_name],
         paymentStatus,
         amount,
-        serviceDate: entry.date
+        serviceDate: entry.date,
+        comments: entry.message
       });
 
       entry.seva_id = activityId;
@@ -1741,9 +1747,9 @@ app.put('/update-payment-status/:id', async (req, res) => {
       await entry.save();
 
       if (entry.row_index <= 1000) {
-        //TO DO: Check if needed
+        // TODO: Add if required
         //await updateSheetStatus(entry.sheet_name, entry.row_index, 'Paid');
-        //await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
+        await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
       } else {
         console.error(`Row index ${entry.row_index} exceeds Google Sheets limit.`);
       }
@@ -1824,8 +1830,32 @@ app.get('/email-credentials', async (req, res) => {
 
 cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp End
 
+
+
+// TV Display
+
+const fs = require('fs');
+const path = require('path');
+
+// Serve static files from the "src/assets" directory
+app.use('/assets', express.static(path.join(__dirname, 'src', 'assets')));
+
+// API endpoint to get slideshow files
+app.get('/api/slideshow-files', (req, res) => {
+  const slidesDir = path.join(__dirname, 'src', 'assets', 'tv_slides');
+  fs.readdir(slidesDir, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to read slides directory' });
+    }
+    const fileUrls = files.map(file => `/assets/tv_slides/${file}`);
+    res.json({ files: fileUrls });
+  });
+});
+
+// Tv Display Ends
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {
