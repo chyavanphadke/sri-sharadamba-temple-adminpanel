@@ -71,8 +71,8 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ('Super Admin', 'Home', 1, 1, 1, 1, 2, 2),
 
 ('User', 'exceldata', 0, 2, 2, 2, 2, 2),
-('Admin', 'exceldata', 1, 2, 2, 2, 2, 2),
-('Super Admin', 'exceldata', 1, 2, 2, 2, 2, 2),
+('Admin', 'exceldata', 0, 2, 2, 2, 2, 2),
+('Super Admin', 'exceldata', 0, 2, 2, 2, 2, 2),
 
 ('User', 'Calendar', 0, 0, 0, 0, 2, 2),
 ('Admin', 'Calendar', 1, 2, 0, 2, 2, 2),
@@ -122,27 +122,30 @@ CREATE TABLE `EditedReceipts` (
 
 
 
-CREATE TABLE excelsevadata (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    seva_id VARCHAR(255),
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    email VARCHAR(255),
-    phone VARCHAR(255),
-    date DATE,
-    message TEXT,
-    payment_status VARCHAR(255),
-    card_details TEXT,
-    sheet_name VARCHAR(255),
-    status VARCHAR(255)
-);
-ALTER TABLE excelsevadata 
-ADD COLUMN createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-ADD COLUMN updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE excelsevadata ADD COLUMN `devotee_id` INT DEFAULT NULL;
-ALTER TABLE excelsevadata ADD COLUMN amount DOUBLE;
+CREATE TABLE `excelsevadata` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `seva_id` varchar(45) DEFAULT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(255) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `message` text,
+  `payment_status` varchar(255) DEFAULT NULL,
+  `card_details` text,
+  `sheet_name` varchar(255) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `devotee_id` int DEFAULT NULL,
+  `amount` double DEFAULT NULL,
+  `row_index` int DEFAULT NULL,
+  `unique_id` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=240 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 ```
+User Table: 'online Paid', 'Paid at Temple'
 
 # Installation:
 

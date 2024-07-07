@@ -389,10 +389,10 @@ const Home = () => {
   };
 
   const columns = [
-    { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName' },
-    { title: 'Last Name', dataIndex: 'LastName', key: 'LastName' },
-    { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text) },
-    { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text) },
+    { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName',  align: 'center'},
+    { title: 'Last Name', dataIndex: 'LastName', key: 'LastName',  align: 'center'},
+    { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text), align: 'center' },
+    { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text), align: 'center' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
@@ -400,7 +400,7 @@ const Home = () => {
           {accessControl.Home?.can_edit === 1 && <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>}
           {accessControl.Home?.can_delete === 1 && <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>}
         </>
-      )
+      ),  align: 'center'
     }
   ];
 

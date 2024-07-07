@@ -147,8 +147,8 @@ const SuperAdmin = () => {
   };
 
   const columns = [
-    { title: 'Username', dataIndex: 'username', key: 'username' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: 'Username', dataIndex: 'username', key: 'username', align: 'center' },
+    { title: 'Email', dataIndex: 'email', key: 'email', align: 'center' },
     { title: 'Access Level', dataIndex: 'usertype', key: 'usertype', render: (text, record) => (
         <Select
           defaultValue={text}
@@ -160,10 +160,10 @@ const SuperAdmin = () => {
           <Option value="Admin">Admin</Option>
           {(loggedInUsername === 'nb' || loggedInUsername === 'aghamya') && <Option value="Super Admin">Super Admin</Option>}
         </Select>
-      )
+      ), align: 'center'
     },
-    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text === 'Auto Approved' ? 'Auto Approved' : (userMap[text] || 'N/A') },
-    { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => text ? 'Yes' : 'No' },
+    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text === 'Auto Approved' ? 'Auto Approved' : (userMap[text] || 'N/A'), align: 'center' },
+    { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => text ? 'Yes' : 'No', align: 'center' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
@@ -174,7 +174,7 @@ const SuperAdmin = () => {
           )}
           <Button onClick={() => handleDeleteUser(record.userid, record.username)} danger style={{ marginRight: 8 }}>Delete</Button>
         </>
-      )
+      ), align: 'center'
     }
   ];
 

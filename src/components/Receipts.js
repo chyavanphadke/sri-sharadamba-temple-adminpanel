@@ -215,12 +215,12 @@ const Receipts = () => {
   };
 
   const columnsPending = [
-    { title: 'Name', dataIndex: 'Name', key: 'Name' },
-    { title: 'Service', dataIndex: 'Service', key: 'Service' },
-    { title: 'Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text) },
-    { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod' },
-    { title: 'Amount', dataIndex: 'Amount', key: 'Amount' },
-    { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy' },
+    { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center'},
+    { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
+    { title: 'Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod', align: 'center' },
+    { title: 'Amount', dataIndex: 'Amount', key: 'Amount', align: 'center' },
+    { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy', align: 'center' },
     {
       title: 'Actions',
       key: 'actions',
@@ -233,19 +233,19 @@ const Receipts = () => {
             <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
           )}
         </>
-      )
+      ), align: 'center'
     }
   ];
 
   const columnsApproved = [
-    { title: 'Name', dataIndex: 'Name', key: 'Name' },
-    { title: 'Service', dataIndex: 'Service', key: 'Service' },
-    { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text) },
-    { title: 'Approved Date', dataIndex: 'ApprovedDate', key: 'ApprovedDate', render: (text) => formatDate(text) },
-    { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod' },
-    { title: 'Amount', dataIndex: 'Amount', key: 'Amount' },
-    { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy' },
-    { title: 'Email', dataIndex: 'Email', key: 'Email' },
+    { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
+    { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
+    { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Approved Date', dataIndex: 'ApprovedDate', key: 'ApprovedDate', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod', align: 'center' },
+    { title: 'Amount', dataIndex: 'Amount', key: 'Amount', align: 'center' },
+    { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy', align: 'center' },
+    { title: 'Email', dataIndex: 'Email', key: 'Email', align: 'center' },
     {
       title: 'Actions',
       key: 'actions',
@@ -267,12 +267,12 @@ const Receipts = () => {
             </>
           )}
         </>
-      )
+      ), align: 'center'
     }
   ];
 
   const columnsEdited = [
-    { title: 'Name', dataIndex: 'Name', key: 'Name' },
+    { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
       title: 'Old Service', 
       dataIndex: 'OldService', 
@@ -281,7 +281,7 @@ const Receipts = () => {
         <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
           {text}
         </span>
-      ) 
+      ), align: 'center'
     },
     { 
       title: 'New Service', 
@@ -291,7 +291,7 @@ const Receipts = () => {
         <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
           {text}
         </span>
-      ) 
+      ) , align: 'center'
     },
     { 
       title: 'Old Amount', 
@@ -301,7 +301,7 @@ const Receipts = () => {
         <span style={{ color: record.OldAmount !== record.NewAmount ? 'red' : 'inherit', fontWeight: record.OldAmount !== record.NewAmount ? 'bold' : 'normal' }}>
           {text}
         </span>
-      ) 
+      ) , align: 'center'
     },
     { 
       title: 'New Amount', 
@@ -311,14 +311,14 @@ const Receipts = () => {
         <span style={{ color: record.OldAmount !== record.NewAmount ? 'red' : 'inherit', fontWeight: record.OldAmount !== record.NewAmount ? 'bold' : 'normal' }}>
           {text}
         </span>
-      ) 
+      ) , align: 'center'
     },
-    { title: 'Edited By', dataIndex: 'EditedBy', key: 'EditedBy' },
+    { title: 'Edited By', dataIndex: 'EditedBy', key: 'EditedBy', align: 'center' },
     { 
       title: 'Edited On', 
       dataIndex: 'EditedOn', 
       key: 'EditedOn', 
-      render: (text) => moment(text).tz('America/Los_Angeles').format('MMM D, YYYY h:mm A') 
+      render: (text) => moment(text).tz('America/Los_Angeles').format('MMM D, YYYY h:mm A'), align: 'center'
     },
   ];
   
