@@ -1881,13 +1881,13 @@ sequelize.sync().then(async () => {
   // Endpoint to reset email text
   app.put('/email-text/reset', (req, res) => {
     emailText = [
-      "Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.",
-      "Your donation will go a long way in helping us accomplish our goal of creating a modern facility",
-      "to support the religious, social and cultural needs of our community.",
-      "May god blessings always with you and your family.",
+      "Thank you for your generous donation to the Sringeri Education and Vedic Academy.",
+      "Your donation will greatly help us achieve our goal of creating a modern facility",
+      "to support the religious, social, and cultural needs of our community.",
+      "May God's blessings always be with you and your family.",
       "Sincerely,",
       "Sringeri Education and Vedic Academy.",
-      "No goods or services were provided for this donation."
+      "No goods or services were provided in exchange for this donation."          
     ];
     res.status(200).json({ message: 'Email text reset to default' });
   });
