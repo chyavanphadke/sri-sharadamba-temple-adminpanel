@@ -1472,7 +1472,7 @@ app.get('/todays-events', async (req, res) => {
 
       const familyMembers = await Family.findAll({
         where: { DevoteeId: activity.Devotee.DevoteeId },
-        attributes: ['FirstName', 'LastName'],
+        attributes: ['FirstName', 'LastName', 'RelationShip', 'Gotra', 'Star'],
       });
 
       acc[serviceName].push({
@@ -1482,7 +1482,13 @@ app.get('/todays-events', async (req, res) => {
         LastName: activity.Devotee.LastName,
         Gotra: activity.Devotee.Gotra,
         Star: activity.Devotee.Star,
-        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+        FamilyMembers: familyMembers.map(member => ({
+          RelationShip: member.RelationShip,
+          FirstName: member.FirstName,
+          LastName: member.LastName,
+          Gotra: member.Gotra,
+          Star: member.Star,
+        })),
       });
 
       return acc;

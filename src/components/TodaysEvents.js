@@ -44,7 +44,14 @@ const TodaysEvents = () => {
               <Text style={{ marginLeft: '12px' }} strong>Gotra: </Text><Text>{item.Gotra}</Text><br />
               <Text style={{ marginLeft: '12px' }} strong>Star: </Text><Text>{item.Star}</Text><br />
               <Text style={{ marginLeft: '12px' }} strong>Family Members:</Text><br />
-              <Text style={{ marginLeft: '12px' }}>{item.FamilyMembers.join(', ')}</Text>
+              {item.FamilyMembers.map((member, memberIndex) => (
+                <div key={memberIndex} style={{ marginLeft: '24px' }}>
+                  <Text>{memberIndex + 1}. Relation: {member.RelationShip || 'N/A'}, </Text><br />
+                  <Text style={{ marginLeft: '12px' }}>Name: {member.FirstName || 'N/A'} {member.LastName || 'N/A'}, </Text><br />
+                  <Text style={{ marginLeft: '12px' }}>Gotra: {member.Gotra || 'N/A'}, </Text><br />
+                  <Text style={{ marginLeft: '12px' }}>Star: {member.Star || 'N/A'}</Text><br />
+                </div>
+              ))}
             </div>
           ))}
         </Card>
