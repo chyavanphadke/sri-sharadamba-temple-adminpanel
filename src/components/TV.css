@@ -1,8 +1,7 @@
 .tv-container {
   display: flex;
   height: 100vh;
-  background-color: #FF8C00; /* Background shade of orange */
-  color: #2F4F4F; /* Dark grey for text */
+  background-color: #f0f4f8; /* Light grey-blue background */
   font-family: 'Roboto', sans-serif;
 }
 
@@ -11,7 +10,7 @@
   top: 10px;
   right: 10px;
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #1a73e8; /* Google blue */
   color: white;
   border: none;
   border-radius: 5px;
@@ -25,8 +24,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #FF8C00; /* Background shade of orange */
-  border-right: 2px solid #FF4500; /* Darker shade of orange for border */
+  background-color: #ffffff; /* White background */
+  border-right: 2px solid #d1e3f8; /* Light blue border */
 }
 
 .right-section {
@@ -34,22 +33,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FF8C00; /* Background shade of orange */
+  background-color: #ffffff; /* White background */
 }
 
 .section {
-  background-color: #FFFFFF; /* White for card background */
-  border: 2px solid #A9A9A9; /* Grey for card border */
+  background-color: #ffffff; /* White for card background */
+  border: 2px solid #d1e3f8; /* Light blue for card border */
   border-radius: 15px;
   margin-bottom: 20px;
   padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section h2 {
   font-size: 24px;
-  color: #000080; /* Navy for headings */
+  color: #1a73e8; /* Google blue for headings */
   margin-bottom: 10px;
-  border-bottom: 2px solid #FF4500; /* Darker shade of orange for border */
+  border-bottom: 2px solid #d1e3f8; /* Light blue for border */
   padding-bottom: 5px;
 }
 
@@ -95,7 +95,7 @@
 
 .temple-timings-content .separator {
   width: 1px;
-  background-color: #A9A9A9; /* Grey for separator */
+  background-color: #d1e3f8; /* Light blue for separator */
   margin: 0 10px;
 }
 
@@ -108,15 +108,15 @@
   justify-content: center;
   background-color: #000; /* Black for slideshow background */
   overflow: hidden;
-  border-left: 2px solid #FF4500; /* Darker shade of orange for border */
+  border-left: 2px solid #d1e3f8; /* Light blue for border */
 }
 
 .slideshow img {
   position: relative;
   z-index: 2;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Adjust to fit portrait and landscape */
 }
 
 .slideshow-background {
@@ -153,7 +153,7 @@
 
 .progress {
   height: 100%;
-  background-color: #007bff;
+  background-color: #1a73e8; /* Google blue */
   width: 0;
   transition: width 0.1s linear;
 }
