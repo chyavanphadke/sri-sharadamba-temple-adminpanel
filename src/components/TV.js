@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './TV.css';
+import styles from './TV.module.css';
 import { Timeline } from 'antd';
 import axios from 'axios';
 import image1 from '../assets/image1.jpg';
@@ -119,25 +119,25 @@ const TV = () => {
   };
 
   return (
-    <div className="tv-container">
+    <div className={styles.tvContainer}>
       {!isFullscreen && (
-        <button onClick={enterFullscreen} className="fullscreen-button">
+        <button onClick={enterFullscreen} className={styles.fullscreenButton}>
           Enter Fullscreen
         </button>
       )}
-      <div className="left-section">
-        <h2 className="welcome-text">Welcome to Sri Sharadamba Temple</h2> {/* Centered and colored welcome text */}
-        <div className="section">
+      <div className={styles.leftSection}>
+        <h2 className={styles.welcomeText}>Welcome to Sri Sharadamba Temple</h2> {/* Centered and colored welcome text */}
+        <div className={styles.section}>
           <h2>Today's Panchanga</h2>
-          <div className="panchanga-content">
-            <div className="panchanga-left">
+          <div className={styles.panchangaContent}>
+            <div className={styles.panchangaLeft}>
               <p><strong>Sunrise:</strong> {panchanga.Sunrise}</p>
               <p><strong>Sunset:</strong> {panchanga.Sunset}</p>
               <p><strong>Moonrise:</strong> {panchanga.Moonrise}</p>
               <p><strong>Moonset:</strong> {panchanga.Moonset}</p>
               <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
             </div>
-            <div className="panchanga-right">
+            <div className={styles.panchangaRight}>
               <p><strong>Shaka Samvat:</strong> {panchanga.ShakaSamvat}</p>
               <p><strong>Purnimanta Month:</strong> {panchanga.PurnimantaMonth}</p>
               <p><strong>Paksha:</strong> {panchanga.Paksha}</p>
@@ -146,9 +146,9 @@ const TV = () => {
             </div>
           </div>
         </div>
-        <div className="section">
+        <div className={styles.section}>
           <h2>Temple Events</h2> {/* Changed "Events" to "Temple Events" */}
-          <Timeline mode="alternate" className="timeline"> {/* Moved timeline to the left */}
+          <Timeline mode="alternate" className={styles.timeline}> {/* Moved timeline to the left */}
             {events.map((event, index) => (
               <Timeline.Item
                 key={index}
@@ -160,16 +160,16 @@ const TV = () => {
             ))}
           </Timeline>
         </div>
-        <div className="section">
-          <div className="date-time">
+        <div className={styles.section}>
+          <div className={styles.dateTime}>
             <h1>{formatDay(dateTime)}</h1>
             <p>{formatDate(dateTime)}</p>
             <p>{new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
           </div>
         </div>
-        <div className="section">
+        <div className={styles.section}>
           <h2>Temple Timings</h2>
-          <div className="temple-timings-content">
+          <div className={styles.templeTimingsContent}>
             <div className="weekday">
               <p>Weekdays</p>
               <p>6:00 PM – 8:00 PM</p>
@@ -182,19 +182,19 @@ const TV = () => {
           </div>
         </div>
       </div>
-      <div className="right-section">
-        <div className="slideshow">
+      <div className={styles.rightSection}>
+        <div className={styles.slideshow}>
           <div
-            className="slideshow-background"
+            className={styles.slideshowBackground}
             style={{
               backgroundImage: `url(${images[currentImageIndex]})`
             }}
           ></div>
-          <div className="slideshow-overlay"></div>
+          <div className={styles.slideshowOverlay}></div>
           <img src={images[currentImageIndex]} alt="Slideshow" />
-          <div className="progress-bar">
+          <div className={styles.progressBar}>
             <div
-              className="progress"
+              className={styles.progress}
               style={{ width: `${progress}%` }}
             ></div>
           </div>
