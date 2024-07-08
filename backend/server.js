@@ -1919,8 +1919,8 @@ fetchEvents();
 fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every minute
-cron.schedule('* * * * *', fetchEvents);
-cron.schedule('* * * * *', fetchPanchanga);
+cron.schedule('*/5 * * * *', fetchEvents);
+cron.schedule('*/5 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
