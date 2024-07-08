@@ -126,6 +126,7 @@ const TV = () => {
         </button>
       )}
       <div className="left-section">
+        <h2 className="welcome-text">Welcome to Sri Sharadamba Temple</h2> {/* Centered and colored welcome text */}
         <div className="section">
           <h2>Today's Panchanga</h2>
           <div className="panchanga-content">
@@ -141,19 +142,20 @@ const TV = () => {
               <p><strong>Purnimanta Month:</strong> {panchanga.PurnimantaMonth}</p>
               <p><strong>Paksha:</strong> {panchanga.Paksha}</p>
               <p><strong>Tithi:</strong> {panchanga.Tithi}</p>
+              <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p> {/* Added Nakshatra */}
             </div>
           </div>
         </div>
         <div className="section">
-          <h2>Events</h2>
-          <Timeline mode="alternate">
+          <h2>Temple Events</h2> {/* Changed "Events" to "Temple Events" */}
+          <Timeline mode="alternate" className="timeline"> {/* Moved timeline to the left */}
             {events.map((event, index) => (
               <Timeline.Item
                 key={index}
                 color={isToday(event.Date) ? 'green' : 'blue'}
-                label={<span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal' }}>{formatDayDate(event.Date)}</span>}
+                label={<span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal', fontSize: isToday(event.Date) ? '24px' : '18px' }}>{formatDayDate(event.Date)}</span>}
               >
-                <span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal' }}>{event.Event}</span>
+                <span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal', fontSize: isToday(event.Date) ? '24px' : '18px' }}>{event.Event}</span>
               </Timeline.Item>
             ))}
           </Timeline>
