@@ -1837,23 +1837,99 @@ cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
 // TV Display
 
-const fs = require('fs');
-const path = require('path');
+const SPREADSHEET_ID_EVENTS = '1M7SGMUaEJ99zEqLsUk-N9_1BD5RSWjg3RmkBuiBtV1g';
+const RANGE_EVENTS = 'Sheet1!A:B';
+const SPREADSHEET_ID_PANCHANGA = '1751nfWkt0PhxQ_K_9Bq0AS40j2SzaH71BWJ_Yi6lEn0';
+const RANGE_PANCHANGA = 'Sheet1!A:K';
 
-// Serve static files from the "src/assets" directory
-app.use('/assets', express.static(path.join(__dirname, 'src', 'assets')));
+let cachedEvents = [];
+let cachedPanchanga = {};
 
-// API endpoint to get slideshow files
-app.get('/api/slideshow-files', (req, res) => {
-  const slidesDir = path.join(__dirname, 'src', 'assets', 'tv_slides');
-  fs.readdir(slidesDir, (err, files) => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to read slides directory' });
+const resetTime = (date) => {
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const fetchEvents = async () => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_EVENTS,
+      range: RANGE_EVENTS
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const today = resetTime(new Date());
+      const events = rows.slice(1).filter(row => {
+        const eventDate = resetTime(new Date(row[0]));
+        return eventDate >= today;
+      }).slice(0, 8).map(row => ({
+        Date: row[0],
+        Event: row[1]
+      }));
+      cachedEvents = events;
+      console.log('Events fetched and cached:', events);
+    } else {
+      cachedEvents = [];
     }
-    const fileUrls = files.map(file => `/assets/tv_slides/${file}`);
-    res.json({ files: fileUrls });
-  });
+  } catch (error) {
+    console.error('Error fetching data from Google Sheets:', error);
+  }
+};
+
+const fetchPanchanga = async () => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_PANCHANGA,
+      range: RANGE_PANCHANGA
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const today = resetTime(new Date());
+      const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
+      const panchanga = rows.find(row => row[0] === todayStr);
+
+      if (panchanga) {
+        cachedPanchanga = {
+          Date: panchanga[0],
+          Sunrise: panchanga[1],
+          Sunset: panchanga[2],
+          Moonrise: panchanga[3],
+          Moonset: panchanga[4],
+          ShakaSamvat: panchanga[5],
+          PurnimantaMonth: panchanga[6],
+          Paksha: panchanga[7],
+          Tithi: panchanga[8],
+          Weekday: panchanga[9],
+          Nakshatra: panchanga[10]
+        };
+        console.log('Panchanga fetched and cached:', cachedPanchanga);
+      } else {
+        cachedPanchanga = {};
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching Panchanga from Google Sheets:', error);
+  }
+};
+
+// Fetch events and panchanga immediately on server start
+fetchEvents();
+fetchPanchanga();
+
+// Set up cron jobs to fetch events and panchanga every minute
+cron.schedule('* * * * *', fetchEvents);
+cron.schedule('* * * * *', fetchPanchanga);
+
+app.get('/api/events', (req, res) => {
+  res.status(200).json(cachedEvents);
 });
+
+app.get('/api/panchanga', (req, res) => {
+  res.status(200).json(cachedPanchanga);
+});
+
 
 // Tv Display Ends
 

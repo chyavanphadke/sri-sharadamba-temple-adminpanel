@@ -1,0 +1,159 @@
+.tv-container {
+  display: flex;
+  height: 100vh;
+  background-color: #FF8C00; /* Background shade of orange */
+  color: #2F4F4F; /* Dark grey for text */
+  font-family: 'Roboto', sans-serif;
+}
+
+.fullscreen-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.left-section {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #FF8C00; /* Background shade of orange */
+  border-right: 2px solid #FF4500; /* Darker shade of orange for border */
+}
+
+.right-section {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FF8C00; /* Background shade of orange */
+}
+
+.section {
+  background-color: #FFFFFF; /* White for card background */
+  border: 2px solid #A9A9A9; /* Grey for card border */
+  border-radius: 15px;
+  margin-bottom: 20px;
+  padding: 20px;
+}
+
+.section h2 {
+  font-size: 24px;
+  color: #000080; /* Navy for headings */
+  margin-bottom: 10px;
+  border-bottom: 2px solid #FF4500; /* Darker shade of orange for border */
+  padding-bottom: 5px;
+}
+
+.panchanga-content {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.panchanga-left, .panchanga-right {
+  flex: 1;
+}
+
+.panchanga-left p, .panchanga-right p {
+  margin: 5px 0;
+}
+
+.date-time {
+  text-align: center;
+}
+
+.date-time h1 {
+  font-size: 48px;
+  margin: 0;
+  color: #000000; /* Black for date text */
+}
+
+.date-time p {
+  font-size: 24px;
+  margin: 5px 0;
+}
+
+.temple-timings-content {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.temple-timings-content .weekday, .temple-timings-content .weekend {
+  flex: 1;
+  text-align: center;
+}
+
+.temple-timings-content .separator {
+  width: 1px;
+  background-color: #A9A9A9; /* Grey for separator */
+  margin: 0 10px;
+}
+
+.slideshow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000; /* Black for slideshow background */
+  overflow: hidden;
+  border-left: 2px solid #FF4500; /* Darker shade of orange for border */
+}
+
+.slideshow img {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.slideshow-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+  z-index: 1;
+}
+
+.slideshow-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Adjust the opacity as needed */
+  z-index: 1;
+}
+
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.3);
+  z-index: 3;
+}
+
+.progress {
+  height: 100%;
+  background-color: #007bff;
+  width: 0;
+  transition: width 0.1s linear;
+}
