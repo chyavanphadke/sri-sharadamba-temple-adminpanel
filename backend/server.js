@@ -132,7 +132,11 @@ app.post('/login', async (req, res) => {
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-// Forgot Password Route to generate and send reset token
+// Helper function to generate random OTP of length 10
+const generateOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 app.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -141,19 +145,22 @@ app.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ message: 'Email not found' });
     }
 
-    // Generate a password reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    user.passwordResetToken = resetToken;
-    user.passwordResetExpires = Date.now() + 3600000; // Token expires in 1 hour
-    await user.save();
+    const now = Date.now();
+    let otp;
+    if (user.passwordResetToken && user.passwordResetExpires > now) {
+      otp = user.passwordResetToken; // Reuse the existing OTP
+    } else {
+      otp = generateOtp();
+      user.passwordResetToken = otp;
+      user.passwordResetExpires = now + 3 * 60 * 1000; // Token expires in 3 minutes
+      await user.save();
+    }
 
-    // Fetch email credentials from the database
     const emailCredential = await EmailCredential.findOne();
     if (!emailCredential) {
       return res.status(404).json({ message: 'Email credentials not found' });
     }
 
-    // Configure nodemailer transport with dynamic credentials
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
@@ -162,12 +169,11 @@ app.post('/forgot-password', async (req, res) => {
       }
     });
 
-    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
     const mailOptions = {
       from: emailCredential.email,
       to: email,
-      subject: 'Password Reset for Sharada Temple, Milpitas',
-      text: `You requested a password reset. Please click the following link to reset your password: ${resetUrl}`
+      subject: 'Password Reset OTP for Sharada Temple, Milpitas',
+      text: `You requested a password reset. Your OTP is: ${otp}. This OTP is valid for 3 minutes.`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -178,26 +184,46 @@ app.post('/forgot-password', async (req, res) => {
       res.send('Email sent: ' + info.response);
     });
 
-    res.status(200).json({ message: `Reset email sent to ${email}` });
+    res.status(200).json({ message: `OTP sent to ${email}` });
   } catch (err) {
-    console.error('Error sending reset email:', err);
-    res.status(500).json({ message: 'Error sending reset email', error: err.message });
+    console.error('Error sending OTP email:', err);
+    res.status(500).json({ message: 'Error sending OTP email', error: err.message });
   }
 });
 
-// Reset Password Route
-app.post('/reset-password/:token', async (req, res) => {
-  const { token } = req.params;
-  const { newPassword } = req.body;
+app.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
   try {
     const user = await User.findOne({
       where: {
-        passwordResetToken: token,
+        email,
+        passwordResetToken: otp,
         passwordResetExpires: { [Op.gt]: Date.now() }
       }
     });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    res.status(200).json({ message: 'OTP verified successfully' });
+  } catch (err) {
+    console.error('Error verifying OTP:', err);
+    res.status(500).json({ message: 'Error verifying OTP', error: err.message });
+  }
+});
+
+app.post('/reset-password', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  try {
+    const user = await User.findOne({
+      where: {
+        email,
+        passwordResetToken: otp,
+        passwordResetExpires: { [Op.gt]: Date.now() }
+      }
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -213,24 +239,19 @@ app.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-app.post('/change-password', authenticateToken, async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
+app.post('/invalidate-token', async (req, res) => {
+  const { email } = req.body;
   try {
-    const user = await User.findOne({ where: { username: req.user.username } });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ where: { email } });
+    if (user) {
+      user.passwordResetToken = null;
+      user.passwordResetExpires = null;
+      await user.save();
     }
-    const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
-    }
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
-    res.status(200).json({ message: 'Password changed successfully' });
+    res.status(200).json({ message: 'Token invalidated' });
   } catch (err) {
-    console.error('Error changing password:', err);
-    res.status(500).json({ message: 'Error changing password', error: err.message });
+    console.error('Error invalidating token:', err);
+    res.status(500).json({ message: 'Error invalidating token', error: err.message });
   }
 });
 
