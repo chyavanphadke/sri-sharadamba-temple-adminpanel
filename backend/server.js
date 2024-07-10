@@ -1637,6 +1637,16 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     ServiceId: serviceId // Add ServiceId here
   });
 
+  await sendSevaEmail({
+    email,
+    serviceId,
+    serviceDate: formattedDate,
+    amount,
+    paymentStatus,
+    firstName,
+    lastName
+  });
+
   if (rowIndex <= 1000) {
     await updateSheetStatus(sheetId, rowIndex, devotee.isNew ? 'New Devotee' : 'Existing Devotee');
     if (paymentStatus === 'Paid') {
@@ -1646,6 +1656,110 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     console.error(`Row index ${rowIndex} exceeds Google Sheets limit.`);
   }
 }
+
+const { createICalEvent } = require('./ical');
+const path = require('path');
+const fs = require('fs');
+
+async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName }) {
+  try {
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      console.error('Service not found:', serviceId);
+      return;
+    }
+
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      console.error('Email credentials not found');
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword
+      }
+    });
+
+    const icalContent = await createICalEvent({
+      service: service.Service,
+      date: serviceDate
+    });
+
+    const dayOfWeek = new Date(serviceDate).toLocaleString('en-US', { weekday: 'long' });
+    const formattedDate = new Date(serviceDate).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const startTime = new Date(serviceDate).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const endTime = new Date(new Date(serviceDate).setHours(new Date(serviceDate).getHours() + 1)).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    
+    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(service.Service)}+Seva&dates=${startTime}/${endTime}&details=${encodeURIComponent('You have a scheduled seva at Sri Sharadamba Temple')}&location=${encodeURIComponent('Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035')}&sf=true&output=xml`;
+
+    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1TODNWAt0ZregZ3zW9REMBxmd79SsANcP'; // Updated file ID
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
+      text: `
+        Seva: ${service.Service}
+        When: ${dayOfWeek}, ${formattedDate}
+        Where: Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)
+
+        ${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}
+        Priest Dakshina is as per your wish, please pay it in the temple directly.
+
+        Please visit https://sharadaseva.org to get the latest updates and upcoming events.
+        Contact (510) 565-1411 / (925) 663-5962 if you have any questions.
+        Thank you.
+      `,
+      attachments: [
+        {
+          filename: 'invite.ics',
+          content: icalContent,
+          contentType: 'text/calendar'
+        }
+      ],
+      html: `
+        <div style="text-align: center;">
+          <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
+            <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
+            <div style="margin-bottom: 20px;"></div>
+            <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
+            <div style="margin-bottom: 20px;"></div>
+            <p><b>Seva:</b> ${service.Service}</p>
+            <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
+            <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
+            <div style="margin-bottom: 20px;"></div>
+            <p>${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}</p>
+            <p>Priest Dakshina is as per your wish, please pay it in the temple directly.</p>
+            <div style="margin-bottom: 20px;"></div>
+            <a href="${googleCalendarUrl}" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">Add to Calendar</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Sri+Sharadamba+Temple+(SEVA)" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px;">Navigate</a>
+            <div style="margin-bottom: 20px;"></div>
+            <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
+            <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962</a> if you have any questions.</p>
+            <p style="color: grey;">Thank you.</p>
+          </div>
+        </div>
+      `
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+  } catch (error) {
+    console.error('Error in sendSevaEmail:', error);
+  }
+}
+
+module.exports = {
+  sendSevaEmail
+};
 
 async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
   try {
