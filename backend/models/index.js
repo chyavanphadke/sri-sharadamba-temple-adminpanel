@@ -424,10 +424,20 @@ const EmailCredential = sequelize.define('EmailCredential', {
   },
 });
 
+// Define GeneralConfigurations model
 const GeneralConfigurations = sequelize.define('GeneralConfigurations', {
-  autoApprove: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  configuration: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  value: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
 }, {
   tableName: 'generalconfigurations',

@@ -76,20 +76,20 @@ app.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const config = await GeneralConfigurations.findOne();
+    const config = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
 
     const newUser = {
       username,
       email,
       password: hashedPassword,
-      approved: config && config.autoApprove ? true : false,
-      approvedBy: config && config.autoApprove ? 'Auto Approved' : null,
+      approved: config && config.value === '1' ? true : false,
+      approvedBy: config && config.value === '1' ? 'Auto Approved' : null,
     };
 
     await User.create(newUser);
 
-    const message = config && config.autoApprove 
-      ? 'User signed up successfully. Auto Approved.' 
+    const message = config && config.value === '1'
+      ? 'User signed up successfully. Auto Approved.'
       : 'User signed up successfully. Waiting for Admin approval.';
 
     res.status(200).json({ message });
@@ -98,6 +98,7 @@ app.post('/signup', async (req, res) => {
     res.status(500).json({ message: 'Error signing up', error: err.message });
   }
 });
+
 
 // Update Login Route to accept either username or email
 app.post('/login', async (req, res) => {
@@ -1206,8 +1207,12 @@ app.get('/reports', authenticateToken, async (req, res) => {
 // General Configurations Routes
 app.get('/general-configurations', async (req, res) => {
   try {
-    const config = await GeneralConfigurations.findOne();
-    res.json(config);
+    const config = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
+    if (config) {
+      res.json({ autoApprove: config.value === '1' });
+    } else {
+      res.json({ autoApprove: false });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error fetching general configurations', error });
   }
@@ -1216,7 +1221,10 @@ app.get('/general-configurations', async (req, res) => {
 app.put('/general-configurations', async (req, res) => {
   try {
     const { autoApprove } = req.body;
-    await GeneralConfigurations.update({ autoApprove }, { where: { id: 1 } });
+    await GeneralConfigurations.update(
+      { value: autoApprove ? '1' : '0' },
+      { where: { configuration: 'autoApprove' } }
+    );
     res.json({ message: 'General configurations updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating general configurations', error });
