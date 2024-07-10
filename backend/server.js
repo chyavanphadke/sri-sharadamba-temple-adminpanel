@@ -1205,14 +1205,16 @@ app.get('/reports', authenticateToken, async (req, res) => {
 });
 
 // General Configurations Routes
+// General Configurations Routes
 app.get('/general-configurations', async (req, res) => {
   try {
-    const config = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
-    if (config) {
-      res.json({ autoApprove: config.value === '1' });
-    } else {
-      res.json({ autoApprove: false });
-    }
+    const autoApproveConfig = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
+    const excelSevaEmailConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
+
+    res.json({
+      autoApprove: autoApproveConfig ? autoApproveConfig.value === '1' : false,
+      excelSevaEmailConformation: excelSevaEmailConfig ? excelSevaEmailConfig.value === '1' : false,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching general configurations', error });
   }
@@ -1220,11 +1222,18 @@ app.get('/general-configurations', async (req, res) => {
 
 app.put('/general-configurations', async (req, res) => {
   try {
-    const { autoApprove } = req.body;
+    const { autoApprove, excelSevaEmailConformation } = req.body;
+
     await GeneralConfigurations.update(
       { value: autoApprove ? '1' : '0' },
       { where: { configuration: 'autoApprove' } }
     );
+
+    await GeneralConfigurations.update(
+      { value: excelSevaEmailConformation ? '1' : '0' },
+      { where: { configuration: 'excelSevaEmailConformation' } }
+    );
+
     res.json({ message: 'General configurations updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating general configurations', error });
@@ -1672,6 +1681,12 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     const emailCredential = await EmailCredential.findOne();
     if (!emailCredential) {
       console.error('Email credentials not found');
+      return;
+    }
+
+    const generalConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
+    if (!generalConfig || generalConfig.value !== '1') {
+      console.log('Email sending is disabled by configuration');
       return;
     }
 
