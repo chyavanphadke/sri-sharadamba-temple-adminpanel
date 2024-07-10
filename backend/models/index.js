@@ -247,6 +247,9 @@ const Service = sequelize.define('Service', {
   SvcCategoryId: {
     type: DataTypes.INTEGER,
     defaultValue: 3
+  },
+  excelSheetLink: {
+    type: DataTypes.STRING
   }
 }, {
   timestamps: false,
@@ -528,6 +531,10 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   },
   unique_id: {
     type: DataTypes.STRING
+  },
+  ServiceId: {  // Add this new column
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   timestamps: true, // Add timestamps
@@ -554,6 +561,9 @@ Receipt.belongsTo(Activity, { foreignKey: 'activityid' });
 
 Service.hasMany(Receipt, { foreignKey: 'servicetype', as: 'ServiceType' });
 Receipt.belongsTo(Service, { foreignKey: 'servicetype', as: 'Service' });
+
+ExcelSevaData.belongsTo(Service, { foreignKey: 'ServiceId' });
+Service.hasMany(ExcelSevaData, { foreignKey: 'ServiceId' });
 
 // Sync the models with the database
 sequelize.sync()

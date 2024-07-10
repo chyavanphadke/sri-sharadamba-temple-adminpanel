@@ -1515,17 +1515,25 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 
-const sheetServiceMap = {
-  '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
-  '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
-  '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
-  '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
-  '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 283,
-  '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
-};
+let sheetServiceMap = {};
+
+async function initializeSheetServiceMap() {
+  try {
+    const services = await Service.findAll({ where: { excelSheetLink: { [Op.not]: null } } });
+    sheetServiceMap = services.reduce((map, service) => {
+      map[service.excelSheetLink] = service.ServiceId;
+      return map;
+    }, {});
+  } catch (error) {
+    console.error('Error initializing sheet service map:', error);
+    throw error;
+  }
+}
 
 async function fetchDataFromSheets() {
   try {
+    await initializeSheetServiceMap(); // Initialize the map before fetching data
+
     let newEntriesCount = 0;
     for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
@@ -1577,7 +1585,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     'Message to Priest': messageToPriest,
     'Payment Option': paymentStatus,
     'Card Details': cardDetails,
-    'Donation Amount': amount
+    'Suggested Donation': amount
   } = rowData;
 
   console.log('Processing row with values:', { firstName, lastName, email, phone });
@@ -1617,7 +1625,8 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     devotee_id: devotee.DevoteeId,
     amount,
     status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
-    row_index: rowIndex  // Add row_index here to use it later for updates
+    row_index: rowIndex,
+    ServiceId: serviceId // Add ServiceId here
   });
 
   if (rowIndex <= 1000) {
@@ -1721,13 +1730,19 @@ app.post('/fetch-sheets-data', async (req, res) => {
 // Fetch ExcelSevaData API
 app.get('/excel-seva-data', async (req, res) => {
   try {
-    const excelSevaData = await ExcelSevaData.findAll();
+    const excelSevaData = await ExcelSevaData.findAll({
+      include: [{
+        model: Service,
+        attributes: ['Service']
+      }]
+    });
     res.status(200).json(excelSevaData);
   } catch (error) {
     console.error('Error fetching ExcelSevaData:', error);
     res.status(500).json({ message: 'Error fetching ExcelSevaData', error: error.message });
   }
 });
+
 
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
