@@ -44,3 +44,5 @@ Thumbs.db
 
 # Miscellaneous
 .cache
+
+service_account.json

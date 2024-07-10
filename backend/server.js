@@ -978,6 +978,7 @@ app.get('/receipts/pending', async (req, res) => {
       Name: `${activity.Devotee.FirstName} ${activity.Devotee.LastName}`,
       Service: activity.Service.Service,
       Date: activity.ActivityDate,
+      ServiceDate: activity.ServiceDate,
       PaymentMethod: activity.ModeOfPayment.MethodName === 'Check' ? `Check (${activity.CheckNumber})` : activity.ModeOfPayment.MethodName,
       Amount: activity.Amount,
       AssistedBy: activity.AssistedBy.username,
@@ -1035,6 +1036,7 @@ app.get('/receipts/approved', async (req, res) => {
         Email: devotee.Email || '',
         Service: receipt.servicetype,
         ActivityDate: activity.ActivityDate,
+        ServiceDate: activity.ServiceDate,
         ApprovedDate: receipt.approvaldate,
         PaymentMethod: modeOfPayment.MethodName === 'Check' ? `Check (${activity.CheckNumber})` : modeOfPayment.MethodName,
         Amount: activity.Amount,
@@ -1493,7 +1495,7 @@ app.get('/todays-events', async (req, res) => {
 
       const familyMembers = await Family.findAll({
         where: { DevoteeId: activity.Devotee.DevoteeId },
-        attributes: ['FirstName', 'LastName'],
+        attributes: ['FirstName', 'LastName', 'RelationShip', 'Gotra', 'Star'],
       });
 
       acc[serviceName].push({
@@ -1503,7 +1505,13 @@ app.get('/todays-events', async (req, res) => {
         LastName: activity.Devotee.LastName,
         Gotra: activity.Devotee.Gotra,
         Star: activity.Devotee.Star,
-        FamilyMembers: familyMembers.map(member => `${member.FirstName} ${member.LastName}`),
+        FamilyMembers: familyMembers.map(member => ({
+          RelationShip: member.RelationShip,
+          FirstName: member.FirstName,
+          LastName: member.LastName,
+          Gotra: member.Gotra,
+          Star: member.Star,
+        })),
       });
 
       return acc;
@@ -1529,10 +1537,12 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 
 const sheetServiceMap = {
-  '1qL4B3eM9he1PfCxAcKosbvHX0cToVOYFmY3uamRtkq0': 278,
-  '1DDvnPGC3hljQoh36idBSC1vp50IYti1h9Nc294uyh2g': 281,
-  '1Fkv6tSulX0Tz8-nhlY93Wq7EqJFWXRjQlH6-cJKpb24': 280,
-  '1zBbVrsXh_32MxAoV06oQWw6fhghUSp0V3E1tzszqeM8': 269
+  '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
+  '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
+  '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
+  '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
+  '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 283,
+  '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
 };
 
 async function fetchDataFromSheets() {
@@ -1541,17 +1551,27 @@ async function fetchDataFromSheets() {
     for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A:J'
+        range: 'Sheet1!A:M'  // Adjusted to new range
       });
 
       const rows = response.data.values;
+      if (!rows) {
+        console.error(`No data found in sheet: ${sheetId}`);
+        continue;
+      }
+
       if (rows.length) {
         console.log(`Fetched ${rows.length} rows from sheet ${sheetId}`);
+        const headers = rows[0].map(header => header.split('|')[0]); // Extract headers
         for (let index = 1; index < rows.length; index++) {
           const row = rows[index];
           if (!row[0]) {
             console.log(`Processing row ${index} from sheet ${sheetId}:`, row);
-            await processRow(row, sheetId, index + 1, serviceId);
+            const rowData = headers.reduce((acc, header, i) => {
+              acc[header] = row[i];
+              return acc;
+            }, {});
+            await processRow(rowData, sheetId, index + 1, serviceId);
             newEntriesCount++;
           }
         }
@@ -1566,19 +1586,20 @@ async function fetchDataFromSheets() {
   }
 }
 
-async function processRow(row, sheetId, rowIndex, serviceId) {
-  const [
-    status,
-    sevaId,
-    firstName,
-    lastName,
-    email,
-    phone,
-    date,
-    messageToPriest,
-    paymentStatus,
-    cardDetails
-  ] = row;
+async function processRow(rowData, sheetId, rowIndex, serviceId) {
+  const {
+    Status,
+    'Seva ID': sevaId,
+    'First Name': firstName,
+    'Last Name': lastName,
+    'Email Address': email,
+    Phone: phone,
+    Date: date,
+    'Message to Priest': messageToPriest,
+    'Payment Option': paymentStatus,
+    'Card Details': cardDetails,
+    'Donation Amount': amount
+  } = rowData;
 
   console.log('Processing row with values:', { firstName, lastName, email, phone });
 
@@ -1597,8 +1618,9 @@ async function processRow(row, sheetId, rowIndex, serviceId) {
       devoteeId: devotee.DevoteeId,
       serviceId,
       paymentStatus,
-      amount: await getServiceRate(serviceId),
-      serviceDate: formattedDate
+      amount,
+      serviceDate: formattedDate,
+      comments: messageToPriest || ''
     });
   }
 
@@ -1614,7 +1636,7 @@ async function processRow(row, sheetId, rowIndex, serviceId) {
     card_details: cardDetails || '',
     sheet_name: sheetId,
     devotee_id: devotee.DevoteeId,
-    amount: await getServiceRate(serviceId),
+    amount,
     status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
     row_index: rowIndex  // Add row_index here to use it later for updates
   });
@@ -1651,17 +1673,7 @@ async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
   }
 }
 
-async function getServiceRate(serviceId) {
-  try {
-    const service = await Service.findByPk(serviceId);
-    return service ? service.Rate : 0;
-  } catch (error) {
-    console.error('Error getting service rate:', error);
-    throw error;
-  }
-}
-
-async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate }) {
+async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate, comments }) {
   try {
     const activity = await Activity.create({
       DevoteeId: devoteeId,
@@ -1669,7 +1681,8 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
       PaymentMethod: paymentStatus === 'Paid' ? 1 : 2,
       Amount: amount,
       UserId: 'online Paid',
-      ServiceDate: serviceDate
+      ServiceDate: serviceDate,
+      Comments: comments
     });
     return activity.ActivityId;
   } catch (error) {
@@ -1753,7 +1766,8 @@ app.put('/update-payment-status/:id', async (req, res) => {
         serviceId: sheetServiceMap[entry.sheet_name],
         paymentStatus,
         amount,
-        serviceDate: entry.date
+        serviceDate: entry.date,
+        comments: entry.message
       });
 
       entry.seva_id = activityId;
@@ -1762,9 +1776,9 @@ app.put('/update-payment-status/:id', async (req, res) => {
       await entry.save();
 
       if (entry.row_index <= 1000) {
-        //TO DO: Check if needed
+        // TODO: Add if required
         //await updateSheetStatus(entry.sheet_name, entry.row_index, 'Paid');
-        //await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
+        await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
       } else {
         console.error(`Row index ${entry.row_index} exceeds Google Sheets limit.`);
       }
@@ -1845,8 +1859,108 @@ app.get('/email-credentials', async (req, res) => {
 
 cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp End
 
+
+
+// TV Display
+
+const SPREADSHEET_ID_EVENTS = '1M7SGMUaEJ99zEqLsUk-N9_1BD5RSWjg3RmkBuiBtV1g';
+const RANGE_EVENTS = 'Sheet1!A:B';
+const SPREADSHEET_ID_PANCHANGA = '1751nfWkt0PhxQ_K_9Bq0AS40j2SzaH71BWJ_Yi6lEn0';
+const RANGE_PANCHANGA = 'Sheet1!A:K';
+
+let cachedEvents = [];
+let cachedPanchanga = {};
+
+const resetTime = (date) => {
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const fetchEvents = async () => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_EVENTS,
+      range: RANGE_EVENTS
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const today = resetTime(new Date());
+      const events = rows.slice(1).filter(row => {
+        const eventDate = resetTime(new Date(row[0]));
+        return eventDate >= today;
+      }).slice(0, 8).map(row => ({
+        Date: row[0],
+        Event: row[1]
+      }));
+      cachedEvents = events;
+      console.log('Events fetched and cached:', events);
+    } else {
+      cachedEvents = [];
+    }
+  } catch (error) {
+    console.error('Error fetching data from Google Sheets:', error);
+  }
+};
+
+const fetchPanchanga = async () => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_PANCHANGA,
+      range: RANGE_PANCHANGA
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const today = resetTime(new Date());
+      const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
+      const panchanga = rows.find(row => row[0] === todayStr);
+
+      if (panchanga) {
+        cachedPanchanga = {
+          Date: panchanga[0],
+          Sunrise: panchanga[1],
+          Sunset: panchanga[2],
+          Moonrise: panchanga[3],
+          Moonset: panchanga[4],
+          ShakaSamvat: panchanga[5],
+          PurnimantaMonth: panchanga[6],
+          Paksha: panchanga[7],
+          Tithi: panchanga[8],
+          Weekday: panchanga[9],
+          Nakshatra: panchanga[10]
+        };
+        console.log('Panchanga fetched and cached:', cachedPanchanga);
+      } else {
+        cachedPanchanga = {};
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching Panchanga from Google Sheets:', error);
+  }
+};
+
+// Fetch events and panchanga immediately on server start
+fetchEvents();
+fetchPanchanga();
+
+// Set up cron jobs to fetch events and panchanga every minute
+cron.schedule('*/5 * * * *', fetchEvents);
+cron.schedule('*/5 * * * *', fetchPanchanga);
+
+app.get('/api/events', (req, res) => {
+  res.status(200).json(cachedEvents);
+});
+
+app.get('/api/panchanga', (req, res) => {
+  res.status(200).json(cachedPanchanga);
+});
+
+
+// Tv Display Ends
 
 // Sync the database and create a super user
 sequelize.sync().then(async () => {

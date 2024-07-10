@@ -217,7 +217,8 @@ const Receipts = () => {
   const columnsPending = [
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center'},
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
-    { title: 'Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Activity Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Service Date', dataIndex: 'ServiceDate', key: 'ServiceDate', render: (text) => formatDate(text), align: 'center' },
     { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod', align: 'center' },
     { title: 'Amount', dataIndex: 'Amount', key: 'Amount', align: 'center' },
     { title: 'Assisted by', dataIndex: 'AssistedBy', key: 'AssistedBy', align: 'center' },
@@ -241,6 +242,7 @@ const Receipts = () => {
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text), align: 'center' },
+    { title: 'Service Date', dataIndex: 'ServiceDate', key: 'ServiceDate', render: (text) => formatDate(text), align: 'center' },
     { title: 'Approved Date', dataIndex: 'ApprovedDate', key: 'ApprovedDate', render: (text) => formatDate(text), align: 'center' },
     { title: 'Mode of Payment', dataIndex: 'PaymentMethod', key: 'PaymentMethod', align: 'center' },
     { title: 'Amount', dataIndex: 'Amount', key: 'Amount', align: 'center' },

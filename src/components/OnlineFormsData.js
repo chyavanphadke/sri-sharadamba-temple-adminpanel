@@ -16,10 +16,12 @@ const OnlineFormsData = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const sheetServiceMap = {
-    '1qL4B3eM9he1PfCxAcKosbvHX0cToVOYFmY3uamRtkq0': 278,
-    '1DDvnPGC3hljQoh36idBSC1vp50IYti1h9Nc294uyh2g': 281,
-    '1Fkv6tSulX0Tz8-nhlY93Wq7EqJFWXRjQlH6-cJKpb24': 280,
-    '1zBbVrsXh_32MxAoV06oQWw6fhghUSp0V3E1tzszqeM8': 269
+    '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
+    '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
+    '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
+    '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
+    '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 51,
+    '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
   };
 
   useEffect(() => {
@@ -136,10 +138,12 @@ const OnlineFormsData = () => {
       key: 'service', 
       render: (text) => {
         const serviceMap = {
-          278: 'Flower Sponsor',
-          281: 'Sankata Hara Chaturthi',
-          280: 'Pradosha Pooja',
-          269: 'Annadan'
+          269: 'Annadhanam',
+          280: 'Pradosham',
+          270: 'Rathothsavam',
+          281: 'Sankashti',
+          51: 'Satyanarayana Puja',
+          277: 'Vastra'
         };
         return serviceMap[text] || 'Unknown Service';
       }, 
@@ -205,3 +209,4 @@ const OnlineFormsData = () => {
 };
 
 export default OnlineFormsData;
+
