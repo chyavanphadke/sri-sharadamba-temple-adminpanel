@@ -1,27 +1,47 @@
 .todays-events-container .event-card {
-    margin-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.panchanga-card {
+  margin-bottom: 16px;
+}
+
+.todays-events-container .event-detail {
+  margin-bottom: 16px;
+  font-size: 15px; /* Increase the font size for event details */
+}
+
+@media (min-width: 576px) {
+  .todays-events-container .ant-row {
+    display: flex;
+    flex-wrap: wrap;
   }
-  
-  .todays-events-container .event-detail {
-    margin-bottom: 16px;
+
+  .todays-events-container .ant-col {
+    flex: 1 0 33%;
+    max-width: 33%;
   }
-  
-  @media (min-width: 576px) {
-    .todays-events-container .ant-row {
-      display: flex;
-      flex-wrap: wrap;
-    }
-  
-    .todays-events-container .ant-col {
-      flex: 1 0 33%;
-      max-width: 33%;
-    }
+}
+
+@media (max-width: 575px) {
+  .todays-events-container .ant-col {
+    flex: 1 0 100%;
+    max-width: 100%;
   }
-  
-  @media (max-width: 575px) {
-    .todays-events-container .ant-col {
-      flex: 1 0 100%;
-      max-width: 100%;
-    }
-  }
-  
+}
+
+.todays-events-container .ant-card-body {
+  font-size: 15px; /* Increase the font size for card body */
+}
+
+.todays-events-container .ant-typography {
+  font-size: 18px; /* Increase the font size for typography */
+}
+
+.todays-events-container .ant-btn {
+  font-size: 15px; /* Increase the font size for buttons */
+}
+
+.todays-events-container .ant-typography-title {
+  font-size: 15px; /* Increase the font size for titles */
+}

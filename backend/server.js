@@ -1520,6 +1520,46 @@ app.get('/todays-events', async (req, res) => {
   }
 });
 
+const fetchPanchangaForDate = async (date) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_PANCHANGA,
+      range: RANGE_PANCHANGA
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const panchanga = rows.find(row => row[0] === date);
+      if (panchanga) {
+        return {
+          Date: panchanga[0],
+          Sunrise: panchanga[1],
+          Sunset: panchanga[2],
+          Moonrise: panchanga[3],
+          Moonset: panchanga[4],
+          Weekday: panchanga[5],
+          Yoga: panchanga[6],
+          Tithi: panchanga[7],
+          Nakshatra: panchanga[8],
+          Karana: panchanga[9]
+        };
+      }
+    }
+    return {};
+  } catch (error) {
+    console.error('Error fetching Panchanga from Google Sheets:', error);
+    return {};
+  }
+};
+
+app.get('/api/panchanga', async (req, res) => {
+  const date = req.query.date || new Date().toLocaleDateString('en-US');
+  console.log("Date came to backend", date);
+  const panchangaData = await fetchPanchangaForDate(date);
+  res.status(200).json(panchangaData);
+});
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp start
 
 const { google } = require('googleapis');
@@ -2057,12 +2097,11 @@ const fetchPanchanga = async () => {
           Sunset: panchanga[2],
           Moonrise: panchanga[3],
           Moonset: panchanga[4],
-          ShakaSamvat: panchanga[5],
-          PurnimantaMonth: panchanga[6],
-          Paksha: panchanga[7],
-          Tithi: panchanga[8],
-          Weekday: panchanga[9],
-          Nakshatra: panchanga[10]
+          Weekday: panchanga[5],
+          Yoga: panchanga[6],
+          Tithi: panchanga[7],
+          Nakshatra: panchanga[8],
+          Karana: panchanga[9]
         };
         console.log('Panchanga fetched and cached:', cachedPanchanga);
       } else {

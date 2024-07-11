@@ -135,14 +135,13 @@ const TV = () => {
               <p><strong>Sunset:</strong> {panchanga.Sunset}</p>
               <p><strong>Moonrise:</strong> {panchanga.Moonrise}</p>
               <p><strong>Moonset:</strong> {panchanga.Moonset}</p>
-              <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
             </div>
             <div className={styles.panchangaRight}>
-              <p><strong>Shaka Samvat:</strong> {panchanga.ShakaSamvat}</p>
-              <p><strong>Purnimanta Month:</strong> {panchanga.PurnimantaMonth}</p>
-              <p><strong>Paksha:</strong> {panchanga.Paksha}</p>
+              <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
+              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
               <p><strong>Tithi:</strong> {panchanga.Tithi}</p>
-              <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p> {/* Added Nakshatra */}
+              <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p>
+              <p><strong>Karana:</strong> {panchanga.Karana}</p>
             </div>
           </div>
         </div>
