@@ -76,10 +76,10 @@ const TodaysEvents = () => {
     <Card title="Panchanga" className="panchanga-card">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12}>
+        <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
           <Text><strong>Weekday:</strong> {panchanga.Weekday}</Text><br />
-          <Text><strong>Yoga:</strong> {panchanga.Yoga}</Text><br />
-          <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
           <Text><strong>Nakshatra:</strong> {panchanga.Nakshatra}</Text><br />
+          <Text><strong>Yoga:</strong> {panchanga.Yoga}</Text><br />
           <Text><strong>Karana:</strong> {panchanga.Karana}</Text><br />
         </Col>
       </Row>

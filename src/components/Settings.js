@@ -389,7 +389,7 @@ const Settings = () => {
                   onChange={(e) => saveExcelSevaEmailConformation(e.target.checked)}
                   style={{ marginTop: '10px', fontSize: '20px'}}
                 >
-                  Excel Seva Email Confirmation
+                  Send Email Confirmation for entrees from Website
                 </Checkbox>
               </div>
             </>
