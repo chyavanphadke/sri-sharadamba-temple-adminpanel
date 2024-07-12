@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styles from './TV.module.css';
 import { Timeline } from 'antd';
 import axios from 'axios';
-import image1 from '../assets/image1.jpg';
-import image2 from '../assets/image2.jpg';
 
 const TV = () => {
   const [dateTime, setDateTime] = useState(new Date());
@@ -12,7 +10,7 @@ const TV = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [events, setEvents] = useState([]);
   const [panchanga, setPanchanga] = useState({});
-  const images = [image1, image2];
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,12 +56,26 @@ const TV = () => {
       }
     };
 
+    const fetchImages = async () => {
+      try {
+        const response = await axios.get('http://localhost:5001/api/images');
+        console.log('Fetched images:', response.data); // Log fetched images
+        // Transform the URLs to use the proxy route
+        const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
+        setImages(imageUrls);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+    };
+
     fetchEvents();
     fetchPanchanga();
+    fetchImages();
     const interval = setInterval(() => {
       fetchEvents();
       fetchPanchanga();
-    }, 60000); // Fetch events and panchanga every minute
+      fetchImages();
+    }, 60000); // Fetch events, panchanga, and images every minute
 
     return () => clearInterval(interval);
   }, []);
@@ -126,7 +138,7 @@ const TV = () => {
         </button>
       )}
       <div className={styles.leftSection}>
-        <h2 className={styles.welcomeText}>Welcome to Sri Sharadamba Temple</h2> {/* Centered and colored welcome text */}
+        <h2 className={styles.welcomeText}>Welcome to Sri Sharadamba Temple</h2>
         <div className={styles.section}>
           <h2>Today's Panchanga</h2>
           <div className={styles.panchangaContent}>
@@ -146,8 +158,8 @@ const TV = () => {
           </div>
         </div>
         <div className={styles.section}>
-          <h2>Temple Events</h2> {/* Changed "Events" to "Temple Events" */}
-          <Timeline mode="alternate" className={styles.timeline}> {/* Moved timeline to the left */}
+          <h2>Temple Events</h2>
+          <Timeline mode="alternate" className={styles.timeline}>
             {events.map((event, index) => (
               <Timeline.Item
                 key={index}
@@ -183,20 +195,31 @@ const TV = () => {
       </div>
       <div className={styles.rightSection}>
         <div className={styles.slideshow}>
-          <div
-            className={styles.slideshowBackground}
-            style={{
-              backgroundImage: `url(${images[currentImageIndex]})`
-            }}
-          ></div>
-          <div className={styles.slideshowOverlay}></div>
-          <img src={images[currentImageIndex]} alt="Slideshow" />
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progress}
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
+          {images.length > 0 && (
+            <>
+              <div
+                className={styles.slideshowBackground}
+                style={{
+                  backgroundImage: `url(${images[currentImageIndex]})`
+                }}
+              ></div>
+              <div className={styles.slideshowOverlay}></div>
+              <img 
+                src={images[currentImageIndex]} 
+                alt="Slideshow" 
+                onError={(e) => {
+                  console.error('Image load error:', e);
+                  console.log('Failed URL:', images[currentImageIndex]);
+                }} 
+              />
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progress}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

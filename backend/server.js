@@ -1589,9 +1589,13 @@ const cron = require('node-cron');
 const serviceAccount = require('./service-account.json');
 const auth = new google.auth.GoogleAuth({
   credentials: serviceAccount,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  scopes: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.readonly',
+  ],
 });
 const sheets = google.sheets({ version: 'v4', auth });
+const drive = google.drive({ version: 'v3', auth });
 
 let sheetServiceMap = {};
 
@@ -2057,14 +2061,15 @@ cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
 
 // TV Display
-
 const SPREADSHEET_ID_EVENTS = '1M7SGMUaEJ99zEqLsUk-N9_1BD5RSWjg3RmkBuiBtV1g';
 const RANGE_EVENTS = 'Sheet1!A:B';
 const SPREADSHEET_ID_PANCHANGA = '1751nfWkt0PhxQ_K_9Bq0AS40j2SzaH71BWJ_Yi6lEn0';
 const RANGE_PANCHANGA = 'Sheet1!A:K';
+const DRIVE_FOLDER_ID = '1U21uCZbwX8ccCIfLUiGkAZIjLyrBoKBm';
 
 let cachedEvents = [];
 let cachedPanchanga = {};
+let cachedImages = [];
 
 const resetTime = (date) => {
   date.setHours(0, 0, 0, 0);
@@ -2075,19 +2080,23 @@ const fetchEvents = async () => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID_EVENTS,
-      range: RANGE_EVENTS
+      range: RANGE_EVENTS,
     });
 
     const rows = response.data.values;
     if (rows.length) {
       const today = resetTime(new Date());
-      const events = rows.slice(1).filter(row => {
-        const eventDate = resetTime(new Date(row[0]));
-        return eventDate >= today;
-      }).slice(0, 8).map(row => ({
-        Date: row[0],
-        Event: row[1]
-      }));
+      const events = rows
+        .slice(1)
+        .filter((row) => {
+          const eventDate = resetTime(new Date(row[0]));
+          return eventDate >= today;
+        })
+        .slice(0, 8)
+        .map((row) => ({
+          Date: row[0],
+          Event: row[1],
+        }));
       cachedEvents = events;
       console.log('Events fetched and cached:', events);
     } else {
@@ -2102,14 +2111,14 @@ const fetchPanchanga = async () => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID_PANCHANGA,
-      range: RANGE_PANCHANGA
+      range: RANGE_PANCHANGA,
     });
 
     const rows = response.data.values;
     if (rows.length) {
       const today = resetTime(new Date());
       const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
-      const panchanga = rows.find(row => row[0] === todayStr);
+      const panchanga = rows.find((row) => row[0] === todayStr);
 
       if (panchanga) {
         cachedPanchanga = {
@@ -2122,7 +2131,7 @@ const fetchPanchanga = async () => {
           Yoga: panchanga[6],
           Tithi: panchanga[7],
           Nakshatra: panchanga[8],
-          Karana: panchanga[9]
+          Karana: panchanga[9],
         };
         console.log('Panchanga fetched and cached:', cachedPanchanga);
       } else {
@@ -2134,11 +2143,67 @@ const fetchPanchanga = async () => {
   }
 };
 
-// Fetch events and panchanga immediately on server start
+
+const axios = require('axios');
+const DOWNLOAD_DIR = path.join(__dirname, '../src/assets/tvSlideshow');
+
+const fetchImages = async () => {
+  try {
+    const response = await drive.files.list({
+      q: `'${DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/'`,
+      fields: 'files(id, name)',
+    });
+
+    const files = response.data.files;
+    if (files.length) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      files.forEach(async (file) => {
+        const [month, day, year] = file.name.replace('.jpg', '').split('-');
+        const fileDate = new Date(year, month - 1, day);
+
+        if (fileDate >= today) {
+          const url = `https://drive.google.com/uc?export=view&id=${file.id}`;
+          const filePath = path.join(DOWNLOAD_DIR, file.name);
+
+          const writer = fs.createWriteStream(filePath);
+          const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+          });
+
+          response.data.pipe(writer);
+
+          writer.on('finish', () => {
+            console.log(`Image downloaded: ${file.name}`);
+          });
+
+          writer.on('error', (error) => {
+            console.error(`Error downloading image ${file.name}:`, error);
+          });
+        } else {
+          console.log(`Skipping past image: ${file.name}`);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching images from Google Drive:', error);
+  }
+};
+
+// Schedule the fetchImages function to run every 10 minutes
+cron.schedule('*/10 * * * *', fetchImages);
+
+// Fetch images immediately on server start
+fetchImages();
+
+// Fetch events, panchanga, and images immediately on server start
 fetchEvents();
 fetchPanchanga();
 
-// Set up cron jobs to fetch events and panchanga every minute
+// Set up cron jobs to fetch events and panchanga every 5 minutes
 cron.schedule('*/5 * * * *', fetchEvents);
 cron.schedule('*/5 * * * *', fetchPanchanga);
 
@@ -2150,6 +2215,39 @@ app.get('/api/panchanga', (req, res) => {
   res.status(200).json(cachedPanchanga);
 });
 
+// Function to check if the date is today or in the future
+const isFutureOrToday = (filename) => {
+  const [month, day, year] = filename.replace('.jpg', '').split('-');
+  const fileDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return fileDate >= today;
+};
+
+app.get('/api/images', (req, res) => {
+  fs.readdir(DOWNLOAD_DIR, (err, files) => {
+    if (err) {
+      console.error('Error reading downloaded images directory:', err);
+      return res.status(500).send('Error reading images directory');
+    }
+
+    const validFiles = files.filter(file => isFutureOrToday(file));
+    const fileUrls = validFiles.map(file => `/api/image/${file}`);
+    res.status(200).json(fileUrls);
+  });
+});
+
+app.get('/api/image/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(DOWNLOAD_DIR, filename);
+
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending image file:', err);
+      res.status(500).send('Error sending image');
+    }
+  });
+});
 
 // Tv Display Ends
 
