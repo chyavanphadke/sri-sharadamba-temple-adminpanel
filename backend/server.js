@@ -2145,7 +2145,8 @@ const fetchPanchanga = async () => {
 
 
 const axios = require('axios');
-const DOWNLOAD_DIR = path.join(__dirname, '../src/assets/tvSlideshow');
+const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
+const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
 
 const fetchImages = async () => {
   try {
@@ -2194,7 +2195,7 @@ const fetchImages = async () => {
 };
 
 // Schedule the fetchImages function to run every 10 minutes
-cron.schedule('*/10 * * * *', fetchImages);
+cron.schedule('0 * * * *', fetchImages);
 
 // Fetch images immediately on server start
 fetchImages();
@@ -2204,8 +2205,8 @@ fetchEvents();
 fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every 5 minutes
-cron.schedule('*/5 * * * *', fetchEvents);
-cron.schedule('*/5 * * * *', fetchPanchanga);
+cron.schedule('0 * * * *', fetchEvents);
+cron.schedule('0 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
@@ -2232,7 +2233,13 @@ app.get('/api/images', (req, res) => {
     }
 
     const validFiles = files.filter(file => isFutureOrToday(file));
-    const fileUrls = validFiles.map(file => `/api/image/${file}`);
+    let fileUrls = validFiles.map(file => `/api/image/${file}`);
+
+    if (fileUrls.length === 0) {
+      // If no valid images, use the default image
+      fileUrls = [`/api/image/sharadamba_backroung.jpg`];
+    }
+
     res.status(200).json(fileUrls);
   });
 });
