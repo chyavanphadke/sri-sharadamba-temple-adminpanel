@@ -10,7 +10,6 @@ const TV = () => {
   const [events, setEvents] = useState([]);
   const [panchanga, setPanchanga] = useState({});
   const [images, setImages] = useState([]);
-  const [fontSize, setFontSize] = useState(16); // Default font size
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -130,12 +129,8 @@ const TV = () => {
     setIsFullscreen(true);
   };
 
-  const increaseFontSize = () => setFontSize((prev) => prev + 1);
-  const decreaseFontSize = () => setFontSize((prev) => (prev > 1 ? prev - 1 : prev));
-  const resetFontSize = () => setFontSize(16);
-
   return (
-    <div className={styles.tvContainer} style={{ '--font-size': `${fontSize}px` }}>
+    <div className={styles.tvContainer}>
       {!isFullscreen && (
         <button onClick={enterFullscreen} className={styles.fullscreenButton}>
           Enter Fullscreen
@@ -232,11 +227,6 @@ const TV = () => {
             </>
           )}
         </div>
-      </div>
-      <div className={styles.fontSizeControls}>
-        <button onClick={increaseFontSize} className={styles.fontSizeButton}>+</button>
-        <button onClick={decreaseFontSize} className={styles.fontSizeButton}>-</button>
-        <button onClick={resetFontSize} className={styles.fontSizeButton}>Reset</button>
       </div>
     </div>
   );

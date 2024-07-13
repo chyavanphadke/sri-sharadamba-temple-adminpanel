@@ -2092,7 +2092,7 @@ const fetchEvents = async () => {
           const eventDate = resetTime(new Date(row[0]));
           return eventDate >= today;
         })
-        .slice(0, 10)
+        .slice(0, 8)
         .map((row) => ({
           Date: row[0],
           Time: row[1], // Add Time field
