@@ -251,7 +251,7 @@ const Service = sequelize.define('Service', {
   category_id: {
     type: DataTypes.INTEGER,
     references: {
-      model: 'service_category',
+      model: 'ServiceCategory',
       key: 'category_id'
     }
   },
@@ -265,23 +265,23 @@ const Service = sequelize.define('Service', {
 });
 
 // Define ServiceCategory model
-const ServiceCategory = sequelize.define('service_category', {
+const ServiceCategory = sequelize.define('ServiceCategory', {
   category_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  category_name: {
+  Category_name: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  active: {
+  Active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   }
 }, {
-  timestamps: false,
-  freezeTableName: true
+  freezeTableName: true,
+  timestamps: false
 });
 
 // Define ModeOfPayment model

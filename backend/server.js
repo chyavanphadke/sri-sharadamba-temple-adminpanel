@@ -3,9 +3,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData } = require('./models');
+const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData } = require('./models');
 const moment = require('moment');
 const { Op } = require('sequelize'); // Make sure this is only declared once
+
 
 const app = express();
 const port = 5001;
@@ -583,6 +584,7 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
 });
 
 // Service Management Routes
+
 app.get('/services', async (req, res) => {
   try {
     const services = await Service.findAll();
@@ -593,53 +595,106 @@ app.get('/services', async (req, res) => {
   }
 });
 
-app.put('/services', async (req, res) => {
-  const transaction = await sequelize.transaction();
+app.post('/services', async (req, res) => {
+  const { Service, Rate, Comments, Active, DisplayFamily, Temple, category_id } = req.body;
   try {
-    const updates = req.body;
-    for (const update of updates) {
-      const service = await Service.findByPk(update.ServiceId);
-      if (service) {
-        await service.update(update, { transaction });
-      }
-    }
-    await transaction.commit();
-    res.status(200).json({ message: 'Services updated successfully' });
+    const newService = await Service.create({ Service, Rate, Comments, Active, DisplayFamily, Temple, category_id });
+    res.status(201).json(newService);
   } catch (err) {
-    await transaction.rollback();
-    console.error('Error updating services:', err);
-    res.status(500).json({ message: 'Error updating services', error: err.message });
+    console.error('Error creating service:', err);
+    res.status(500).json({ message: 'Error creating service', error: err.message });
   }
 });
 
-// Add new service
-app.post('/services', async (req, res) => {
-  const { Service: serviceName, Rate } = req.body;
-
-  // Validate input
-  if (!serviceName || !Rate) {
-    console.error('Validation error: Service name and rate are required');
-    return res.status(400).json({ message: 'Service name and rate are required' });
-  }
-
-  // Set default values for fields that were not provided
-  const newService = {
-    Service: serviceName,
-    Rate: parseFloat(Rate),
-    Comment: 'Added',
-    Active: true,
-    DisplayFamily: false,
-    Temple: 1,
-    SvcCategoryId: 3,
-  };
-
+app.put('/services', async (req, res) => {
+  const updatedServices = req.body;
+  const transaction = await sequelize.transaction();
   try {
-    console.log('Creating service with data:', newService);
-    const createdService = await Service.create(newService);
-    res.status(201).json(createdService);
+    for (const service of updatedServices) {
+      await Service.update(
+        { ...service },
+        { where: { ServiceId: service.ServiceId } },
+        { transaction }
+      );
+    }
+    await transaction.commit();
+    res.status(200).json({ message: 'Services updated successfully' });
   } catch (error) {
-    console.error('Error adding service:', error); // Log the error
-    res.status(500).json({ message: 'Failed to add service', error: error.message });
+    await transaction.rollback();
+    console.error('Error updating services:', error);
+    res.status(500).json({ message: 'Error updating services', error: error.message });
+  }
+});
+
+app.get('/categories', async (req, res) => {
+  try {
+    console.log('Fetching categories from database...');
+    const categories = await ServiceCategory.findAll();
+    console.log('Categories fetched:', categories);
+    res.status(200).json(categories);
+  } catch (err) {
+    console.error('Error fetching categories:', err.message, err.stack);
+    res.status(500).json({ message: 'Error fetching categories', error: err.message });
+  }
+});
+
+
+
+
+app.post('/categories', async (req, res) => {
+  const { Category_name, Active } = req.body;
+  try {
+    const newCategory = await ServiceCategory.create({ Category_name, Active });
+    res.status(201).json(newCategory);
+  } catch (err) {
+    console.error('Error creating category:', err);
+    res.status(500).json({ message: 'Error creating category', error: err.message });
+  }
+});
+
+app.put('/categories/:id', async (req, res) => {
+  const { Category_name, Active } = req.body;
+  try {
+    const category = await ServiceCategory.findByPk(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    // Update category
+    await category.update({ Category_name, Active });
+
+    // If the category is deactivated, deactivate all services under it
+    if (!Active) {
+      await Service.update(
+        { Active: false },
+        { where: { category_id: req.params.id } }
+      );
+    } else {
+      // If the category is reactivated, reactivate all services under it
+      await Service.update(
+        { Active: true },
+        { where: { category_id: req.params.id } }
+      );
+    }
+
+    res.status(200).json(category);
+  } catch (err) {
+    console.error('Error updating category:', err);
+    res.status(500).json({ message: 'Error updating category', error: err.message });
+  }
+});
+
+app.delete('/categories/:id', async (req, res) => {
+  try {
+    const category = await ServiceCategory.findByPk(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    await category.destroy();
+    res.status(204).json({ message: 'Category deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting category:', err);
+    res.status(500).json({ message: 'Error deleting category', error: err.message });
   }
 });
 
