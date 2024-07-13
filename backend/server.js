@@ -1775,7 +1775,7 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     
     const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(service.Service)}+Seva&dates=${startTime}/${endTime}&details=${encodeURIComponent('You have a scheduled seva at Sri Sharadamba Temple')}&location=${encodeURIComponent('Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035')}&sf=true&output=xml`;
 
-    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1TODNWAt0ZregZ3zW9REMBxmd79SsANcP'; // Updated file ID
+    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS'; // Updated file ID
 
     const mailOptions = {
       from: emailCredential.email,
@@ -2061,11 +2061,11 @@ cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
 
 // TV Display
-const SPREADSHEET_ID_EVENTS = '1M7SGMUaEJ99zEqLsUk-N9_1BD5RSWjg3RmkBuiBtV1g';
-const RANGE_EVENTS = 'Sheet1!A:B';
-const SPREADSHEET_ID_PANCHANGA = '1751nfWkt0PhxQ_K_9Bq0AS40j2SzaH71BWJ_Yi6lEn0';
+const SPREADSHEET_ID_EVENTS = '1lmFLx8asxPv9-iIp7I7sRINcgxvXEYT886P5VnIO6GM';
+const RANGE_EVENTS = 'Sheet1!A:C'; // Update range to include the Time column
+const SPREADSHEET_ID_PANCHANGA = '1x-PSkfZROadknm2N4V56fT_vl-a_byNKoRDWQqkFuQE';
 const RANGE_PANCHANGA = 'Sheet1!A:K';
-const DRIVE_FOLDER_ID = '1U21uCZbwX8ccCIfLUiGkAZIjLyrBoKBm';
+const DRIVE_FOLDER_ID = '1NBYfOXyQ7ULNKVD87xd5vdBEXZ2URxPP';
 
 let cachedEvents = [];
 let cachedPanchanga = {};
@@ -2092,10 +2092,11 @@ const fetchEvents = async () => {
           const eventDate = resetTime(new Date(row[0]));
           return eventDate >= today;
         })
-        .slice(0, 8)
+        .slice(0, 10)
         .map((row) => ({
           Date: row[0],
-          Event: row[1],
+          Time: row[1], // Add Time field
+          Event: row[2],
         }));
       cachedEvents = events;
       console.log('Events fetched and cached:', events);
@@ -2143,8 +2144,6 @@ const fetchPanchanga = async () => {
   }
 };
 
-
-const axios = require('axios');
 const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
 const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
 
@@ -2195,7 +2194,7 @@ const fetchImages = async () => {
 };
 
 // Schedule the fetchImages function to run every 10 minutes
-cron.schedule('0 * * * *', fetchImages);
+cron.schedule('*/5 * * * *', fetchImages);
 
 // Fetch images immediately on server start
 fetchImages();
@@ -2205,7 +2204,7 @@ fetchEvents();
 fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every 5 minutes
-cron.schedule('0 * * * *', fetchEvents);
+cron.schedule('*/5 * * * *', fetchEvents);
 cron.schedule('0 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {

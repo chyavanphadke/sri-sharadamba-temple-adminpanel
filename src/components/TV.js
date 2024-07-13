@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styles from './TV.module.css';
-import { Timeline } from 'antd';
 import axios from 'axios';
 
 const TV = () => {
@@ -11,6 +10,7 @@ const TV = () => {
   const [events, setEvents] = useState([]);
   const [panchanga, setPanchanga] = useState({});
   const [images, setImages] = useState([]);
+  const [fontSize, setFontSize] = useState(16); // Default font size
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -96,7 +96,7 @@ const TV = () => {
     } else if (eventDate.toDateString() === tomorrow.toDateString()) {
       return 'Tomorrow';
     } else {
-      const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
       return eventDate.toLocaleDateString(undefined, options);
     }
   };
@@ -130,8 +130,12 @@ const TV = () => {
     setIsFullscreen(true);
   };
 
+  const increaseFontSize = () => setFontSize((prev) => prev + 1);
+  const decreaseFontSize = () => setFontSize((prev) => (prev > 1 ? prev - 1 : prev));
+  const resetFontSize = () => setFontSize(16);
+
   return (
-    <div className={styles.tvContainer}>
+    <div className={styles.tvContainer} style={{ '--font-size': `${fontSize}px` }}>
       {!isFullscreen && (
         <button onClick={enterFullscreen} className={styles.fullscreenButton}>
           Enter Fullscreen
@@ -139,7 +143,30 @@ const TV = () => {
       )}
       <div className={styles.leftSection}>
         <h2 className={styles.welcomeText}>Welcome to Sri Sharadamba Temple</h2>
-        <div className={styles.section}>
+        <div className={`${styles.section} ${styles.eventsSection}`}>
+          <h2>Temple Events</h2>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Event</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event, index) => (
+                  <tr key={index} className={isToday(event.Date) ? `${styles.highlight} ${styles.boldRow}` : ''}>
+                    <td>{formatDayDate(event.Date)}</td>
+                    <td>{event.Time}</td>
+                    <td>{event.Event}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className={`${styles.section} ${styles.panchangaCard}`}>
           <h2>Today's Panchanga</h2>
           <div className={styles.panchangaContent}>
             <div className={styles.panchangaLeft}>
@@ -157,38 +184,22 @@ const TV = () => {
             </div>
           </div>
         </div>
-        <div className={styles.section}>
-          <h2>Temple Events</h2>
-          <Timeline mode="alternate" className={styles.timeline}>
-            {events.map((event, index) => (
-              <Timeline.Item
-                key={index}
-                color={isToday(event.Date) ? 'green' : 'blue'}
-                label={<span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal', fontSize: isToday(event.Date) ? '24px' : '18px' }}>{formatDayDate(event.Date)}</span>}
-              >
-                <span style={{ fontWeight: isToday(event.Date) ? 'bold' : 'normal', fontSize: isToday(event.Date) ? '24px' : '18px' }}>{event.Event}</span>
-              </Timeline.Item>
-            ))}
-          </Timeline>
-        </div>
-        <div className={styles.section}>
-          <div className={styles.dateTime}>
-            <h1>{formatDay(dateTime)}</h1>
-            <p>{formatDate(dateTime)}</p>
-            <p>{new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
-          </div>
-        </div>
-        <div className={styles.section}>
-          <h2>Temple Timings</h2>
-          <div className={styles.templeTimingsContent}>
-            <div className="weekday">
-              <p>Weekdays</p>
-              <p>6:00 PM – 8:00 PM</p>
+        <div className={styles.cardsContainer}>
+          <div className={`${styles.card} ${styles.dateTimeCard}`}>
+            <h2> </h2>
+            <div className={styles.dateTime}>
+              <h1>{formatDay(dateTime)}</h1>
+              <p>{formatDate(dateTime)}</p>
+              <p>{new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
             </div>
-            <div className="separator"></div>
-            <div className="weekend">
-              <p>Weekends</p>
-              <p>5:30 PM – 8:30 PM</p>
+          </div>
+          <div className={`${styles.cardTimings} ${styles.timingsCard}`}>
+            <h2>Temple Timings</h2>
+            <div className={styles.templeTimingsContent}>
+              <div className="weekday">
+                <p><strong>Weekdays  | 6:00 PM – 8:00 PM</strong></p>
+                <p><strong>Weekends | 5:30 PM – 8:30 PM</strong></p>
+              </div>
             </div>
           </div>
         </div>
@@ -221,6 +232,11 @@ const TV = () => {
             </>
           )}
         </div>
+      </div>
+      <div className={styles.fontSizeControls}>
+        <button onClick={increaseFontSize} className={styles.fontSizeButton}>+</button>
+        <button onClick={decreaseFontSize} className={styles.fontSizeButton}>-</button>
+        <button onClick={resetFontSize} className={styles.fontSizeButton}>Reset</button>
       </div>
     </div>
   );
