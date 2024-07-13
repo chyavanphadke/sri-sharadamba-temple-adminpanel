@@ -95,7 +95,7 @@ const TV = () => {
     } else if (eventDate.toDateString() === tomorrow.toDateString()) {
       return 'Tomorrow';
     } else {
-      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      const options = { weekday: 'short', month: 'long', day: 'numeric' };
       return eventDate.toLocaleDateString(undefined, options);
     }
   };

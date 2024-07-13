@@ -75,7 +75,7 @@
   display: flex;
   justify-content: space-between;
   padding: 5px 0; /* Adjusted padding */
-  font-size: 16px; /* Adjusted font size */
+  font-size: 14px; /* Adjusted font size */
   padding-left: 20px;
   padding-bottom: 50px;
 }
@@ -255,7 +255,7 @@
   border: 2px solid #d1e3f8;
   padding: 10px;
   text-align: left;
-  font-size: 17px; /* Set font size to 25px */
+  font-size: 16px; /* Set font size to 25px */
 }
 
 .table th:nth-child(1), .table td:nth-child(1) {
@@ -263,7 +263,7 @@
 }
 
 .table th:nth-child(2), .table td:nth-child(2) {
-  width: 15%; /* Adjust percentage as needed */
+  width: 20%; /* Adjust percentage as needed */
 }
 
 .table th:nth-child(3), .table td:nth-child(3) {
