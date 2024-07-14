@@ -63,3 +63,8 @@
     gap: 10px;
   }
 }
+
+.general-configurations-container {
+  display: flex;
+  flex-direction: column;
+}

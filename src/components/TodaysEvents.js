@@ -11,17 +11,30 @@ const { Title, Text } = Typography;
 const TodaysEvents = () => {
   const [events, setEvents] = useState({});
   const [selectedDate, setSelectedDate] = useState(moment());
+  const [panchanga, setPanchanga] = useState({});
 
   useEffect(() => {
     fetchEvents(selectedDate);
+    fetchPanchanga(selectedDate);
   }, [selectedDate]);
 
   const fetchEvents = async (date) => {
     try {
       const response = await axios.get(`http://localhost:5001/todays-events?date=${date.format('YYYY-MM-DD')}`);
       setEvents(response.data);
+      console.log('Events fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch events', error);
+    }
+  };
+
+  const fetchPanchanga = async (date) => {
+    try {
+      const response = await axios.get(`http://localhost:5001/api/panchanga?date=${date.format('M/D/YYYY')}`);
+      setPanchanga(response.data);
+      console.log('Panchanga fetched:', response.data);
+    } catch (error) {
+      console.error('Failed to fetch Panchanga', error);
     }
   };
 
@@ -59,6 +72,20 @@ const TodaysEvents = () => {
     );
   };
 
+  const renderPanchanga = () => (
+    <Card title="Panchanga" className="panchanga-card">
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12}>
+        <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
+          <Text><strong>Weekday:</strong> {panchanga.Weekday}</Text><br />
+          <Text><strong>Nakshatra:</strong> {panchanga.Nakshatra}</Text><br />
+          <Text><strong>Yoga:</strong> {panchanga.Yoga}</Text><br />
+          <Text><strong>Karana:</strong> {panchanga.Karana}</Text><br />
+        </Col>
+      </Row>
+    </Card>
+  );
+
   return (
     <Layout className="todays-events-container">
       <Content style={{ padding: '24px' }}>
@@ -67,6 +94,7 @@ const TodaysEvents = () => {
           <Title level={3} style={{ margin: '0 16px' }}>{selectedDate.format('MMMM Do YYYY')}</Title>
           <Button icon={<RightOutlined />} onClick={handleNextDay} />
         </div>
+        {renderPanchanga()}
         {Object.keys(events).length === 0 ? (
           <Title level={4} style={{ textAlign: 'center' }}>No Seva for Today</Title>
         ) : (

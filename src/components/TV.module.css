@@ -25,7 +25,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start; /* Adjust to start from the top */
   background-color: #ffffff; /* White background */
   border-right: 2px solid #d1e3f8; /* Light blue border */
   align-items: center; /* Center align contents */
@@ -34,9 +34,9 @@
 
 .welcomeText {
   text-align: center;
-  color: #d37109; /* Orange color */
+  color: #f30606; /* Orange color */
   font-size: 35px; /* Adjusted font size */
-  margin-bottom: 10px; /* Add some space below the welcome text */
+  margin-bottom: 20px; /* Add some space below the welcome text */
 }
 
 .rightSection {
@@ -51,7 +51,7 @@
   background-color: #ffffff; /* White for card background */
   border: 2px solid #d1e3f8; /* Light blue for card border */
   border-radius: 15px;
-  margin-bottom: 10px; /* Reduced space between cards */
+  margin-bottom: 20px; /* Reduced space between cards */
   padding: 10px; /* Adjusted padding */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 90%; /* Make sections take full width */
@@ -66,12 +66,18 @@
   padding-bottom: 5px;
 }
 
+/* New class specifically for the Temple Events section */
+.eventsSection {
+  height: 60%; /* Fixed height of 50% */
+}
+
 .panchangaContent {
   display: flex;
   justify-content: space-between;
   padding: 5px 0; /* Adjusted padding */
-  font-size: 16px; /* Adjusted font size */
+  font-size: 13px; /* Adjusted font size */
   padding-left: 20px;
+  padding-bottom: 50px;
 }
 
 .panchangaLeft, .panchangaRight {
@@ -79,7 +85,45 @@
 }
 
 .panchangaLeft p, .panchangaRight p {
-  margin: 3px 0; /* Adjusted margin */
+  margin: 10px 0; /* Adjusted margin */
+}
+
+.cardsContainer {
+  display: flex;
+  justify-content: space-between;
+  width: 93%;
+}
+
+.cardTimings {
+  flex: 1;
+  border: 2px solid #d1e3f8; /* Light blue for card border */
+  border-radius: 15px;
+  padding: 10px;
+  padding-left: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff; /* White for card background */
+}
+
+.card {
+  flex: 1;
+  border: 2px solid #d1e3f8; /* Light blue for card border */
+  border-radius: 15px;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-right: 20px; /* Space between cards */
+  background-color: #ffffff; /* White for card background */
+}
+
+.cardTimings h2 {
+  font-size: 24px; /* Adjusted font size for headings */
+  color: #1a73e8; /* Google blue for headings */
+  margin-bottom: 10px;
+  border-bottom: 2px solid #d1e3f8; /* Light blue for border */
+  padding-bottom: 5px;
+}
+
+.card:last-child {
+  margin-right: 0; /* Remove margin from the last card */
 }
 
 .dateTime {
@@ -88,13 +132,13 @@
 }
 
 .dateTime h1 {
-  font-size: 36px; /* Adjusted font size */
+  font-size: 50px; /* Adjusted font size */
   margin: 0;
   color: #000000; /* Black for date text */
 }
 
 .dateTime p {
-  font-size: 20px; /* Adjusted font size */
+  font-size: 25px; /* Adjusted font size */
   margin: 5px 0;
 }
 
@@ -102,7 +146,7 @@
   display: flex;
   justify-content: space-between;
   padding: 5px 0; /* Adjusted padding */
-  font-size: 16px; /* Adjusted font size */
+  font-size: 18px; /* Adjusted font size */
 }
 
 .templeTimingsContent .weekday, .templeTimingsContent .weekend {
@@ -194,4 +238,71 @@
   .rightSection {
     border-top: 2px solid #d1e3f8; /* Light blue border on top for small screens */
   }
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 95%;
+  border-collapse: collapse;
+  margin: 0 auto 10px auto; /* Center align table with margin on top and bottom */
+}
+
+.table th, .table td {
+  border: 2px solid #d1e3f8;
+  padding: 10px;
+  text-align: left;
+  font-size: 16px; /* Set font size to 25px */
+}
+
+.table th:nth-child(1), .table td:nth-child(1) {
+  width: 30%; /* Adjust percentage as needed */
+}
+
+.table th:nth-child(2), .table td:nth-child(2) {
+  width: 20%; /* Adjust percentage as needed */
+}
+
+.table th:nth-child(3), .table td:nth-child(3) {
+  width: 50%; /* Adjust percentage as needed */
+}
+
+.table th {
+  background-color: #1a73e8; /* Google blue for header background */
+  color: white; /* White text for header */
+}
+
+.table td {
+  background-color: #ffffff; /* White background for cells */
+}
+
+.table tr:nth-child(even) {
+  background-color: #f0f4f8; /* Light grey-blue background for even rows */
+}
+
+.table tr.highlight {
+  background-color: #c8e6c9; /* Light green for highlighted rows */
+}
+
+@media (max-width: 768px) {
+  .tvContainer {
+    flex-direction: column;
+  }
+
+  .leftSection, .rightSection {
+    flex: 1;
+    width: 100%;
+    border: none;
+  }
+
+  .rightSection {
+    border-top: 2px solid #d1e3f8; /* Light blue border on top for small screens */
+  }
+}
+
+.boldRow {
+  font-weight: bold;
 }

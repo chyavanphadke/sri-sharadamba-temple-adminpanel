@@ -14,29 +14,38 @@ const OnlineFormsData = () => {
   const [form] = Form.useForm();
   const [showAll, setShowAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const sheetServiceMap = {
-    '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
-    '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
-    '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
-    '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
-    '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 51,
-    '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
-  };
+  const [sheetServiceMap, setSheetServiceMap] = useState({});
 
   useEffect(() => {
+    fetchServiceMap();
     fetchExcelSevaData();
   }, []);
+
+  const fetchServiceMap = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/services'); // Assuming you have an endpoint to fetch services
+      const serviceMap = response.data.reduce((map, service) => {
+        if (service.excelSheetLink) {
+          map[service.excelSheetLink] = service.ServiceId;
+        }
+        return map;
+      }, {});
+      setSheetServiceMap(serviceMap);
+    } catch (error) {
+      console.error('Error fetching service map:', error);
+      message.error('Failed to load service map');
+    }
+  };
 
   const fetchExcelSevaData = async () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5001/excel-seva-data');
-      const dataWithServiceId = response.data.map(entry => ({
+      const dataWithServiceName = response.data.map(entry => ({
         ...entry,
-        ServiceId: sheetServiceMap[entry.sheet_name] || null
+        serviceName: entry.Service ? entry.Service.Service : 'Unknown Service'
       }));
-      const sortedData = dataWithServiceId.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const sortedData = dataWithServiceName.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setData(sortedData);
       filterData(sortedData, showAll, searchQuery);
     } catch (error) {
@@ -46,6 +55,7 @@ const OnlineFormsData = () => {
       setLoading(false);
     }
   };
+  
 
   const filterData = (data, showAll, query) => {
     const filtered = data.filter(entry => 
@@ -97,15 +107,24 @@ const OnlineFormsData = () => {
     setAmountModalVisible(true);
   };
 
-  const handleDeleteService = async (record) => {
-    try {
-      await axios.delete(`http://localhost:5001/delete-entry/${record.id}`);
-      message.success('Service deleted successfully');
-      fetchExcelSevaData();
-    } catch (error) {
-      console.error('Error deleting service:', error);
-      message.error('Failed to delete service');
-    }
+  const handleDeleteService = (record) => {
+    Modal.confirm({
+      title: 'Confirm Deletion',
+      content: 'Are you sure you want to delete this service?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await axios.delete(`http://localhost:5001/delete-entry/${record.id}`);
+          message.success('Service deleted successfully');
+          fetchExcelSevaData();
+        } catch (error) {
+          console.error('Error deleting service:', error);
+          message.error('Failed to delete service');
+        }
+      }
+    });
   };
 
   const handleUpdatePaymentStatus = async () => {
@@ -134,19 +153,8 @@ const OnlineFormsData = () => {
     { title: 'Date', dataIndex: 'date', key: 'date', align: 'center' },
     { 
       title: 'Service', 
-      dataIndex: 'ServiceId', 
+      dataIndex: 'serviceName', 
       key: 'service', 
-      render: (text) => {
-        const serviceMap = {
-          269: 'Annadhanam',
-          280: 'Pradosham',
-          270: 'Rathothsavam',
-          281: 'Sankashti',
-          51: 'Satyanarayana Puja',
-          277: 'Vastra'
-        };
-        return serviceMap[text] || 'Unknown Service';
-      }, 
       align: 'center' 
     },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', align: 'center' },
@@ -163,6 +171,7 @@ const OnlineFormsData = () => {
       align: 'center'
     }
   ];
+    
 
   return (
     <Layout>
@@ -209,4 +218,3 @@ const OnlineFormsData = () => {
 };
 
 export default OnlineFormsData;
-

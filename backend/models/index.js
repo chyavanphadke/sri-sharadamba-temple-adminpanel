@@ -452,10 +452,20 @@ const EmailCredential = sequelize.define('EmailCredential', {
   },
 });
 
+// Define GeneralConfigurations model
 const GeneralConfigurations = sequelize.define('GeneralConfigurations', {
-  autoApprove: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  configuration: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  value: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
 }, {
   tableName: 'generalconfigurations',
@@ -559,6 +569,10 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   },
   unique_id: {
     type: DataTypes.STRING
+  },
+  ServiceId: {  // Add this new column
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   timestamps: true, // Add timestamps
@@ -585,6 +599,9 @@ Receipt.belongsTo(Activity, { foreignKey: 'activityid' });
 
 Service.hasMany(Receipt, { foreignKey: 'servicetype', as: 'ServiceType' });
 Receipt.belongsTo(Service, { foreignKey: 'servicetype', as: 'Service' });
+
+ExcelSevaData.belongsTo(Service, { foreignKey: 'ServiceId' });
+Service.hasMany(ExcelSevaData, { foreignKey: 'ServiceId' });
 
 // Sync the models with the database
 sequelize.sync()

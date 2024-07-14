@@ -28,6 +28,7 @@ const Settings = () => {
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [emailText, setEmailText] = useState([]);
   const [autoApprove, setAutoApprove] = useState(false);
+  const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false); // New state
   const [tempServices, setTempServices] = useState([]); // Temporary state for services
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
@@ -44,7 +45,7 @@ const Settings = () => {
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
     if (storedSidebarColor) setSidebarColor(storedSidebarColor);
     fetchEmailText();
-    fetchAutoApprove();
+    fetchGeneralConfigurations();
   }, []);
 
   const sortServices = (services, categories) => {
@@ -94,23 +95,41 @@ const Settings = () => {
     }
   };
 
-  const fetchAutoApprove = async () => {
+  const fetchGeneralConfigurations = async () => {
     try {
       const response = await axios.get('http://localhost:5001/general-configurations');
       setAutoApprove(response.data.autoApprove);
+      setExcelSevaEmailConformation(response.data.excelSevaEmailConformation); // Fetch new setting
     } catch (error) {
-      message.error('Failed to load auto approve setting');
+      message.error('Failed to load general configurations');
+    }
+  };
+
+  const saveGeneralConfigurations = async (newConfigurations) => {
+    try {
+      await axios.put('http://localhost:5001/general-configurations', newConfigurations);
+      message.success('General configurations updated successfully');
+    } catch (error) {
+      message.error('Failed to update general configurations');
     }
   };
 
   const saveAutoApprove = async (value) => {
-    try {
-      await axios.put('http://localhost:5001/general-configurations', { autoApprove: value });
-      setAutoApprove(value);
-      message.success(value ? 'Auto approve on sign up GRANTED (Access: User)' : 'Auto approve on sign up REMOVED');
-    } catch (error) {
-      message.error('Failed to update general configurations');
-    }
+    const newConfigurations = {
+      autoApprove: value,
+      excelSevaEmailConformation,
+    };
+    setAutoApprove(value);
+    saveGeneralConfigurations(newConfigurations);
+  };
+
+  const saveExcelSevaEmailConformation = async (value) => {
+    const newConfigurations = {
+      autoApprove,
+      excelSevaEmailConformation: value,
+    };
+    setExcelSevaEmailConformation(value);
+    saveGeneralConfigurations(newConfigurations);
   };
 
   const onFinishPasswordChange = async (values) => {
@@ -574,13 +593,22 @@ const Settings = () => {
           {userType === 'Super Admin' && (
             <>
               <h2 style={{ marginTop: '40px' }}>General Configurations</h2>
-              <Checkbox
-                checked={autoApprove}
-                onChange={(e) => saveAutoApprove(e.target.checked)}
-                style={{ marginTop: '10px', fontSize: '20px' }}
-              >
-                Auto Approve users on Signup
-              </Checkbox>
+              <div className="general-configurations-container">
+                <Checkbox
+                  checked={autoApprove}
+                  onChange={(e) => saveAutoApprove(e.target.checked)}
+                  style={{ marginTop: '10px', fontSize: '20px'}}
+                >
+                  Auto Approve users on Signup
+                </Checkbox>
+                <Checkbox
+                  checked={excelSevaEmailConformation}
+                  onChange={(e) => saveExcelSevaEmailConformation(e.target.checked)}
+                  style={{ marginTop: '10px', fontSize: '20px'}}
+                >
+                  Send Email Confirmation for entrees from Website
+                </Checkbox>
+              </div>
             </>
           )}
 

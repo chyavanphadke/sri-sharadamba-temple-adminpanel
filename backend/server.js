@@ -77,20 +77,20 @@ app.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const config = await GeneralConfigurations.findOne();
+    const config = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
 
     const newUser = {
       username,
       email,
       password: hashedPassword,
-      approved: config && config.autoApprove ? true : false,
-      approvedBy: config && config.autoApprove ? 'Auto Approved' : null,
+      approved: config && config.value === '1' ? true : false,
+      approvedBy: config && config.value === '1' ? 'Auto Approved' : null,
     };
 
     await User.create(newUser);
 
-    const message = config && config.autoApprove 
-      ? 'User signed up successfully. Auto Approved.' 
+    const message = config && config.value === '1'
+      ? 'User signed up successfully. Auto Approved.'
       : 'User signed up successfully. Waiting for Admin approval.';
 
     res.status(200).json({ message });
@@ -99,6 +99,7 @@ app.post('/signup', async (req, res) => {
     res.status(500).json({ message: 'Error signing up', error: err.message });
   }
 });
+
 
 // Update Login Route to accept either username or email
 app.post('/login', async (req, res) => {
@@ -1280,10 +1281,16 @@ app.get('/reports', authenticateToken, async (req, res) => {
 });
 
 // General Configurations Routes
+// General Configurations Routes
 app.get('/general-configurations', async (req, res) => {
   try {
-    const config = await GeneralConfigurations.findOne();
-    res.json(config);
+    const autoApproveConfig = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
+    const excelSevaEmailConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
+
+    res.json({
+      autoApprove: autoApproveConfig ? autoApproveConfig.value === '1' : false,
+      excelSevaEmailConformation: excelSevaEmailConfig ? excelSevaEmailConfig.value === '1' : false,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching general configurations', error });
   }
@@ -1291,8 +1298,18 @@ app.get('/general-configurations', async (req, res) => {
 
 app.put('/general-configurations', async (req, res) => {
   try {
-    const { autoApprove } = req.body;
-    await GeneralConfigurations.update({ autoApprove }, { where: { id: 1 } });
+    const { autoApprove, excelSevaEmailConformation } = req.body;
+
+    await GeneralConfigurations.update(
+      { value: autoApprove ? '1' : '0' },
+      { where: { configuration: 'autoApprove' } }
+    );
+
+    await GeneralConfigurations.update(
+      { value: excelSevaEmailConformation ? '1' : '0' },
+      { where: { configuration: 'excelSevaEmailConformation' } }
+    );
+
     res.json({ message: 'General configurations updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating general configurations', error });
@@ -1579,6 +1596,46 @@ app.get('/todays-events', async (req, res) => {
   }
 });
 
+const fetchPanchangaForDate = async (date) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_PANCHANGA,
+      range: RANGE_PANCHANGA
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const panchanga = rows.find(row => row[0] === date);
+      if (panchanga) {
+        return {
+          Date: panchanga[0],
+          Sunrise: panchanga[1],
+          Sunset: panchanga[2],
+          Moonrise: panchanga[3],
+          Moonset: panchanga[4],
+          Weekday: panchanga[5],
+          Yoga: panchanga[6],
+          Tithi: panchanga[7],
+          Nakshatra: panchanga[8],
+          Karana: panchanga[9]
+        };
+      }
+    }
+    return {};
+  } catch (error) {
+    console.error('Error fetching Panchanga from Google Sheets:', error);
+    return {};
+  }
+};
+
+app.get('/api/panchanga', async (req, res) => {
+  const date = req.query.date || new Date().toLocaleDateString('en-US');
+  console.log("Date came to backend", date);
+  const panchangaData = await fetchPanchangaForDate(date);
+  res.status(200).json(panchangaData);
+});
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp start
 
 const { google } = require('googleapis');
@@ -1587,21 +1644,33 @@ const cron = require('node-cron');
 const serviceAccount = require('./service-account.json');
 const auth = new google.auth.GoogleAuth({
   credentials: serviceAccount,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  scopes: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.readonly',
+  ],
 });
 const sheets = google.sheets({ version: 'v4', auth });
+const drive = google.drive({ version: 'v3', auth });
 
-const sheetServiceMap = {
-  '1SBreZNZX4wYViXwvW3IswUamwkgkckPK-ZXjsi6BlU4': 269,
-  '1PozePRRuSdileZroTCgZo-BDEhj0auXUgjDLA_uDvVI': 280,
-  '16A2Lo0FmRiRBTdch8sB0UyJZlYv85oVANklAgatFTRQ': 270,
-  '1_ze8hxIU_anFUZ4w2qsicU80DkxizuMW6KAciGt85eM': 281,
-  '1RkYNyuYKL5-w6jyZU6gV5_hPUqGQZSpI4jx5-k_JldM': 283,
-  '1fcdLPi-d6CFpnHZXL0ccWuXv-_FgXM-3-YZI92awuOc': 277
-};
+let sheetServiceMap = {};
+
+async function initializeSheetServiceMap() {
+  try {
+    const services = await Service.findAll({ where: { excelSheetLink: { [Op.not]: null } } });
+    sheetServiceMap = services.reduce((map, service) => {
+      map[service.excelSheetLink] = service.ServiceId;
+      return map;
+    }, {});
+  } catch (error) {
+    console.error('Error initializing sheet service map:', error);
+    throw error;
+  }
+}
 
 async function fetchDataFromSheets() {
   try {
+    await initializeSheetServiceMap(); // Initialize the map before fetching data
+
     let newEntriesCount = 0;
     for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
@@ -1653,7 +1722,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     'Message to Priest': messageToPriest,
     'Payment Option': paymentStatus,
     'Card Details': cardDetails,
-    'Donation Amount': amount
+    'Suggested Donation': amount
   } = rowData;
 
   console.log('Processing row with values:', { firstName, lastName, email, phone });
@@ -1693,7 +1762,18 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     devotee_id: devotee.DevoteeId,
     amount,
     status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
-    row_index: rowIndex  // Add row_index here to use it later for updates
+    row_index: rowIndex,
+    ServiceId: serviceId // Add ServiceId here
+  });
+
+  await sendSevaEmail({
+    email,
+    serviceId,
+    serviceDate: formattedDate,
+    amount,
+    paymentStatus,
+    firstName,
+    lastName
   });
 
   if (rowIndex <= 1000) {
@@ -1705,6 +1785,116 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     console.error(`Row index ${rowIndex} exceeds Google Sheets limit.`);
   }
 }
+
+const { createICalEvent } = require('./ical');
+const path = require('path');
+const fs = require('fs');
+
+async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName }) {
+  try {
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      console.error('Service not found:', serviceId);
+      return;
+    }
+
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      console.error('Email credentials not found');
+      return;
+    }
+
+    const generalConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
+    if (!generalConfig || generalConfig.value !== '1') {
+      console.log('Email sending is disabled by configuration');
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword
+      }
+    });
+
+    const icalContent = await createICalEvent({
+      service: service.Service,
+      date: serviceDate
+    });
+
+    const dayOfWeek = new Date(serviceDate).toLocaleString('en-US', { weekday: 'long' });
+    const formattedDate = new Date(serviceDate).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const startTime = new Date(serviceDate).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const endTime = new Date(new Date(serviceDate).setHours(new Date(serviceDate).getHours() + 1)).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    
+    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(service.Service)}+Seva&dates=${startTime}/${endTime}&details=${encodeURIComponent('You have a scheduled seva at Sri Sharadamba Temple')}&location=${encodeURIComponent('Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035')}&sf=true&output=xml`;
+
+    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS'; // Updated file ID
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
+      text: `
+        Seva: ${service.Service}
+        When: ${dayOfWeek}, ${formattedDate}
+        Where: Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)
+
+        ${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}
+        Priest Dakshina is as per your wish, please pay it in the temple directly.
+
+        Please visit https://sharadaseva.org to get the latest updates and upcoming events.
+        Contact (510) 565-1411 / (925) 663-5962 if you have any questions.
+        Thank you.
+      `,
+      attachments: [
+        {
+          filename: 'invite.ics',
+          content: icalContent,
+          contentType: 'text/calendar'
+        }
+      ],
+      html: `
+        <div style="text-align: center;">
+          <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
+            <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
+            <div style="margin-bottom: 20px;"></div>
+            <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
+            <div style="margin-bottom: 20px;"></div>
+            <p><b>Seva:</b> ${service.Service}</p>
+            <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
+            <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
+            <div style="margin-bottom: 20px;"></div>
+            <p>${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}</p>
+            <p>Priest Dakshina is as per your wish, please pay it in the temple directly.</p>
+            <div style="margin-bottom: 20px;"></div>
+            <a href="${googleCalendarUrl}" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">Add to Calendar</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Sri+Sharadamba+Temple+(SEVA)" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px;">Navigate</a>
+            <div style="margin-bottom: 20px;"></div>
+            <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
+            <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962</a> if you have any questions.</p>
+            <p style="color: grey;">Thank you.</p>
+          </div>
+        </div>
+      `
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+  } catch (error) {
+    console.error('Error in sendSevaEmail:', error);
+  }
+}
+
+module.exports = {
+  sendSevaEmail
+};
 
 async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
   try {
@@ -1797,13 +1987,19 @@ app.post('/fetch-sheets-data', async (req, res) => {
 // Fetch ExcelSevaData API
 app.get('/excel-seva-data', async (req, res) => {
   try {
-    const excelSevaData = await ExcelSevaData.findAll();
+    const excelSevaData = await ExcelSevaData.findAll({
+      include: [{
+        model: Service,
+        attributes: ['Service']
+      }]
+    });
     res.status(200).json(excelSevaData);
   } catch (error) {
     console.error('Error fetching ExcelSevaData:', error);
     res.status(500).json({ message: 'Error fetching ExcelSevaData', error: error.message });
   }
 });
+
 
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
@@ -1920,14 +2116,15 @@ cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
 
 // TV Display
-
-const SPREADSHEET_ID_EVENTS = '1M7SGMUaEJ99zEqLsUk-N9_1BD5RSWjg3RmkBuiBtV1g';
-const RANGE_EVENTS = 'Sheet1!A:B';
-const SPREADSHEET_ID_PANCHANGA = '1751nfWkt0PhxQ_K_9Bq0AS40j2SzaH71BWJ_Yi6lEn0';
+const SPREADSHEET_ID_EVENTS = '1lmFLx8asxPv9-iIp7I7sRINcgxvXEYT886P5VnIO6GM';
+const RANGE_EVENTS = 'Sheet1!A:C'; // Update range to include the Time column
+const SPREADSHEET_ID_PANCHANGA = '1x-PSkfZROadknm2N4V56fT_vl-a_byNKoRDWQqkFuQE';
 const RANGE_PANCHANGA = 'Sheet1!A:K';
+const DRIVE_FOLDER_ID = '1NBYfOXyQ7ULNKVD87xd5vdBEXZ2URxPP';
 
 let cachedEvents = [];
 let cachedPanchanga = {};
+let cachedImages = [];
 
 const resetTime = (date) => {
   date.setHours(0, 0, 0, 0);
@@ -1938,19 +2135,24 @@ const fetchEvents = async () => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID_EVENTS,
-      range: RANGE_EVENTS
+      range: RANGE_EVENTS,
     });
 
     const rows = response.data.values;
     if (rows.length) {
       const today = resetTime(new Date());
-      const events = rows.slice(1).filter(row => {
-        const eventDate = resetTime(new Date(row[0]));
-        return eventDate >= today;
-      }).slice(0, 8).map(row => ({
-        Date: row[0],
-        Event: row[1]
-      }));
+      const events = rows
+        .slice(1)
+        .filter((row) => {
+          const eventDate = resetTime(new Date(row[0]));
+          return eventDate >= today;
+        })
+        .slice(0, 8)
+        .map((row) => ({
+          Date: row[0],
+          Time: row[1], // Add Time field
+          Event: row[2],
+        }));
       cachedEvents = events;
       console.log('Events fetched and cached:', events);
     } else {
@@ -1965,14 +2167,14 @@ const fetchPanchanga = async () => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID_PANCHANGA,
-      range: RANGE_PANCHANGA
+      range: RANGE_PANCHANGA,
     });
 
     const rows = response.data.values;
     if (rows.length) {
       const today = resetTime(new Date());
       const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
-      const panchanga = rows.find(row => row[0] === todayStr);
+      const panchanga = rows.find((row) => row[0] === todayStr);
 
       if (panchanga) {
         cachedPanchanga = {
@@ -1981,12 +2183,11 @@ const fetchPanchanga = async () => {
           Sunset: panchanga[2],
           Moonrise: panchanga[3],
           Moonset: panchanga[4],
-          ShakaSamvat: panchanga[5],
-          PurnimantaMonth: panchanga[6],
-          Paksha: panchanga[7],
-          Tithi: panchanga[8],
-          Weekday: panchanga[9],
-          Nakshatra: panchanga[10]
+          Weekday: panchanga[5],
+          Yoga: panchanga[6],
+          Tithi: panchanga[7],
+          Nakshatra: panchanga[8],
+          Karana: panchanga[9],
         };
         console.log('Panchanga fetched and cached:', cachedPanchanga);
       } else {
@@ -1998,13 +2199,68 @@ const fetchPanchanga = async () => {
   }
 };
 
-// Fetch events and panchanga immediately on server start
+const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
+const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
+
+const fetchImages = async () => {
+  try {
+    const response = await drive.files.list({
+      q: `'${DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/'`,
+      fields: 'files(id, name)',
+    });
+
+    const files = response.data.files;
+    if (files.length) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      files.forEach(async (file) => {
+        const [month, day, year] = file.name.replace('.jpg', '').split('-');
+        const fileDate = new Date(year, month - 1, day);
+
+        if (fileDate >= today) {
+          const url = `https://drive.google.com/uc?export=view&id=${file.id}`;
+          const filePath = path.join(DOWNLOAD_DIR, file.name);
+
+          const writer = fs.createWriteStream(filePath);
+          const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+          });
+
+          response.data.pipe(writer);
+
+          writer.on('finish', () => {
+            console.log(`Image downloaded: ${file.name}`);
+          });
+
+          writer.on('error', (error) => {
+            console.error(`Error downloading image ${file.name}:`, error);
+          });
+        } else {
+          console.log(`Skipping past image: ${file.name}`);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching images from Google Drive:', error);
+  }
+};
+
+// Schedule the fetchImages function to run every 10 minutes
+cron.schedule('*/5 * * * *', fetchImages);
+
+// Fetch images immediately on server start
+fetchImages();
+
+// Fetch events, panchanga, and images immediately on server start
 fetchEvents();
 fetchPanchanga();
 
-// Set up cron jobs to fetch events and panchanga every minute
+// Set up cron jobs to fetch events and panchanga every 5 minutes
 cron.schedule('*/5 * * * *', fetchEvents);
-cron.schedule('*/5 * * * *', fetchPanchanga);
+cron.schedule('0 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
@@ -2014,6 +2270,45 @@ app.get('/api/panchanga', (req, res) => {
   res.status(200).json(cachedPanchanga);
 });
 
+// Function to check if the date is today or in the future
+const isFutureOrToday = (filename) => {
+  const [month, day, year] = filename.replace('.jpg', '').split('-');
+  const fileDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return fileDate >= today;
+};
+
+app.get('/api/images', (req, res) => {
+  fs.readdir(DOWNLOAD_DIR, (err, files) => {
+    if (err) {
+      console.error('Error reading downloaded images directory:', err);
+      return res.status(500).send('Error reading images directory');
+    }
+
+    const validFiles = files.filter(file => isFutureOrToday(file));
+    let fileUrls = validFiles.map(file => `/api/image/${file}`);
+
+    if (fileUrls.length === 0) {
+      // If no valid images, use the default image
+      fileUrls = [`/api/image/sharadamba_backroung.jpg`];
+    }
+
+    res.status(200).json(fileUrls);
+  });
+});
+
+app.get('/api/image/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(DOWNLOAD_DIR, filename);
+
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending image file:', err);
+      res.status(500).send('Error sending image');
+    }
+  });
+});
 
 // Tv Display Ends
 
