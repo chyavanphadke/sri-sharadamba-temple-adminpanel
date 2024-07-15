@@ -3,6 +3,7 @@ import { Form, Input, Button, Layout, message, Card, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
+import tvImage from '../assets/icons/tv.png'; // Adjust the path as necessary
 
 const { Content } = Layout;
 
@@ -118,6 +119,15 @@ const Login = () => {
     setNewPassword('');
     setConfirmPassword('');
     form.resetFields(['otp', 'newPassword', 'confirmPassword']);
+  };
+
+  const handleGearClick = async () => {
+    try {
+      const response = await axios.post('http://localhost:5001/run-gear-functions');
+      message.success(response.data.message);
+    } catch (error) {
+      message.error('Error running gear functions');
+    }
   };
 
   return (
@@ -252,6 +262,13 @@ const Login = () => {
             </Form.Item>
           </Form>
         </Modal>
+
+        <Button
+          className="gear-button"
+          onClick={handleGearClick}
+        >
+          <img src={tvImage} alt="TV" className="gear-button-image" />
+        </Button>
       </Content>
     </Layout>
   );

@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import styles from './TV.module.css';
 import axios from 'axios';
 
+import rathotsavaImage from '../assets/tv_sevas/Rathotsava.webp';
+import annadanImage from '../assets/tv_sevas/Annadan.webp';
+import vastraImage from '../assets/tv_sevas/Vastra.webp';
+import flowerImage from '../assets/tv_sevas/Flower.webp';
+import satyanarayanaPoojaImage from '../assets/tv_sevas/Satyanarayana_Pooja.webp';
+import pradoshaImage from '../assets/tv_sevas/Pradosha.webp';
+import sankataHaraChaturthiImage from '../assets/tv_sevas/Sankata_Hara_ChaturthiI.webp';
+import sarvaSevaImage from '../assets/tv_sevas/sarva_seva.webp';
+import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
+import generalImage from '../assets/tv_sevas/general.webp';
+
 const TV = () => {
   const [dateTime, setDateTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -96,18 +107,18 @@ const TV = () => {
           }
         });
         setProgress(0);
-      }, 10000); // Change image every 10 seconds
-    } else if (currentMode === 'activities') {
+      }, 25000); // Change image every 10 seconds
+    } else if (currentMode === 'activities' && showActivities) {
       modeTimer = setTimeout(() => {
         setCurrentMode('slideshow');
-      }, 10000); // Show activities for 10 seconds
+      }, 25000); // Show activities for 10 seconds
     }
 
     return () => {
       clearInterval(modeTimer);
       clearInterval(progressTimer);
     };
-  }, [currentMode, images.length]);
+  }, [currentMode, images.length, showActivities]);
 
   const convertToPST = (date) => {
     return new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
@@ -176,6 +187,31 @@ const TV = () => {
   };
 
   const groupedActivities = groupActivitiesByService();
+
+  const getServiceImage = (serviceId) => {
+    switch (serviceId) {
+      case 270:
+        return rathotsavaImage;
+      case 269:
+        return annadanImage;
+      case 277:
+        return vastraImage;
+      case 278:
+        return flowerImage;
+      case 279:
+        return satyanarayanaPoojaImage;
+      case 280:
+        return pradoshaImage;
+      case 281:
+        return sankataHaraChaturthiImage;
+      case 282:
+        return sarvaSevaImage;
+      case 284:
+        return nityaPoojaImage;
+      default:
+        return generalImage;
+    }
+  };
 
   return (
     <div className={styles.tvContainer}>
@@ -248,7 +284,7 @@ const TV = () => {
         </div>
       </div>
       <div className={styles.rightSection}>
-        {currentMode === 'slideshow' ? (
+        {currentMode === 'slideshow' || activities.length === 0 ? (
           <div className={styles.slideshow}>
             {images.length > 0 && (
               <>
@@ -277,17 +313,22 @@ const TV = () => {
             )}
           </div>
         ) : (
-          <div className={`${styles.section} ${styles.activitiesSection}`} style={{ height: '90%' }}>
-            <h2>Today's Activities</h2>
+          <div className={`${styles.sectionActivity} ${styles.activitiesSection}`} style={{ height: '90%' }}>
+            <h2 style={{ fontWeight: 'bold', fontSize: '30px' }}>Today's Sevas</h2>
             <div className={styles.activitiesContainer}>
               {Object.keys(groupedActivities).map((service, index) => (
-                <div key={index} className={styles.serviceSection}>
-                  <h3 className={styles.serviceHeading}>{service}</h3>
-                  <ul className={styles.serviceList}>
-                    {groupedActivities[service].map((activity, idx) => (
-                      <li key={idx}>{`${activity.Devotee.FirstName} ${activity.Devotee.LastName}`}</li>
-                    ))}
-                  </ul>
+                <div key={index} className={styles.serviceWrapper}>
+                  <div className={styles.serviceSection}>
+                    <h3 className={styles.serviceHeading}>{service}</h3>
+                    <div className={styles.serviceContent}>
+                      <img src={getServiceImage(groupedActivities[service][0].Service.ServiceId)} alt={`${service}`} className={styles.serviceImage} />
+                      <ul className={styles.serviceList}>
+                        {groupedActivities[service].map((activity, idx) => (
+                          <li key={idx}>{`${activity.Devotee.FirstName} ${activity.Devotee.LastName}`}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

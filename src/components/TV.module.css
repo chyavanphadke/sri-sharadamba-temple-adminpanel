@@ -306,3 +306,68 @@
 .boldRow {
   font-weight: bold;
 }
+
+.activitiesContainer {
+  display: flex;
+  flex-wrap: wrap; /* Allows items to wrap to the next line if necessary */
+  gap: 20px;
+  width: 100%;
+  justify-content: flex-start; /* Align content to the left */
+}
+
+.serviceWrapper {
+  flex: 1 1 45%; /* Allows two items per row with some spacing */
+  max-width: 50%;
+  box-sizing: border-box;
+}
+
+.serviceSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 2px solid #d1e3f8;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.serviceHeading {
+  font-size: 25px;
+  color: #1a73e8;
+  border-bottom: 2px solid #d1e3f8;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.serviceContent {
+  display: flex;
+  gap: 20px;
+  line-height: 2;
+}
+
+.serviceImage {
+  width: 300px;
+  height: auto;
+  border-radius: 10px;
+}
+
+.serviceList {
+  list-style-type: disc; /* Make the list bulleted */
+  padding: 0;
+  margin: 0;
+  padding-left: 15px;
+  font-size: 20px; /* Increase the font size */
+  font-weight: bold; /* Make the text bold */
+}
+
+.sectionActivity {
+  background-color: #ffffff; /* White for card background */
+  border: 2px solid #ffffff; /* Light blue for card border */
+  border-radius: 15px;
+  margin-bottom: 20px; /* Reduced space between cards */
+  padding: 10px; /* Adjusted padding */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 90%; /* Make sections take full width */
+  overflow: hidden; /* Prevent overflow */
+}

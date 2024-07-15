@@ -2270,7 +2270,7 @@ const fetchImages = async () => {
 };
 
 // Schedule the fetchImages function to run every 10 minutes
-cron.schedule('*/30 * * * * *', fetchImages);
+cron.schedule('0 * * * *', fetchImages);
 
 // Fetch images immediately on server start
 fetchImages();
@@ -2280,8 +2280,8 @@ fetchEvents();
 fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every 5 minutes
-cron.schedule('*/30 * * * * *', fetchEvents);
-cron.schedule('*/30 * * * * *', fetchPanchanga);
+cron.schedule('0 * * * *', fetchEvents);
+cron.schedule('0 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
@@ -2347,7 +2347,7 @@ app.get('/api/today-activities', async (req, res) => {
       },
       include: [
         { model: Devotee, attributes: ['FirstName', 'LastName'] },
-        { model: Service, attributes: ['Service'] }
+        { model: Service, attributes: ['ServiceId', 'Service'] }
       ]
     });
 
@@ -2355,6 +2355,40 @@ app.get('/api/today-activities', async (req, res) => {
   } catch (error) {
     console.error('Error fetching today\'s activities:', error);
     res.status(500).send('Error fetching today\'s activities');
+  }
+});
+
+// Function to delete TV images
+const deleteTvImages = () => {
+  const dirPath = path.join(__dirname, './tvSlideshow');
+  fs.readdir(dirPath, (err, files) => {
+    if (err) throw err;
+
+    for (const file of files) {
+      if (file !== 'sharadamba_backroung.jpg') {
+        fs.unlink(path.join(dirPath, file), err => {
+          if (err) throw err;
+        });
+      }
+    }
+  });
+};
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+app.post('/run-gear-functions', async (req, res) => {
+  try {
+    deleteTvImages();
+    await fetchImages();
+    await delay(2000);
+    await fetchEvents();
+    await delay(2000);
+    await fetchPanchanga();
+    await delay(2000);
+    res.status(200).json({ message: 'Gear functions executed successfully' });
+  } catch (error) {
+    console.error('Error executing gear functions:', error);
+    res.status(500).send('Error executing gear functions');
   }
 });
 

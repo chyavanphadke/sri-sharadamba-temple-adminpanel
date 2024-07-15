@@ -462,6 +462,15 @@ const Settings = () => {
     setFilteredServices(originalServices); // Also restore filtered services to original state
   };
 
+  const handleEditEmailText = async () => {
+    try {
+      const response = await axios.post('http://localhost:5001/run-gear-functions');
+      message.success(response.data.message);
+    } catch (error) {
+      message.error('Error running gear functions');
+    }
+  };  
+
   const serviceColumns = [
     {
       title: 'Category',
@@ -567,6 +576,9 @@ const Settings = () => {
           <h2>Settings</h2>
           <Button type="primary" onClick={() => setPasswordModalVisible(true)}>
             Change Password
+          </Button>
+          <Button type="primary" onClick={handleEditEmailText} style={{ marginLeft: '10px' }}>
+            Refresh TV Data
           </Button>
           {(userType === 'Admin' || userType === 'Super Admin') && (
             <Button type="primary" onClick={handleOpenServiceModal} style={{ marginLeft: '10px' }}>
