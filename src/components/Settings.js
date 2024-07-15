@@ -816,98 +816,42 @@ const Settings = () => {
             title="Change Access Rights"
             visible={accessRightsModalVisible}
             onCancel={() => setAccessRightsModalVisible(false)}
-            onOk={handleAccessRightsSave}
-            width={800}
+            footer={[
+              <Button key="cancel" onClick={() => setAccessRightsModalVisible(false)}>
+                Cancel
+              </Button>,
+              <Button key="save" type="primary" onClick={handleAccessRightsSave}>
+                Save
+              </Button>,
+            ]}
           >
             <Table
+              dataSource={accessRights}
+              rowKey="id"
+              pagination={false}
+              loading={loading}
               columns={[
                 {
-                  title: 'Pages',
-                  dataIndex: 'component',
-                  key: 'component',
+                  title: 'Role',
+                  dataIndex: 'role',
+                  key: 'role',
                 },
                 {
-                  title: 'User Type',
-                  dataIndex: 'usertype',
-                  key: 'usertype',
-                },
-                {
-                  title: 'View',
-                  dataIndex: 'can_view',
-                  key: 'can_view',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_view', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
-                  ),
-                },
-                {
-                  title: 'Add',
-                  dataIndex: 'can_add',
-                  key: 'can_add',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_add', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
-                  ),
-                },
-                {
-                  title: 'Edit',
-                  dataIndex: 'can_edit',
-                  key: 'can_edit',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_edit', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
-                  ),
-                },
-                {
-                  title: 'Delete',
-                  dataIndex: 'can_delete',
-                  key: 'can_delete',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_delete', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
-                  ),
-                },
-                {
-                  title: 'Approve',
-                  dataIndex: 'can_approve',
-                  key: 'can_approve',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_approve', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
-                  ),
-                },
-                {
-                  title: 'Email',
-                  dataIndex: 'can_email',
-                  key: 'can_email',
-                  render: (value, record) => (
-                    <Checkbox
-                      checked={value === 1}
-                      onChange={(e) => handleAccessChange(record, 'can_email', e.target.checked ? 1 : 0)}
-                      disabled={value === 2}
-                    />
+                  title: 'Permission',
+                  dataIndex: 'permission',
+                  key: 'permission',
+                  render: (text, record) => (
+                    <Select
+                      value={text}
+                      onChange={(value) => handleAccessChange(record, 'permission', value)}
+                    >
+                      <Option value="read">Read</Option>
+                      <Option value="write">Write</Option>
+                      <Option value="admin">Admin</Option>
+                    </Select>
                   ),
                 },
               ]}
-              dataSource={accessRights.filter((record) => record.usertype !== 'Super Admin')}
-              rowKey="id"
-              pagination={false}
-              size="small"
             />
           </Modal>
 
@@ -915,9 +859,16 @@ const Settings = () => {
             title="Email Credentials"
             visible={emailCredentialsModalVisible}
             onCancel={() => setEmailCredentialsModalVisible(false)}
-            onOk={handleEmailCredentialsSave}
+            footer={[
+              <Button key="cancel" onClick={() => setEmailCredentialsModalVisible(false)}>
+                Cancel
+              </Button>,
+              <Button key="save" type="primary" onClick={handleEmailCredentialsSave}>
+                Save
+              </Button>,
+            ]}
           >
-            <Form layout="vertical">
+            <Form>
               <Form.Item label="Email">
                 <Input
                   value={emailCredentials.email}
@@ -925,7 +876,8 @@ const Settings = () => {
                 />
               </Form.Item>
               <Form.Item label="App Password">
-                <Input.Password
+                <Input
+                  type="password"
                   value={emailCredentials.appPassword}
                   onChange={(e) => handleEmailChange('appPassword', e.target.value)}
                 />
@@ -936,22 +888,22 @@ const Settings = () => {
           <Modal
             title="Edit Email Text"
             visible={emailModalVisible}
-            onOk={handleSaveEmailText}
             onCancel={() => setEmailModalVisible(false)}
             footer={[
-              <Button key="reset" onClick={handleResetEmailText}>
-                Reset to Default
+              <Button key="cancel" onClick={() => setEmailModalVisible(false)}>
+                Cancel
               </Button>,
-              <Button key="submit" type="primary" onClick={handleSaveEmailText}>
+              <Button key="save" type="primary" onClick={handleSaveEmailText}>
                 Save
               </Button>,
             ]}
           >
-            <Form form={form} layout="horizontal">
-              <Form.Item name="emailText" label="Email Text">
-                <Input.TextArea rows={10} style={{ width: '100%' }} /> 
+            <Form form={form}>
+              <Form.Item name="emailText">
+                <Input.TextArea rows={10} />
               </Form.Item>
             </Form>
+            <Button onClick={handleResetEmailText}>Reset to Default</Button>
           </Modal>
         </div>
       </Content>

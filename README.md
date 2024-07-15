@@ -99,16 +99,6 @@ INSERT INTO accesscontrol (usertype, component, can_view, can_add, can_edit, can
 ALTER TABLE `seva`.`receipt`;
 ALTER TABLE `receipt` ADD COLUMN `emailsentcount` INT DEFAULT 0;
 
-
-CREATE TABLE `generalconfigurations` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `autoApprove` BIT(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-);
-
-INSERT INTO `generalconfigurations` (autoApprove) VALUES (0);
-
-
 CREATE TABLE `EditedReceipts` (
   `EditId` INT AUTO_INCREMENT PRIMARY KEY,
   `Name` VARCHAR(100) NOT NULL,
@@ -146,6 +136,15 @@ CREATE TABLE `excelsevadata` (
 
 ```
 User Table: 'online Paid', 'Paid at Temple'
+
+````
+CREATE TABLE `generalconfigurations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `configuration` varchar(255) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+````
 
 # Installation:
 
