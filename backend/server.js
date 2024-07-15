@@ -2219,7 +2219,7 @@ const fetchPanchanga = async () => {
     console.error('Error fetching Panchanga from Google Sheets:', error);
   }
 };
-
+const axios = require('axios');
 const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
 const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
 
@@ -2270,7 +2270,7 @@ const fetchImages = async () => {
 };
 
 // Schedule the fetchImages function to run every 10 minutes
-cron.schedule('*/5 * * * *', fetchImages);
+cron.schedule('*/30 * * * * *', fetchImages);
 
 // Fetch images immediately on server start
 fetchImages();
@@ -2280,8 +2280,8 @@ fetchEvents();
 fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every 5 minutes
-cron.schedule('*/5 * * * *', fetchEvents);
-cron.schedule('0 * * * *', fetchPanchanga);
+cron.schedule('*/30 * * * * *', fetchEvents);
+cron.schedule('*/30 * * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
@@ -2329,6 +2329,33 @@ app.get('/api/image/:filename', (req, res) => {
       res.status(500).send('Error sending image');
     }
   });
+});
+
+app.get('/api/today-activities', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const activities = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.gte]: today,
+          [Op.lt]: tomorrow,
+        },
+      },
+      include: [
+        { model: Devotee, attributes: ['FirstName', 'LastName'] },
+        { model: Service, attributes: ['Service'] }
+      ]
+    });
+
+    res.status(200).json(activities);
+  } catch (error) {
+    console.error('Error fetching today\'s activities:', error);
+    res.status(500).send('Error fetching today\'s activities');
+  }
 });
 
 // Tv Display Ends

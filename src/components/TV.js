@@ -10,6 +10,9 @@ const TV = () => {
   const [events, setEvents] = useState([]);
   const [panchanga, setPanchanga] = useState({});
   const [images, setImages] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [showActivities, setShowActivities] = useState(false);
+  const [currentMode, setCurrentMode] = useState('slideshow'); // 'slideshow' or 'activities'
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -17,23 +20,6 @@ const TV = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const slideTimer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-      setProgress(0); // Reset progress bar
-    }, 10000); // Change image every 10 seconds
-
-    return () => clearInterval(slideTimer);
-  }, [images.length]);
-
-  useEffect(() => {
-    const progressTimer = setInterval(() => {
-      setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 1 : 0));
-    }, 100); // Update progress every 100ms
-
-    return () => clearInterval(progressTimer);
   }, []);
 
   useEffect(() => {
@@ -59,7 +45,6 @@ const TV = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/images');
         console.log('Fetched images:', response.data); // Log fetched images
-        // Transform the URLs to use the proxy route
         const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
         setImages(imageUrls);
       } catch (error) {
@@ -67,26 +52,75 @@ const TV = () => {
       }
     };
 
+    const fetchActivities = async () => {
+      try {
+        const response = await axios.get('http://localhost:5001/api/today-activities');
+        setActivities(response.data);
+        setShowActivities(response.data.length > 0);
+      } catch (error) {
+        console.error('Error fetching today\'s activities:', error);
+      }
+    };
+
     fetchEvents();
     fetchPanchanga();
     fetchImages();
+    fetchActivities();
+
     const interval = setInterval(() => {
       fetchEvents();
       fetchPanchanga();
       fetchImages();
-    }, 60000); // Fetch events, panchanga, and images every minute
+      fetchActivities();
+    }, 60000); // Fetch data every minute
 
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    let modeTimer;
+    let progressTimer;
+
+    if (currentMode === 'slideshow' && images.length > 0) {
+      progressTimer = setInterval(() => {
+        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 1 : 0));
+      }, 100);
+
+      modeTimer = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => {
+          if (prevIndex === images.length - 1) {
+            setCurrentMode('activities');
+            return 0;
+          } else {
+            return prevIndex + 1;
+          }
+        });
+        setProgress(0);
+      }, 10000); // Change image every 10 seconds
+    } else if (currentMode === 'activities') {
+      modeTimer = setTimeout(() => {
+        setCurrentMode('slideshow');
+      }, 10000); // Show activities for 10 seconds
+    }
+
+    return () => {
+      clearInterval(modeTimer);
+      clearInterval(progressTimer);
+    };
+  }, [currentMode, images.length]);
+
+  const convertToPST = (date) => {
+    return new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  };
+
   const formatDate = (date) => {
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
-    return new Date(date).toLocaleDateString(undefined, options);
+    return convertToPST(new Date(date)).toLocaleDateString(undefined, options);
   };
 
   const formatDayDate = (date) => {
-    const today = resetTime(new Date());
-    const eventDate = resetTime(new Date(date));
+    const today = resetTime(convertToPST(new Date()));
+    const eventDate = resetTime(convertToPST(new Date(date)));
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
@@ -101,8 +135,8 @@ const TV = () => {
   };
 
   const isToday = (date) => {
-    const today = resetTime(new Date());
-    const eventDate = resetTime(new Date(date));
+    const today = resetTime(convertToPST(new Date()));
+    const eventDate = resetTime(convertToPST(new Date(date)));
     return eventDate.toDateString() === today.toDateString();
   };
 
@@ -112,7 +146,7 @@ const TV = () => {
   };
 
   const formatDay = (date) => {
-    return new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
+    return convertToPST(new Date(date)).toLocaleDateString(undefined, { weekday: 'long' });
   };
 
   const enterFullscreen = () => {
@@ -128,6 +162,20 @@ const TV = () => {
     }
     setIsFullscreen(true);
   };
+
+  const groupActivitiesByService = () => {
+    const grouped = activities.reduce((acc, activity) => {
+      const service = activity.Service.Service;
+      if (!acc[service]) {
+        acc[service] = [];
+      }
+      acc[service].push(activity);
+      return acc;
+    }, {});
+    return grouped;
+  };
+
+  const groupedActivities = groupActivitiesByService();
 
   return (
     <div className={styles.tvContainer}>
@@ -185,7 +233,7 @@ const TV = () => {
             <div className={styles.dateTime}>
               <h1>{formatDay(dateTime)}</h1>
               <p>{formatDate(dateTime)}</p>
-              <p>{new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
+              <p>{convertToPST(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
             </div>
           </div>
           <div className={`${styles.cardTimings} ${styles.timingsCard}`}>
@@ -200,33 +248,51 @@ const TV = () => {
         </div>
       </div>
       <div className={styles.rightSection}>
-        <div className={styles.slideshow}>
-          {images.length > 0 && (
-            <>
-              <div
-                className={styles.slideshowBackground}
-                style={{
-                  backgroundImage: `url(${images[currentImageIndex]})`
-                }}
-              ></div>
-              <div className={styles.slideshowOverlay}></div>
-              <img 
-                src={images[currentImageIndex]} 
-                alt="Slideshow" 
-                onError={(e) => {
-                  console.error('Image load error:', e);
-                  console.log('Failed URL:', images[currentImageIndex]);
-                }} 
-              />
-              <div className={styles.progressBar}>
+        {currentMode === 'slideshow' ? (
+          <div className={styles.slideshow}>
+            {images.length > 0 && (
+              <>
                 <div
-                  className={styles.progress}
-                  style={{ width: `${progress}%` }}
+                  className={styles.slideshowBackground}
+                  style={{
+                    backgroundImage: `url(${images[currentImageIndex]})`
+                  }}
                 ></div>
-              </div>
-            </>
-          )}
-        </div>
+                <div className={styles.slideshowOverlay}></div>
+                <img 
+                  src={images[currentImageIndex]} 
+                  alt="Slideshow" 
+                  onError={(e) => {
+                    console.error('Image load error:', e);
+                    console.log('Failed URL:', images[currentImageIndex]);
+                  }} 
+                />
+                <div className={styles.progressBar}>
+                  <div
+                    className={styles.progress}
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className={`${styles.section} ${styles.activitiesSection}`} style={{ height: '90%' }}>
+            <h2>Today's Activities</h2>
+            <div className={styles.activitiesContainer}>
+              {Object.keys(groupedActivities).map((service, index) => (
+                <div key={index} className={styles.serviceSection}>
+                  <h3 className={styles.serviceHeading}>{service}</h3>
+                  <ul className={styles.serviceList}>
+                    {groupedActivities[service].map((activity, idx) => (
+                      <li key={idx}>{`${activity.Devotee.FirstName} ${activity.Devotee.LastName}`}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
