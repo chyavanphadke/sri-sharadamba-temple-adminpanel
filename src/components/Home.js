@@ -39,6 +39,8 @@ const Home = () => {
   const [isSevaModalVisible, setIsSevaModalVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [services, setServices] = useState([]);
+  const [activeServices, setActiveServices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedService, setSelectedService] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
@@ -100,10 +102,21 @@ const Home = () => {
 
   const fetchServices = useCallback(async () => {
     try {
-      const response = await axiosInstance.get('/services');
-      setServices(response.data);
+      const [servicesResponse, categoriesResponse] = await Promise.all([
+        axiosInstance.get('/services'),
+        axiosInstance.get('/categories')
+      ]);
+
+      setServices(servicesResponse.data);
+      setCategories(categoriesResponse.data);
+
+      // Filter active services based on active categories and service status
+      const activeCategories = categoriesResponse.data.filter(category => category.Active);
+      const activeCategoryIds = activeCategories.map(category => category.category_id);
+      const activeServicesData = servicesResponse.data.filter(service => service.Active && activeCategoryIds.includes(service.category_id));
+      setActiveServices(activeServicesData);
     } catch (error) {
-      message.error('Failed to load services');
+      message.error('Failed to load services or categories');
     }
   }, [axiosInstance]);
 
@@ -671,7 +684,7 @@ const Home = () => {
                 <Select
                   placeholder="Select a service"
                   onChange={(value) => {
-                    const service = services.find(s => s.Service === value);
+                    const service = activeServices.find(s => s.Service === value);
                     sevaForm.setFieldsValue({ Expected_Donation: service.Rate, AmountPaid: service.Rate });
                     setSelectedService(value);
                   }}
@@ -680,7 +693,7 @@ const Home = () => {
                     option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                   }
                 >
-                  {services.map(service => (
+                  {activeServices.map(service => (
                     <Option key={service.ServiceId} value={service.Service}>{service.Service}</Option>
                   ))}
                 </Select>

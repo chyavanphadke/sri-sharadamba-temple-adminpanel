@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Layout, message, Modal, Table, Checkbox } from 'antd';
+import { Form, Input, Button, Layout, message, Modal, Table, Checkbox, Select, Dropdown, Menu } from 'antd';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './Settings.css'; // Import CSS file for styling
 
 const { Content } = Layout;
+const { Option } = Select;
 
 const Settings = () => {
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
+  const [newCategoryModalVisible, setNewCategoryModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
   const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
   const [emailCredentialsModalVisible, setEmailCredentialsModalVisible] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [services, setServices] = useState([]);
+  const [originalServices, setOriginalServices] = useState([]); // Backup of original services
+  const [categories, setCategories] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [headerColor, setHeaderColor] = useState('#001529');
@@ -27,6 +31,7 @@ const Settings = () => {
   const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false); // New state
   const [tempServices, setTempServices] = useState([]); // Temporary state for services
   const [form] = Form.useForm();
+  const [categoryForm] = Form.useForm();
 
   const token = localStorage.getItem('token');
   const decodedToken = jwtDecode(token);
@@ -34,6 +39,7 @@ const Settings = () => {
 
   useEffect(() => {
     fetchServices();
+    fetchCategories();
     const storedHeaderColor = localStorage.getItem('headerColor');
     const storedSidebarColor = localStorage.getItem('sidebarColor');
     if (storedHeaderColor) setHeaderColor(storedHeaderColor);
@@ -42,15 +48,40 @@ const Settings = () => {
     fetchGeneralConfigurations();
   }, []);
 
+  const sortServices = (services, categories) => {
+    return services.sort((a, b) => {
+      const categoryA = categories.find(cat => cat.category_id === a.category_id)?.Category_name || '';
+      const categoryB = categories.find(cat => cat.category_id === b.category_id)?.Category_name || '';
+      if (categoryA < categoryB) return -1;
+      if (categoryA > categoryB) return 1;
+      if (a.Service < b.Service) return -1;
+      if (a.Service > b.Service) return 1;
+      return 0;
+    });
+  };
+
   const fetchServices = async () => {
     try {
       const response = await axios.get('http://localhost:5001/services');
       const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
       setServices(sortedServices);
+      setOriginalServices(sortedServices); // Backup original services
       setFilteredServices(sortedServices);
       setTempServices(sortedServices); // Initialize tempServices with fetched data
     } catch (error) {
       message.error('Failed to load services');
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      console.log('Fetching categories...');
+      const response = await axios.get('http://localhost:5001/categories');
+      console.log('Categories fetched:', response.data);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error.message, error.response);
+      message.error('Failed to load categories');
     }
   };
 
@@ -118,14 +149,71 @@ const Settings = () => {
   };
 
   const onTempServiceChange = (index, field, value) => {
-    const newTempServices = [...tempServices];
-    newTempServices[index][field] = value;
-    setTempServices(newTempServices);
+    const serviceId = filteredServices[index].ServiceId;
+    const updatedServices = services.map(service => {
+      if (service.ServiceId === serviceId) {
+        return { ...service, [field]: value };
+      }
+      return service;
+    });
+
+    const updatedFilteredServices = filteredServices.map((service, idx) => {
+      if (index === idx) {
+        return { ...service, [field]: value };
+      }
+      return service;
+    });
+
+    setServices(updatedServices);
+    setFilteredServices(updatedFilteredServices);
+  };
+
+  const onCategoryActiveChange = async (index, isActive) => {
+    const serviceId = filteredServices[index].ServiceId;
+    const categoryId = filteredServices[index].category_id;
+
+    const updatedCategories = categories.map(cat => {
+      if (cat.category_id === categoryId) {
+        return { ...cat, Active: isActive };
+      }
+      return cat;
+    });
+
+    const updatedServices = services.map(service => {
+      if (service.category_id === categoryId) {
+        return { ...service, Active: isActive };
+      }
+      return service;
+    });
+
+    const updatedFilteredServices = filteredServices.map(service => {
+      if (service.category_id === categoryId) {
+        return { ...service, Active: isActive };
+      }
+      return service;
+    });
+
+    setCategories(updatedCategories);
+    setServices(updatedServices);
+    setFilteredServices(updatedFilteredServices);
+
+    try {
+      await axios.put(`http://localhost:5001/categories/${categoryId}`, {
+        Category_name: updatedCategories.find(cat => cat.category_id === categoryId).Category_name,
+        Active: isActive,
+      });
+
+      await axios.put('http://localhost:5001/services', updatedServices);
+
+      message.success('Category and associated services updated successfully');
+    } catch (error) {
+      message.error('Failed to update category and services');
+    }
   };
 
   const handleServiceSave = async () => {
     try {
-      await axios.put('http://localhost:5001/services', tempServices);
+      await axios.put('http://localhost:5001/services', services);
       message.success('Services updated successfully');
       setServiceModalVisible(false);
       fetchServices();
@@ -135,15 +223,16 @@ const Settings = () => {
   };
 
   const handleSearch = (e) => {
-    const term = e.target.value;
+    const term = e.target.value.toLowerCase();
     setSearchTerm(term);
     if (term.length >= 3) {
-      const filtered = tempServices.filter(service =>
-        service.Service.toLowerCase().includes(term.toLowerCase())
+      const filtered = services.filter(service =>
+        service.Service.toLowerCase().includes(term) ||
+        categories.find(category => category.Category_name.toLowerCase().includes(term) && category.category_id === service.category_id)
       );
       setFilteredServices(filtered);
     } else {
-      setFilteredServices(tempServices);
+      setFilteredServices(services);
     }
   };
 
@@ -156,7 +245,7 @@ const Settings = () => {
         Active: true,
         DisplayFamily: false,
         Temple: 0,
-        SvcCategoryId: 0,
+        category_id: values.category_id,
       };
 
       await axios.post('http://localhost:5001/services', newService);
@@ -165,6 +254,28 @@ const Settings = () => {
       fetchServices();
     } catch (error) {
       message.error('Failed to add service');
+    }
+  };
+
+  const handleAddCategory = async (values) => {
+    try {
+      const existingCategory = categories.find(category => category.Category_name.toLowerCase() === values.Category_name.toLowerCase());
+      if (existingCategory) {
+        message.error('Category already exists');
+        return;
+      }
+
+      const newCategory = {
+        Category_name: values.Category_name,
+        Active: true,
+      };
+
+      await axios.post('http://localhost:5001/categories', newCategory);
+      message.success('Category added successfully');
+      setNewCategoryModalVisible(false);
+      fetchCategories();
+    } catch (error) {
+      message.error('Failed to add category');
     }
   };
 
@@ -178,8 +289,32 @@ const Settings = () => {
     form.resetFields();
   };
 
+  const handleNewCategoryModalOpen = () => {
+    categoryForm.resetFields();
+    setNewCategoryModalVisible(true);
+  };
+
+  const handleNewCategoryModalCancel = () => {
+    setNewCategoryModalVisible(false);
+    categoryForm.resetFields();
+  };
+
   const handleClearForm = () => {
     form.resetFields();
+  };
+
+  const handleClearCategoryForm = () => {
+    categoryForm.resetFields();
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setFilteredServices(services);
+  };
+
+  const handleClearChanges = () => {
+    setServices(originalServices); // Restore original services
+    setFilteredServices(originalServices); // Restore filtered services to original state
   };
 
   const handleChangeColor = () => {
@@ -281,17 +416,84 @@ const Settings = () => {
     }
   };
 
+  const handleSearchSelect = (value) => {
+    const selectedCategory = categories.find(category => category.Category_name === value);
+    if (selectedCategory) {
+      setFilteredServices(services.filter(service => service.category_id === selectedCategory.category_id));
+    } else {
+      const selectedService = services.find(service => service.Service === value);
+      if (selectedService) {
+        setFilteredServices([selectedService]);
+      }
+    }
+    setSearchTerm(value); // Set the search term to the selected value
+  };
+
+  const getDropdownMenu = () => {
+    const matchedCategories = categories.filter(category => category.Category_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchedServices = tempServices.filter(service => service.Service.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const menuItems = [
+      ...matchedCategories.map(category => ({ key: `category-${category.category_id}`, label: category.Category_name })),
+      ...matchedServices.map(service => ({ key: `service-${service.ServiceId}`, label: service.Service }))
+    ];
+
+    return (
+      <Menu
+        onClick={({ key }) => handleSearchSelect(menuItems.find(item => item.key === key).label)}
+      >
+        {menuItems.map(item => (
+          <Menu.Item key={item.key}>{item.label}</Menu.Item>
+        ))}
+      </Menu>
+    );
+  };
+
+  const handleOpenServiceModal = () => {
+    setOriginalServices([...services]); // Backup current services
+    setSearchTerm('');
+    setFilteredServices(services);
+    setServiceModalVisible(true);
+  };
+
+  const handleCloseServiceModal = () => {
+    setServiceModalVisible(false);
+    setServices(originalServices); // Restore original services
+    setFilteredServices(originalServices); // Also restore filtered services to original state
+  };
+
   const serviceColumns = [
     {
-      title: 'Active',
-      dataIndex: 'Active',
-      key: 'Active',
+      title: 'Category',
+      dataIndex: 'category_id',
+      key: 'category_id',
       render: (text, record, index) => (
-        <Checkbox
-          checked={text}
-          onChange={(e) => onTempServiceChange(index, 'Active', e.target.checked)}
-        />
+        <Select
+          value={text}
+          onChange={(value) => onTempServiceChange(index, 'category_id', value)}
+          style={{ width: '100%' }}
+        >
+          {categories.map(category => (
+            <Option key={category.category_id} value={category.category_id}>
+              {category.Category_name}
+            </Option>
+          ))}
+        </Select>
       ),
+    },
+    {
+      title: 'Category Active?',
+      dataIndex: 'category_id',
+      key: 'category_active',
+      render: (text, record, index) => {
+        const category = categories.find(cat => cat.category_id === text);
+        return (
+          <Checkbox
+            checked={category && category.Active}
+            onChange={(e) => onCategoryActiveChange(index, e.target.checked)}
+          />
+        );
+      }
     },
     {
       title: 'Seva',
@@ -310,6 +512,21 @@ const Settings = () => {
           maxWidth: `${Math.max(...tempServices.map(service => service.Service.length))}ch`,
         },
       }),
+    },
+    {
+      title: 'Seva Active?',
+      dataIndex: 'Active',
+      key: 'Active',
+      render: (text, record, index) => {
+        const category = categories.find(cat => cat.category_id === record.category_id);
+        return (
+          <Checkbox
+            checked={text}
+            disabled={!category || !category.Active}
+            onChange={(e) => onTempServiceChange(index, 'Active', e.target.checked)}
+          />
+        );
+      },
     },
     {
       title: 'Amount',
@@ -331,12 +548,12 @@ const Settings = () => {
     },
     {
       title: 'Excel Sheet',
-      dataIndex: 'ExcelSheet',
-      key: 'ExcelSheet',
+      dataIndex: 'excelSheetLink',
+      key: 'excelSheetLink',
       render: (text, record, index) => (
         <Input
-          value={record.ExcelSheet || ''}
-          onChange={(e) => onTempServiceChange(index, 'ExcelSheet', e.target.value)}
+          value={record.excelSheetLink || ''}
+          onChange={(e) => onTempServiceChange(index, 'excelSheetLink', e.target.value)}
           style={{ width: '150px' }}
         />
       ),
@@ -352,7 +569,7 @@ const Settings = () => {
             Change Password
           </Button>
           {(userType === 'Admin' || userType === 'Super Admin') && (
-            <Button type="primary" onClick={() => setServiceModalVisible(true)} style={{ marginLeft: '10px' }}>
+            <Button type="primary" onClick={handleOpenServiceModal} style={{ marginLeft: '10px' }}>
               Modify Services
             </Button>
           )}
@@ -429,22 +646,41 @@ const Settings = () => {
           <Modal
             title="Modify Services"
             visible={serviceModalVisible}
-            onCancel={() => setServiceModalVisible(false)}
+            onCancel={handleCloseServiceModal}
             onOk={handleServiceSave}
             width={800}
+            footer={[
+              <Button key="cancel" onClick={handleCloseServiceModal}>
+                Cancel
+              </Button>,
+              <Button key="clear" onClick={handleClearChanges}>
+                Clear
+              </Button>,
+              <Button key="modify" type="primary" onClick={handleServiceSave}>
+                Modify
+              </Button>,
+            ]}
           >
-            <Input.Search
-              placeholder="Search services"
-              value={searchTerm}
-              onChange={handleSearch}
-              style={{ marginBottom: '10px', width: '300px' }}
-            />
+            <Dropdown overlay={getDropdownMenu()} trigger={['click']}>
+              <Input.Search
+                placeholder="Search services or categories"
+                value={searchTerm}
+                onChange={handleSearch}
+                style={{ marginBottom: '10px', width: '300px' }}
+              />
+            </Dropdown>
             <Button type="primary" onClick={handleNewServiceModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
               Add New Service
             </Button>
+            <Button type="primary" onClick={handleNewCategoryModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+              Add New Category
+            </Button>
+            <Button type="default" onClick={handleClearSearch} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+              Clear Search
+            </Button>
             <Table
               columns={serviceColumns}
-              dataSource={filteredServices}
+              dataSource={sortServices(filteredServices, categories)}
               rowKey="ServiceId"
               pagination={false}
               size="small"
@@ -456,7 +692,17 @@ const Settings = () => {
             title="Add New Service"
             visible={newServiceModalVisible}
             onCancel={handleNewServiceModalCancel}
-            footer={null}
+            footer={[
+              <Button key="cancel" onClick={handleNewServiceModalCancel}>
+                Cancel
+              </Button>,
+              <Button key="clear" onClick={handleClearForm}>
+                Clear
+              </Button>,
+              <Button key="submit" type="primary" form="add_service" htmlType="submit">
+                Add Service
+              </Button>,
+            ]}
           >
             <Form
               name="add_service"
@@ -476,16 +722,58 @@ const Settings = () => {
               >
                 <Input placeholder="Rate" />
               </Form.Item>
-              <Form.Item>
-                <Button type="default" onClick={handleClearForm} style={{ marginRight: '10px' }}>
-                  Clear
-                </Button>
-                <Button type="primary" htmlType="submit" style={{ marginRight: '10px' }}>
-                  Add Service
-                </Button>
-                <Button type="default" onClick={handleNewServiceModalCancel}>
-                  Cancel
-                </Button>
+              <Form.Item
+                name="category_id"
+                rules={[{ required: true, message: 'Please select a category!' }]}
+              >
+                <Select placeholder="Select Category">
+                  {categories.map(category => (
+                    <Option key={category.category_id} value={category.category_id}>
+                      {category.Category_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal
+            title="Add New Category"
+            visible={newCategoryModalVisible}
+            onCancel={handleNewCategoryModalCancel}
+            footer={[
+              <Button key="cancel" onClick={handleNewCategoryModalCancel}>
+                Cancel
+              </Button>,
+              <Button key="clear" onClick={handleClearCategoryForm}>
+                Clear
+              </Button>,
+              <Button key="submit" type="primary" form="add_category" htmlType="submit">
+                Add Category
+              </Button>,
+            ]}
+          >
+            <Form
+              name="add_category"
+              className="add-category-form"
+              onFinish={handleAddCategory}
+              form={categoryForm}
+            >
+              <Form.Item
+                name="Category_name"
+                rules={[
+                  { required: true, message: 'Please input the category name!' },
+                  {
+                    validator: (_, value) => {
+                      if (categories.find(category => category.Category_name.toLowerCase() === value.toLowerCase())) {
+                        return Promise.reject('Category already exists');
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <Input placeholder="Category Name" />
               </Form.Item>
             </Form>
           </Modal>
@@ -494,31 +782,34 @@ const Settings = () => {
             title="Change Theme Colors"
             visible={themeModalVisible}
             onCancel={() => setThemeModalVisible(false)}
-            footer={[
-              <Button key="reset" onClick={handleResetColors}>
-                Reset to Default
-              </Button>,
-              <Button key="submit" type="primary" onClick={handleChangeColor}>
-                Change Color
-              </Button>,
-            ]}
+            footer={null}
           >
-            <Form layout="vertical">
-              <Form.Item label="Header Color">
-                <Input
-                  type="color"
-                  value={headerColor}
-                  onChange={(e) => setHeaderColor(e.target.value)}
-                />
-              </Form.Item>
-              <Form.Item label="Sidebar Color">
-                <Input
-                  type="color"
-                  value={sidebarColor}
-                  onChange={(e) => setSidebarColor(e.target.value)}
-                />
-              </Form.Item>
-            </Form>
+            <div>
+              <label>Header Color: </label>
+              <Input
+                type="color"
+                value={headerColor}
+                onChange={(e) => setHeaderColor(e.target.value)}
+                style={{ width: '100px', marginRight: '10px' }}
+              />
+            </div>
+            <div>
+              <label>Sidebar Color: </label>
+              <Input
+                type="color"
+                value={sidebarColor}
+                onChange={(e) => setSidebarColor(e.target.value)}
+                style={{ width: '100px', marginRight: '10px' }}
+              />
+            </div>
+            <div style={{ marginTop: '20px', textAlign: 'right' }}>
+              <Button type="default" onClick={handleResetColors} style={{ marginRight: '10px' }}>
+                Reset to Default
+              </Button>
+              <Button type="primary" onClick={handleChangeColor}>
+                Change Colors
+              </Button>
+            </div>
           </Modal>
 
           <Modal

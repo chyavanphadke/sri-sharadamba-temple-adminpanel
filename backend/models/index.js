@@ -248,12 +248,40 @@ const Service = sequelize.define('Service', {
     type: DataTypes.INTEGER,
     defaultValue: 3
   },
+  category_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'ServiceCategory',
+      key: 'category_id'
+    }
+  },
   excelSheetLink: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   timestamps: false,
   freezeTableName: true
+});
+
+// Define ServiceCategory model
+const ServiceCategory = sequelize.define('ServiceCategory', {
+  category_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  Category_name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  Active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
+}, {
+  freezeTableName: true,
+  timestamps: false
 });
 
 // Define ModeOfPayment model
@@ -590,6 +618,7 @@ module.exports = {
   Devotee,
   Family,
   Service,
+  ServiceCategory,
   Activity,
   ModeOfPayment,
   Receipt,

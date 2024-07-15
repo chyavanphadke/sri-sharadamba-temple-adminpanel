@@ -30,6 +30,7 @@
     "https-browserify": "^1.0.0",
     "ical": "^0.8.0",
     "ical.js": "^2.0.1",
+    "ics": "^3.7.6",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
