@@ -107,11 +107,11 @@ const TV = () => {
           }
         });
         setProgress(0);
-      }, 25000); // Change image every 10 seconds
+      }, 20000); // Change image every 10 seconds
     } else if (currentMode === 'activities' && showActivities) {
       modeTimer = setTimeout(() => {
         setCurrentMode('slideshow');
-      }, 25000); // Show activities for 10 seconds
+      }, 20000); // Show activities for 10 seconds
     }
 
     return () => {
