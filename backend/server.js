@@ -472,18 +472,30 @@ app.get('/devotees', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = search
-      ? { 
-          [Op.or]: [
-            { DevoteeId: { [Op.like]: `%${search}%` } },
-            { FirstName: { [Op.like]: `%${search}%` } },
-            { LastName: { [Op.like]: `%${search}%` } },
-            { Phone: { [Op.like]: `%${search}%` } },
-            { Email: { [Op.like]: `%${search}%` } }
-          ]
-        }
+      ? {
+        [Op.or]: [
+          { DevoteeId: { [Op.like]: `%${search}%` } },
+          { FirstName: { [Op.like]: `%${search}%` } },
+          { LastName: { [Op.like]: `%${search}%` } },
+          { Phone: { [Op.like]: `%${search}%` } },
+          { Email: { [Op.like]: `%${search}%` } },
+          sequelize.literal(`EXISTS (SELECT 1 FROM family WHERE family.DevoteeId = devotee.DevoteeId AND (family.FirstName LIKE '%${search}%' OR family.LastName LIKE '%${search}%'))`)
+        ]
+      }
       : {};
 
-    const devotees = await Devotee.findAll({ where: whereClause, order: [['LastModified', 'DESC']] });
+    const devotees = await Devotee.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Family,
+          attributes: ['FirstName', 'LastName'],
+          required: false // Include family members if they exist, but don't require them for the devotee to be included
+        }
+      ],
+      order: [['LastModified', 'DESC']]
+    });
+
     res.status(200).json(devotees);
   } catch (err) {
     console.error('Error fetching devotees:', err);
