@@ -92,7 +92,7 @@ const TV = () => {
     let modeTimer;
     let progressTimer;
 
-    if (currentMode === 'slideshow' && images.length > 0) {
+    if (images.length > 0) {
       progressTimer = setInterval(() => {
         setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 1 : 0));
       }, 100);
@@ -100,18 +100,22 @@ const TV = () => {
       modeTimer = setInterval(() => {
         setCurrentImageIndex((prevIndex) => {
           if (prevIndex === images.length - 1) {
-            setCurrentMode('activities');
+            if (showActivities) {
+              setCurrentMode((prevMode) => (prevMode === 'slideshow' ? 'activities' : 'slideshow'));
+            }
             return 0;
           } else {
             return prevIndex + 1;
           }
         });
         setProgress(0);
-      }, 20000); // Change image every 10 seconds
-    } else if (currentMode === 'activities' && showActivities) {
+      }, 10000); // Change image every 10 seconds
+    }
+
+    if (currentMode === 'activities' && showActivities) {
       modeTimer = setTimeout(() => {
         setCurrentMode('slideshow');
-      }, 20000); // Show activities for 10 seconds
+      }, 10000); // Show activities for 10 seconds
     }
 
     return () => {
