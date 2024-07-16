@@ -2173,11 +2173,14 @@ const fetchEvents = async () => {
 
     const rows = response.data.values;
     if (rows.length) {
-      const today = resetTime(new Date());
+      const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      today.setHours(0, 0, 0, 0);
+
       const events = rows
         .slice(1)
         .filter((row) => {
-          const eventDate = resetTime(new Date(row[0]));
+          const eventDate = new Date(new Date(row[0]).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+          eventDate.setHours(0, 0, 0, 0);
           return eventDate >= today;
         })
         .slice(0, 8)
@@ -2205,8 +2208,10 @@ const fetchPanchanga = async () => {
 
     const rows = response.data.values;
     if (rows.length) {
-      const today = resetTime(new Date());
+      const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      today.setHours(0, 0, 0, 0);
       const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
+
       const panchanga = rows.find((row) => row[0] === todayStr);
 
       if (panchanga) {
@@ -2231,6 +2236,7 @@ const fetchPanchanga = async () => {
     console.error('Error fetching Panchanga from Google Sheets:', error);
   }
 };
+
 const axios = require('axios');
 const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
 const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
@@ -2238,7 +2244,7 @@ const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroun
 const fetchImages = async () => {
   try {
     const response = await drive.files.list({
-      q: `'${DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/'`,
+      q: `'${DRIVE_FOLDER_ID}' in parents and (mimeType contains 'image/png' or mimeType contains 'image/jpeg')`,
       fields: 'files(id, name)',
     });
 
@@ -2248,10 +2254,14 @@ const fetchImages = async () => {
       today.setHours(0, 0, 0, 0);
 
       files.forEach(async (file) => {
-        const [month, day, year] = file.name.replace('.jpg', '').split('-');
+        const fileNameWithoutExtension = file.name.replace('.png', '').replace('.jpg', '');
+        const [month, day, year] = fileNameWithoutExtension.split('-');
         const fileDate = new Date(year, month - 1, day);
 
-        if (fileDate >= today) {
+        // Convert fileDate to PST
+        const fileDatePST = new Date(fileDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+
+        if (fileDatePST >= today) {
           const url = `https://drive.google.com/uc?export=view&id=${file.id}`;
           const filePath = path.join(DOWNLOAD_DIR, file.name);
 
@@ -2281,6 +2291,7 @@ const fetchImages = async () => {
   }
 };
 
+
 // Schedule the fetchImages function to run every 10 minutes
 cron.schedule('0 * * * *', fetchImages);
 
@@ -2305,11 +2316,17 @@ app.get('/api/panchanga', (req, res) => {
 
 // Function to check if the date is today or in the future
 const isFutureOrToday = (filename) => {
-  const [month, day, year] = filename.replace('.jpg', '').split('-');
+  const fileNameWithoutExtension = filename.replace('.png', '').replace('.jpg', '');
+  const [month, day, year] = fileNameWithoutExtension.split('-');
   const fileDate = new Date(year, month - 1, day);
+
+  // Convert fileDate to PST
+  const fileDatePST = new Date(fileDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return fileDate >= today;
+
+  return fileDatePST >= today;
 };
 
 app.get('/api/images', (req, res) => {
