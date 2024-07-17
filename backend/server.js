@@ -1689,7 +1689,15 @@ let sheetServiceMap = {};
 
 async function initializeSheetServiceMap() {
   try {
-    const services = await Service.findAll({ where: { excelSheetLink: { [Op.not]: null } } });
+    const services = await Service.findAll({
+      where: {
+        [Op.and]: [
+          { excelSheetLink: { [Op.not]: null } },
+          { excelSheetLink: { [Op.not]: '' } }
+        ]
+      }
+    });
+
     sheetServiceMap = services.reduce((map, service) => {
       map[service.excelSheetLink] = service.ServiceId;
       return map;
