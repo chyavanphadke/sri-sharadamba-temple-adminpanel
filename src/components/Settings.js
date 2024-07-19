@@ -246,6 +246,7 @@ const Settings = () => {
         DisplayFamily: false,
         Temple: 0,
         category_id: values.category_id,
+        time: values.time,
       };
 
       await axios.post('http://localhost:5001/services', newService);
@@ -469,9 +470,29 @@ const Settings = () => {
     } catch (error) {
       message.error('Error running gear functions');
     }
-  };  
+  };
 
   const serviceColumns = [
+    {
+      title: 'Category Active?',
+      dataIndex: 'category_id',
+      key: 'category_active',
+      render: (text, record, index) => {
+        const category = categories.find(cat => cat.category_id === text);
+        const isFirstRow = index === 0 || services[index - 1].category_id !== text;
+        return {
+          children: isFirstRow && category ? (
+            <Checkbox
+              checked={category.Active}
+              onChange={(e) => onCategoryActiveChange(index, e.target.checked)}
+            />
+          ) : null,
+          props: {
+            rowSpan: isFirstRow ? services.filter(service => service.category_id === text).length : 0,
+          },
+        };
+      },
+    },
     {
       title: 'Category',
       dataIndex: 'category_id',
@@ -491,23 +512,10 @@ const Settings = () => {
       ),
     },
     {
-      title: 'Category Active?',
-      dataIndex: 'category_id',
-      key: 'category_active',
-      render: (text, record, index) => {
-        const category = categories.find(cat => cat.category_id === text);
-        return (
-          <Checkbox
-            checked={category && category.Active}
-            onChange={(e) => onCategoryActiveChange(index, e.target.checked)}
-          />
-        );
-      }
-    },
-    {
       title: 'Seva',
       dataIndex: 'Service',
       key: 'Service',
+      width: 250,
       render: (text, record, index) => (
         <Input
           value={text}
@@ -515,12 +523,25 @@ const Settings = () => {
           style={{ width: '100%' }}
         />
       ),
-      onCell: () => ({
+      onCell: (record, rowIndex) => ({
         style: {
           whiteSpace: 'nowrap',
           maxWidth: `${Math.max(...tempServices.map(service => service.Service.length))}ch`,
         },
       }),
+    },
+    {
+      title: 'Time',
+      dataIndex: 'time',
+      key: 'time',
+      render: (text, record, index) => (
+        <Input
+          type="time"
+          value={text}
+          onChange={(e) => onTempServiceChange(index, 'time', e.target.value)}
+          style={{ width: '100%' }}
+        />
+      ),
     },
     {
       title: 'Seva Active?',
@@ -541,6 +562,7 @@ const Settings = () => {
       title: 'Amount',
       dataIndex: 'Rate',
       key: 'Rate',
+      width: 100,
       render: (text, record, index) => (
         <Input
           value={text}
@@ -548,7 +570,7 @@ const Settings = () => {
           style={{ width: '100%' }}
         />
       ),
-      onCell: () => ({
+      onCell: (record, rowIndex) => ({
         style: {
           whiteSpace: 'nowrap',
           maxWidth: `${Math.max(...tempServices.map(service => String(service.Rate).length))}ch`,
@@ -660,7 +682,7 @@ const Settings = () => {
             visible={serviceModalVisible}
             onCancel={handleCloseServiceModal}
             onOk={handleServiceSave}
-            width={800}
+            width={1100}
             footer={[
               <Button key="cancel" onClick={handleCloseServiceModal}>
                 Cancel
@@ -697,6 +719,12 @@ const Settings = () => {
               pagination={false}
               size="small"
               scroll={{ x: true }} // Ensure horizontal scrolling if needed
+              rowClassName={(record, index) => {
+                const category = categories.find(cat => cat.category_id === record.category_id);
+                const isFirstRow = index === 0 || services[index - 1].category_id !== record.category_id;
+                const isLastRow = index === services.length - 1 || services[index + 1].category_id !== record.category_id;
+                return isFirstRow ? 'category-group category-group-first' : (isLastRow ? 'category-group category-group-last' : 'category-group');
+              }}
             />
           </Modal>
 
@@ -745,6 +773,12 @@ const Settings = () => {
                     </Option>
                   ))}
                 </Select>
+              </Form.Item>
+              <Form.Item
+                name="time"
+                rules={[{ required: true, message: 'Please select a time!' }]}
+              >
+                <Input type="time" placeholder="Select Time" />
               </Form.Item>
             </Form>
           </Modal>

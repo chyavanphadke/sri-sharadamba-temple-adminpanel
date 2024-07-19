@@ -630,9 +630,18 @@ app.get('/services', async (req, res) => {
 });
 
 app.post('/services', async (req, res) => {
-  const { Service, Rate, Comments, Active, DisplayFamily, Temple, category_id } = req.body;
+  const { Service: serviceName, Rate, Comments, Active, DisplayFamily, Temple, category_id, time } = req.body;
   try {
-    const newService = await Service.create({ Service, Rate, Comments, Active, DisplayFamily, Temple, category_id });
+    const newService = await Service.create({ 
+      Service: serviceName, 
+      Rate, 
+      Comments, 
+      Active, 
+      DisplayFamily, 
+      Temple, 
+      category_id, 
+      time
+    });
     res.status(201).json(newService);
   } catch (err) {
     console.error('Error creating service:', err);

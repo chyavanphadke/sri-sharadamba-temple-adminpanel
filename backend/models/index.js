@@ -259,6 +259,10 @@ const Service = sequelize.define('Service', {
   excelSheetLink: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  time: {
+    type: DataTypes.STRING,  // Add the new column here
+    allowNull: true
   }
 }, {
   timestamps: false,
