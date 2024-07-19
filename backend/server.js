@@ -1725,7 +1725,7 @@ async function fetchDataFromSheets() {
     for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A:M'  // Adjusted to new range
+        range: 'Sheet1!A:S'  // Adjusted to new range
       });
 
       const rows = response.data.values;
@@ -1764,18 +1764,35 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   const {
     Status,
     'Seva ID': sevaId,
-    'First Name': firstName,
-    'Last Name': lastName,
+    'First Name': firstName1,
+    'First Name': firstName2,
+    'Last Name': lastName1,
+    'Last Name': lastName2,
     'Email Address': email,
     Phone: phone,
-    Date: date,
+    Date: date1,
+    'Puja Date (eg. Birthdays, Anniversary)': date2,
     'Message to Priest': messageToPriest,
-    'Payment Option': paymentStatus,
-    'Card Details': cardDetails,
-    'Suggested Donation': amount
+    'Gotra & Nakshatra details (Details for Priest)': gotraDetails,
+    'Payment Option': paymentStatus1,
+    'Payment Method': paymentStatus2,
+    'Card Details': cardDetails1,
+    'Credit / Debit Card': cardDetails2,
+    'Suggested Donation': amount1,
+    'Yearly (USD)': yearlyAmount,
+    'Monthly Pledge (USD)': monthlyAmount,
+    'Select': selectOption
   } = rowData;
 
-  console.log('Processing row with values:', { firstName, lastName, email, phone });
+  const firstName = firstName1 || firstName2;
+  const lastName = lastName1 || lastName2;
+  const date = date1 || date2;
+  const message = messageToPriest || gotraDetails || '';
+  const paymentStatus = paymentStatus1 || paymentStatus2;
+  const cardDetails = cardDetails1 || cardDetails2;
+  const amount = selectOption === 'Yearly' ? yearlyAmount : selectOption === 'Monthly' ? monthlyAmount : amount1;
+
+  console.log('Processing row with values:', { firstName, lastName, email, phone, message });
 
   if (!firstName || !lastName || !email || !phone) {
     console.error('Required fields are missing:', { firstName, lastName, email, phone });
@@ -1792,7 +1809,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
       paymentStatus,
       amount,
       serviceDate: date,
-      comments: messageToPriest || ''
+      comments: message
     });
   }
 
@@ -1803,7 +1820,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     email,
     phone,
     date: date,
-    message: messageToPriest || '',
+    message: message,
     payment_status: paymentStatus,
     card_details: cardDetails || '',
     sheet_name: sheetId,
