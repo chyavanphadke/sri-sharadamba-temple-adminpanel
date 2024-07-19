@@ -1857,24 +1857,35 @@ const fs = require('fs');
 
 async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName }) {
   try {
+    // Fetch service details
+    console.log('Fetching service details for ServiceId:', serviceId);
     const service = await Service.findByPk(serviceId);
     if (!service) {
       console.error('Service not found:', serviceId);
       return;
     }
+    console.log('Service details:', service);
 
+    // Fetch email credentials
+    console.log('Fetching email credentials');
     const emailCredential = await EmailCredential.findOne();
     if (!emailCredential) {
       console.error('Email credentials not found');
       return;
     }
+    console.log('Email credentials:', emailCredential);
 
+    // Fetch email configuration
+    console.log('Fetching email configuration for excelSevaEmailConformation');
     const generalConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
     if (!generalConfig || generalConfig.value !== '1') {
       console.log('Email sending is disabled by configuration');
       return;
     }
+    console.log('Email configuration:', generalConfig);
 
+    // Create transporter for email
+    console.log('Creating email transporter');
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
@@ -1883,20 +1894,39 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       }
     });
 
+    // Determine service time
+    console.log('Determining service time');
+    const serviceTime = service.time ? service.time : '18:00'; // Default time is 6:00 PM
+    console.log('Service time:', serviceTime);
+
+    // Combine service date and time
+    const serviceDateTimeString = `${serviceDate} ${serviceTime}`;
+    const serviceDateTime = new Date(serviceDateTimeString);
+    if (isNaN(serviceDateTime.getTime())) {
+      console.error('Invalid service date and time:', serviceDateTimeString);
+      return;
+    }
+    console.log('Service date and time:', serviceDateTime);
+
+    // Generate iCal content
+    console.log('Generating iCal content');
     const icalContent = await createICalEvent({
       service: service.Service,
-      date: serviceDate
+      date: serviceDateTime
     });
 
-    const dayOfWeek = new Date(serviceDate).toLocaleString('en-US', { weekday: 'long' });
-    const formattedDate = new Date(serviceDate).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const startTime = new Date(serviceDate).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const endTime = new Date(new Date(serviceDate).setHours(new Date(serviceDate).getHours() + 1)).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    
+    // Format date and time for email
+    const dayOfWeek = serviceDateTime.toLocaleString('en-US', { weekday: 'long' });
+    const formattedDate = serviceDateTime.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const startTime = serviceDateTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const endTime = new Date(serviceDateTime.getTime() + 3600000).toISOString().replace(/-|:|\.\d\d\d/g, ""); // Add 1 hour
+
+    // Google Calendar URL
     const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(service.Service)}+Seva&dates=${startTime}/${endTime}&details=${encodeURIComponent('You have a scheduled seva at Sri Sharadamba Temple')}&location=${encodeURIComponent('Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035')}&sf=true&output=xml`;
 
     const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS'; // Updated file ID
 
+    // Mail options
     const mailOptions = {
       from: emailCredential.email,
       to: email,
@@ -1938,13 +1968,15 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
             <a href="https://www.google.com/maps/search/?api=1&query=Sri+Sharadamba+Temple+(SEVA)" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px;">Navigate</a>
             <div style="margin-bottom: 20px;"></div>
             <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
-            <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962</a> if you have any questions.</p>
+            <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962)</a> if you have any questions.</p>
             <p style="color: grey;">Thank you.</p>
           </div>
         </div>
       `
     };
 
+    // Send email
+    console.log('Sending email to:', email);
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
@@ -1953,7 +1985,8 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       }
     });
   } catch (error) {
-    console.error('Error in sendSevaEmail:', error);
+    console.error('Error in sendSevaEmail:', error.message);
+    console.error(error.stack);
   }
 }
 
