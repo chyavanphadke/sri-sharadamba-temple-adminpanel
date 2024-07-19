@@ -1817,7 +1817,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   await sendSevaEmail({
     email,
     serviceId,
-    serviceDate: formattedDate,
+    serviceDate: date,
     amount,
     paymentStatus,
     firstName,

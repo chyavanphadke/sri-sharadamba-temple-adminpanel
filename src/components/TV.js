@@ -17,7 +17,6 @@ const TV = () => {
   const [dateTime, setDateTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [events, setEvents] = useState([]);
   const [panchanga, setPanchanga] = useState({});
   const [images, setImages] = useState([]);
@@ -89,53 +88,42 @@ const TV = () => {
   }, []);
 
   useEffect(() => {
-    let modeTimer;
+    let imageTimer;
+    let activityTimer;
     let progressTimer;
 
     if (images.length > 0) {
       progressTimer = setInterval(() => {
-        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 1 : 0));
-      }, 100);
+        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 5 : 0));
+      }, 1000);
 
-      modeTimer = setInterval(() => {
-        setCurrentImageIndex((prevIndex) => {
-          if (prevIndex === images.length - 1) {
-            if (showActivities) {
-              setCurrentMode((prevMode) => (prevMode === 'slideshow' ? 'activities' : 'slideshow'));
-            }
-            return 0;
-          } else {
-            return prevIndex + 1;
-          }
-        });
+      imageTimer = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
         setProgress(0);
-      }, 10000); // Change image every 10 seconds
+      }, 20000); // Change image every 20 seconds
     }
 
-    if (currentMode === 'activities' && showActivities) {
-      modeTimer = setTimeout(() => {
-        setCurrentMode('slideshow');
-      }, 10000); // Show activities for 10 seconds
+    if (showActivities) {
+      activityTimer = setTimeout(() => {
+        setCurrentMode((prevMode) => (prevMode === 'slideshow' ? 'activities' : 'slideshow'));
+      }, currentMode === 'slideshow' ? images.length * 20000 : 20000); // Switch mode every 20 seconds if activities are present
     }
 
     return () => {
-      clearInterval(modeTimer);
+      clearInterval(imageTimer);
+      clearTimeout(activityTimer);
       clearInterval(progressTimer);
     };
   }, [currentMode, images.length, showActivities]);
 
-  const convertToPST = (date) => {
-    return new Date(date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  };
-
   const formatDate = (date) => {
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
-    return convertToPST(new Date(date)).toLocaleDateString(undefined, options);
+    return new Date(date).toLocaleDateString(undefined, options);
   };
 
   const formatDayDate = (date) => {
-    const today = resetTime(convertToPST(new Date()));
-    const eventDate = resetTime(convertToPST(new Date(date)));
+    const today = resetTime(new Date());
+    const eventDate = resetTime(new Date(date));
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
@@ -150,8 +138,8 @@ const TV = () => {
   };
 
   const isToday = (date) => {
-    const today = resetTime(convertToPST(new Date()));
-    const eventDate = resetTime(convertToPST(new Date(date)));
+    const today = resetTime(new Date());
+    const eventDate = resetTime(new Date(date));
     return eventDate.toDateString() === today.toDateString();
   };
 
@@ -161,21 +149,7 @@ const TV = () => {
   };
 
   const formatDay = (date) => {
-    return convertToPST(new Date(date)).toLocaleDateString(undefined, { weekday: 'long' });
-  };
-
-  const enterFullscreen = () => {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.mozRequestFullScreen) { // Firefox
-      elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { // IE/Edge
-      elem.msRequestFullscreen();
-    }
-    setIsFullscreen(true);
+    return new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
   };
 
   const groupActivitiesByService = () => {
@@ -219,11 +193,6 @@ const TV = () => {
 
   return (
     <div className={styles.tvContainer}>
-      {!isFullscreen && (
-        <button onClick={enterFullscreen} className={styles.fullscreenButton}>
-          Enter Fullscreen
-        </button>
-      )}
       <div className={styles.leftSection}>
         <h2 className={styles.welcomeText}>Welcome to Sri Sharadamba Temple</h2>
         <div className={`${styles.section} ${styles.eventsSection}`}>
@@ -273,7 +242,7 @@ const TV = () => {
             <div className={styles.dateTime}>
               <h1>{formatDay(dateTime)}</h1>
               <p>{formatDate(dateTime)}</p>
-              <p>{convertToPST(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
+              <p>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
             </div>
           </div>
           <div className={`${styles.cardTimings} ${styles.timingsCard}`}>
