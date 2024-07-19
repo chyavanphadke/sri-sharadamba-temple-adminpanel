@@ -34,7 +34,8 @@ const sequelize = new Sequelize(config[env].database, config[env].username, conf
     min: 0,
     acquire: 60000,
     idle: 10000
-  }
+  },
+  timezone: 'America/Los_Angeles'
 });
 
 // Define User model
