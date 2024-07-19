@@ -1782,8 +1782,6 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     return;
   }
 
-  const formattedDate = date ? new Date(date).toISOString().split('T')[0] : null;
-
   const devotee = await findOrCreateDevotee({ firstName, lastName, email, phone });
 
   let activityId = null;
@@ -1793,7 +1791,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
       serviceId,
       paymentStatus,
       amount,
-      serviceDate: formattedDate,
+      serviceDate: date,
       comments: messageToPriest || ''
     });
   }
@@ -1804,7 +1802,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     last_name: lastName,
     email,
     phone,
-    date: formattedDate,
+    date: date,
     message: messageToPriest || '',
     payment_status: paymentStatus,
     card_details: cardDetails || '',
