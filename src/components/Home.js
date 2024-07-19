@@ -394,9 +394,10 @@ const Home = () => {
   };
 
   const disabledDate = (current) => {
-    // Disable all dates except Saturdays if selected service is "Annadan"
-    if (selectedService === 'Annadan') {
-      return current && current.day() !== 6;
+    // Disable all dates except Saturdays if selected service is "Annadan or Rathostava"
+    const selectedServiceObject = activeServices.find(service => service.Service === selectedService);
+    if (selectedServiceObject && (selectedServiceObject.ServiceId === 269 || selectedServiceObject.ServiceId === 270)) {
+      return current && current.day() !== 6; // Disable all dates except Saturdays
     }
     return false;
   };
