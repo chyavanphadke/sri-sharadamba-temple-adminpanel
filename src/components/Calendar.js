@@ -3,11 +3,11 @@ import axios from 'axios';
 import { Card, Col, Row, Typography, Modal, Input, message, Button, Table } from 'antd';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import moment from 'moment-timezone';
+import moment from 'moment';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendar.css';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -18,7 +18,7 @@ const Calendar = () => {
   const [activities, setActivities] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [currentMonth, setCurrentMonth] = useState(moment().utc().startOf('month'));
+  const [currentMonth, setCurrentMonth] = useState(moment().startOf('month'));
   const [accessControl, setAccessControl] = useState({});
   
   const token = localStorage.getItem('token');
@@ -77,7 +77,7 @@ const Calendar = () => {
 
   const fetchTodaysActivities = async () => {
     try {
-      const today = moment().utc().startOf('day').format('YYYY-MM-DD');
+      const today = moment().startOf('day').format('YYYY-MM-DD');
       console.log(`Fetching today's activities for ${today}`);
       const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from: today, to: today }
@@ -118,7 +118,7 @@ const Calendar = () => {
 
     try {
       await axiosInstance.put(`/calendar/activities/${activityId}`, {
-        ServiceDate: moment(date).utc().startOf('day').format('YYYY-MM-DD')
+        ServiceDate: moment(date).startOf('day').format('YYYY-MM-DD')
       });
       message.success('Service Date updated successfully');
       await fetchActivities(); // Re-fetch activities after date change
@@ -169,15 +169,15 @@ const Calendar = () => {
   };
 
   const handleNavigate = (date) => {
-    setCurrentMonth(moment(date).utc().startOf('month'));
+    setCurrentMonth(moment(date).startOf('month'));
   };
 
   const events = activities
     .filter(activity => activity.EventName !== 'DONATION')
     .map(activity => ({
       title: activity.EventName,
-      start: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
-      end: moment.utc(activity.ServiceDate).tz('America/Los_Angeles').toDate(),
+      start: moment(activity.ServiceDate).toDate(),
+      end: moment(activity.ServiceDate).toDate(),
       allDay: true,
       resource: activity,
     }));
@@ -185,7 +185,7 @@ const Calendar = () => {
   const todaysEvents = activities
     .filter(activity => 
       activity.EventName !== 'DONATION' && 
-      moment(activity.ServiceDate).isSame(moment().utc().startOf('day'), 'day')
+      moment(activity.ServiceDate).isSame(moment().startOf('day'), 'day')
     );
 
   const columns = [
@@ -205,7 +205,7 @@ const Calendar = () => {
       key: 'ServiceDate',
       render: (text, record) => (
         <DatePicker
-          selected={moment.utc(text).tz('America/Los_Angeles').toDate()}
+          selected={moment(text).toDate()}
           onChange={(date) => handleDateChange(date, record.ActivityId)}
           dateFormat="yyyy-MM-dd"
         />
@@ -285,7 +285,7 @@ const Calendar = () => {
         {selectedActivity && (
           <div>
             <p><strong>Event Name:</strong> {selectedActivity.EventName}</p>
-            <p><strong>Service Date:</strong> {moment.utc(selectedActivity.ServiceDate).tz('America/Los_Angeles').format('MMMM Do YYYY')}</p>
+            <p><strong>Service Date:</strong> {moment(selectedActivity.ServiceDate).format('MMMM Do YYYY')}</p>
             <p><strong>Devotee Name:</strong> {selectedActivity.DevoteeName}</p>
             <p><strong>Devotee Email:</strong> {selectedActivity.DevoteeEmail}</p>
             <p><strong>Devotee Phone:</strong> {selectedActivity.DevoteePhone}</p>
