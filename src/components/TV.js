@@ -65,8 +65,9 @@ const TV = () => {
     const fetchActivities = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/today-activities');
-        setActivities(response.data);
-        setShowActivities(response.data.length > 0);
+        const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
+        setActivities(filteredActivities);
+        setShowActivities(filteredActivities.length > 0);
       } catch (error) {
         console.error('Error fetching today\'s activities:', error);
       }
@@ -229,9 +230,9 @@ const TV = () => {
             </div>
             <div className={styles.panchangaRight}>
               <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
-              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
               <p><strong>Tithi:</strong> {panchanga.Tithi}</p>
               <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p>
+              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
               <p><strong>Karana:</strong> {panchanga.Karana}</p>
             </div>
           </div>
