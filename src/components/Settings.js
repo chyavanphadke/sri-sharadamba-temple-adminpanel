@@ -695,23 +695,27 @@ const Settings = () => {
               </Button>,
             ]}
           >
-            <Dropdown overlay={getDropdownMenu()} trigger={['click']}>
-              <Input.Search
-                placeholder="Search services or categories"
-                value={searchTerm}
-                onChange={handleSearch}
-                style={{ marginBottom: '10px', width: '300px' }}
-              />
-            </Dropdown>
-            <Button type="primary" onClick={handleNewServiceModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
-              Add New Service
-            </Button>
-            <Button type="primary" onClick={handleNewCategoryModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
-              Add New Category
-            </Button>
-            <Button type="default" onClick={handleClearSearch} style={{ marginBottom: '10px', marginLeft: '10px' }}>
-              Clear Search
-            </Button>
+            <div>
+              <Dropdown overlay={getDropdownMenu()} trigger={['click']}>
+                <Input.Search
+                  placeholder="Search services or categories"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  style={{ marginBottom: '10px', width: '300px' }}
+                />
+              </Dropdown>
+              <Button type="primary" onClick={handleNewServiceModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+                Add New Service
+              </Button>
+              <Button type="primary" onClick={handleNewCategoryModalOpen} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+                Add New Category
+              </Button>
+            </div>
+            <div>
+              <Button type="default" onClick={handleClearSearch} style={{ marginBottom: '10px', marginLeft: '10px' }}>
+                Clear Search
+              </Button>
+            </div>
             <Table
               columns={serviceColumns}
               dataSource={sortServices(filteredServices, categories)}
