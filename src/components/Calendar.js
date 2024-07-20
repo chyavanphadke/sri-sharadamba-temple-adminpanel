@@ -20,6 +20,7 @@ const Calendar = () => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(moment().startOf('month'));
   const [accessControl, setAccessControl] = useState({});
+  const [searchPerformed, setSearchPerformed] = useState(false);
   
   const token = localStorage.getItem('token');
 
@@ -105,8 +106,19 @@ const Calendar = () => {
       }));
 
       setSearchResults(activities.flat());
+      setSearchPerformed(true);
     } catch (error) {
       console.error('Error searching devotees:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    if (value.length >= 3) {
+      handleSearch(value);
+    } else {
+      setSearchResults([]);
+      setSearchPerformed(false);
     }
   };
 
@@ -247,14 +259,15 @@ const Calendar = () => {
             <Search
               placeholder="Search by Name, Phone, or Email"
               enterButton="Search"
-              onSearch={handleSearch}
+              onChange={handleInputChange}
             />
             <Table
-              dataSource={searchResults.length ? searchResults : todaysEvents}
+              dataSource={searchPerformed ? searchResults : todaysEvents}
               columns={columns}
               rowKey="ActivityId"
               pagination={false}
               size="small"
+              locale={{ emptyText: searchPerformed ? 'No match' : 'No data' }}
               style={{ marginTop: 20 }}
             />
           </Card>

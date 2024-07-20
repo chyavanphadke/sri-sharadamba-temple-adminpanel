@@ -65,8 +65,9 @@ const TV = () => {
     const fetchActivities = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/today-activities');
-        setActivities(response.data);
-        setShowActivities(response.data.length > 0);
+        const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
+        setActivities(filteredActivities);
+        setShowActivities(filteredActivities.length > 0);
       } catch (error) {
         console.error('Error fetching today\'s activities:', error);
       }
@@ -94,19 +95,19 @@ const TV = () => {
 
     if (images.length > 0) {
       progressTimer = setInterval(() => {
-        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 5 : 0));
+        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 6.67 : 0));
       }, 1000);
 
       imageTimer = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
         setProgress(0);
-      }, 20000); // Change image every 20 seconds
+      }, 15000); // Change image every 15 seconds
     }
 
     if (showActivities) {
       activityTimer = setTimeout(() => {
         setCurrentMode((prevMode) => (prevMode === 'slideshow' ? 'activities' : 'slideshow'));
-      }, currentMode === 'slideshow' ? images.length * 20000 : 20000); // Switch mode every 20 seconds if activities are present
+      }, currentMode === 'slideshow' ? images.length * 15000 : 15000); // Switch mode every 15 seconds if activities are present
     }
 
     return () => {
@@ -229,9 +230,9 @@ const TV = () => {
             </div>
             <div className={styles.panchangaRight}>
               <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
-              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
               <p><strong>Tithi:</strong> {panchanga.Tithi}</p>
               <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p>
+              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
               <p><strong>Karana:</strong> {panchanga.Karana}</p>
             </div>
           </div>
