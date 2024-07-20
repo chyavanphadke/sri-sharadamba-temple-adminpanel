@@ -1694,6 +1694,20 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 const drive = google.drive({ version: 'v3', auth });
 
+function extractDocumentId(input) {
+  const idRegex = /^[a-zA-Z0-9-_]+$/; // Matches only IDs
+  const urlRegex = /\/d\/([a-zA-Z0-9-_]+)/; // Matches URLs
+
+  if (idRegex.test(input)) {
+    // If input is already an ID, return it
+    return input;
+  } else {
+    // If input is a URL, extract the ID
+    const matches = input.match(urlRegex);
+    return matches ? matches[1] : null;
+  }
+}
+
 let sheetServiceMap = {};
 
 async function initializeSheetServiceMap() {
@@ -1708,7 +1722,10 @@ async function initializeSheetServiceMap() {
     });
 
     sheetServiceMap = services.reduce((map, service) => {
-      map[service.excelSheetLink] = service.ServiceId;
+      const documentId = extractDocumentId(service.excelSheetLink);
+      if (documentId) {
+        map[documentId] = service.ServiceId;
+      }
       return map;
     }, {});
   } catch (error) {
@@ -1716,6 +1733,7 @@ async function initializeSheetServiceMap() {
     throw error;
   }
 }
+
 
 async function fetchDataFromSheets() {
   try {
