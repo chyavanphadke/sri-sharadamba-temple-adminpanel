@@ -58,18 +58,18 @@ const OnlineFormsData = () => {
   
 
   const filterData = (data, showAll, query) => {
+    const lowerCaseQuery = query.toLowerCase();
     const filtered = data.filter(entry => 
-      (showAll || entry.payment_status !== 'Paid') && (
-        entry.seva_id.toString().includes(query) ||
-        entry.first_name.toLowerCase().includes(query.toLowerCase()) ||
-        entry.last_name.toLowerCase().includes(query.toLowerCase()) ||
-        entry.email.toLowerCase().includes(query.toLowerCase()) ||
-        entry.phone.toLowerCase().includes(query.toLowerCase()) ||
-        entry.status.toLowerCase().includes(query.toLowerCase()) ||
-        entry.devotee_id.toString().includes(query) ||
-        entry.date.toLowerCase().includes(query.toLowerCase()) ||
-        entry.amount.toString().includes(query) ||
-        entry.payment_status.toLowerCase().includes(query)
+      (showAll || entry.payment_status.toLowerCase() !== 'paid') && (
+        entry.seva_id.toString().includes(lowerCaseQuery) ||
+        `${entry.first_name.toLowerCase()} ${entry.last_name.toLowerCase()}`.includes(lowerCaseQuery) ||
+        entry.email.toLowerCase().includes(lowerCaseQuery) ||
+        entry.phone.toLowerCase().includes(lowerCaseQuery) ||
+        entry.status.toLowerCase().includes(lowerCaseQuery) ||
+        entry.devotee_id.toString().includes(lowerCaseQuery) ||
+        entry.date.toLowerCase().includes(lowerCaseQuery) ||
+        entry.amount.toString().includes(lowerCaseQuery) ||
+        entry.payment_status.toLowerCase().includes(lowerCaseQuery)
       )
     );
     setFilteredData(filtered);
@@ -158,11 +158,11 @@ const OnlineFormsData = () => {
       align: 'center' 
     },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', align: 'center' },
+    { title: 'Payment Status', dataIndex: 'payment_status', key: 'payment_status', align: 'center' },
     { 
-      title: 'Payment Status', 
-      dataIndex: 'payment_status', 
-      key: 'payment_status', 
-      render: (text, record) => text === 'Paid' ? 'Paid' : (
+      title: 'Actions', 
+      key: 'actions', 
+      render: (text, record) => record.payment_status === 'Paid' ? 'Paid' : (
         <>
           <Button onClick={() => handlePaidAtTemple(record)} style={{ marginRight: 8 }}>Paid at Temple</Button>
           <Button onClick={() => handleDeleteService(record)} danger>Delete</Button>
@@ -171,7 +171,6 @@ const OnlineFormsData = () => {
       align: 'center'
     }
   ];
-    
 
   return (
     <Layout>
