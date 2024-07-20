@@ -146,6 +146,32 @@ CREATE TABLE `generalconfigurations` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ````
 
+#temp update table for timezone issue
+SET sql_mode = '';
+
+
+SELECT * FROM seva_new.activity
+WHERE PrintDate = '0000-00-00 00:00:00';
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE seva_new.activity
+SET PrintDate = NULL
+WHERE PrintDate = '0000-00-00 00:00:00';
+
+SHOW VARIABLES LIKE 'time_zone';-- Step 1: Backup the table
+CREATE TABLE seva_new.activity_backup AS SELECT * FROM seva_new.activity;
+
+-- Step 2: Update UTC dates to PST
+-- Assuming the change to UTC happened on 2023-01-01
+UPDATE seva_new.activity
+SET servicedate = CONVERT_TZ(servicedate, '+00:00', '-08:00')
+WHERE servicedate >= '2024-06-28';
+
+
+
+
 # Installation:
 
 ## Frontend:
