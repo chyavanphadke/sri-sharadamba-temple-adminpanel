@@ -95,19 +95,19 @@ const TV = () => {
 
     if (images.length > 0) {
       progressTimer = setInterval(() => {
-        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 5 : 0));
+        setProgress((prevProgress) => (prevProgress < 100 ? prevProgress + 6.67 : 0));
       }, 1000);
 
       imageTimer = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
         setProgress(0);
-      }, 20000); // Change image every 20 seconds
+      }, 15000); // Change image every 15 seconds
     }
 
     if (showActivities) {
       activityTimer = setTimeout(() => {
         setCurrentMode((prevMode) => (prevMode === 'slideshow' ? 'activities' : 'slideshow'));
-      }, currentMode === 'slideshow' ? images.length * 20000 : 20000); // Switch mode every 20 seconds if activities are present
+      }, currentMode === 'slideshow' ? images.length * 15000 : 15000); // Switch mode every 15 seconds if activities are present
     }
 
     return () => {
