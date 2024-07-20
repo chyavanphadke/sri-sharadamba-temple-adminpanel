@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData } = require('./models');
 const moment = require('moment');
-const { Op } = require('sequelize'); // Make sure this is only declared once
+const { Op, Sequelize } = require('sequelize'); // Make sure this is only declared once
 
 
 const app = express();
@@ -1590,9 +1590,7 @@ app.get('/todays-events', async (req, res) => {
     const { date } = req.query;
 
     const activities = await Activity.findAll({
-      where: {
-        ServiceDate: date
-      },
+      where: Sequelize.where(Sequelize.fn('DATE', Sequelize.col('ServiceDate')), date),
       include: [
         { model: Devotee, attributes: ['FirstName', 'LastName', 'Gotra', 'Star', 'DevoteeId'] },
         { model: Service, attributes: ['Service'] },
