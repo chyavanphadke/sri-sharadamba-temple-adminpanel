@@ -115,10 +115,10 @@ const Calendar = () => {
       message.error('Invalid date selected');
       return;
     }
-
+  
     try {
       await axiosInstance.put(`/calendar/activities/${activityId}`, {
-        ServiceDate: moment(date).startOf('day').format('YYYY-MM-DD')
+        ServiceDate: date
       });
       message.success('Service Date updated successfully');
       await fetchActivities(); // Re-fetch activities after date change
