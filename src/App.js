@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Signup from './components/Signup';
+
 import Dashboard from './components/Dashboard';
 import ForgotPassword from './components/ForgotPassword'; // Import the ForgotPassword component
 import TodaysEvents from './components/TodaysEvents'; // Import the TodaysEvents component
@@ -18,7 +18,6 @@ const App = () => (
   <Router>
     <Routes>
       <Route path="/" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
       <Route path="/reset-password/:token" element={<ForgotPassword />} /> {/* Add this route */}
       <Route path="/todays-events" element={<TodaysEvents />} /> {/* Add this route */}
       <Route path="/tv" element={<TV />} /> {/* Add this route */}

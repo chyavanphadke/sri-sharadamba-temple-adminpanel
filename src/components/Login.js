@@ -19,7 +19,9 @@ const Login = () => {
   const [timer, setTimer] = useState(180); // 3 minutes in seconds
   const [otpSent, setOtpSent] = useState(false); // Flag to track if OTP has been sent
 
+  const [isSignupVisible, setIsSignupVisible] = useState(false); // Add state for signup modal
   const [form] = Form.useForm();
+  const [signupForm] = Form.useForm(); // Form for signup
 
   useEffect(() => {
     let interval;
@@ -130,6 +132,21 @@ const Login = () => {
     }
   };
 
+  const handleSignup = async (values) => {
+    try {
+      const response = await axios.post('http://localhost:5001/signup', values);
+      message.success(response.data.message, 2, () => {
+        setIsSignupVisible(false); // Hide the modal on successful signup
+      });
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Error signing up');
+      }
+    }
+  };
+
   return (
     <Layout>
       <Content className="login-content">
@@ -168,7 +185,7 @@ const Login = () => {
                   <Button type="default" onClick={showForgotPasswordModal} className="forgot-password-button">
                     Forgot Password
                   </Button>
-                  <Button type="default" href="/signup" className="signup-form-button">
+                  <Button type="default" onClick={() => setIsSignupVisible(true)} className="signup-form-button">
                     Sign Up
                   </Button>
                 </div>
@@ -258,6 +275,58 @@ const Login = () => {
               )}
               <Button style={{ marginLeft: '10px' }} onClick={handleCancel}>
                 Cancel
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title="Sign Up"
+          visible={isSignupVisible}
+          onCancel={() => setIsSignupVisible(false)}
+          footer={null}
+          afterClose={() => signupForm.resetFields()} // This will clear the form fields
+        >
+          <Form
+            name="signup_form"
+            className="signup-form"
+            form={signupForm} // Use signupForm for this modal
+            onFinish={handleSignup}
+          >
+            <Form.Item name="email" rules={[{ required: true, message: 'Please input your Email!' }]}>
+              <Input placeholder="Email" />
+            </Form.Item>
+            <Form.Item name="username" rules={[{ required: true, message: 'Please input your Username!' }]}>
+              <Input placeholder="Username" />
+            </Form.Item>
+            <Form.Item name="password" rules={[{ required: true, message: 'Please input your Password!' }]}>
+              <Input type="password" placeholder="Password" />
+            </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              dependencies={['password']}
+              rules={[
+                { required: true, message: 'Please confirm your Password!' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('password') === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('The two passwords do not match!'));
+                  },
+                }),
+              ]}
+            >
+              <Input type="password" placeholder="Confirm Password" />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" className="signup-form-button">
+                Sign Up
+              </Button>
+            </Form.Item>
+            <Form.Item>
+              <Button type="default" onClick={() => setIsSignupVisible(false)} className="back-button">
+                Back to Login
               </Button>
             </Form.Item>
           </Form>
