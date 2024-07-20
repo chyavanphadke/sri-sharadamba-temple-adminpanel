@@ -1049,6 +1049,7 @@ app.get('/receipts/pending', async (req, res) => {
 
     if (search) {
       whereClause[Op.or] = [
+        { ActivityId: { [Op.like]: `%${search}%` } }, // Add search by ActivityId
         { '$Devotee.DevoteeId$': { [Op.like]: `%${search}%` } },
         { '$Devotee.FirstName$': { [Op.like]: `%${search}%` } },
         { '$Devotee.LastName$': { [Op.like]: `%${search}%` } },
@@ -1096,6 +1097,7 @@ app.get('/receipts/approved', async (req, res) => {
     const whereClause = search
       ? {
           [Op.or]: [
+            { '$Activity.ActivityId$': { [Op.like]: `%${search}%` } }, // Add search by ActivityId
             { '$Activity.Devotee.DevoteeId$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },

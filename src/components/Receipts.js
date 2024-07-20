@@ -215,6 +215,7 @@ const Receipts = () => {
   };
 
   const columnsPending = [
+    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center'},
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
@@ -239,6 +240,7 @@ const Receipts = () => {
   ];
 
   const columnsApproved = [
+    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text), align: 'center' },
@@ -274,6 +276,7 @@ const Receipts = () => {
   ];
 
   const columnsEdited = [
+    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
       title: 'Old Service', 
@@ -431,7 +434,7 @@ const Receipts = () => {
         <>
           <div style={{ display: 'flex', marginBottom: '16px' }}>
             <Search
-              placeholder="Search by Name, Phone, or Email"
+              placeholder="Search by Devotee Name, Phone, Email or Receipt ID"
               value={pendingSearch}
               onChange={handlePendingSearchChange}
               style={{ width: '30%' }}
@@ -458,7 +461,7 @@ const Receipts = () => {
         <>
           <div style={{ display: 'flex', marginBottom: '16px' }}>
             <Search
-              placeholder="Search by Name, Phone, or Email"
+              placeholder="Search by Devotee Name, Phone, Email or Receipt ID"
               value={approvedSearch}
               onChange={handleApprovedSearchChange}
               style={{ width: '30%' }}
