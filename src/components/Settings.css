@@ -39,7 +39,7 @@
 }
 
 .category-group-first > td {
-  border-top: 2px solid #f7be03; /* Thick black line at the start of the category */
+  border-top: 2px solid #1890ff; /* Thick  line at the start of the category */
 }
 
 @media (max-width: 768px) {
