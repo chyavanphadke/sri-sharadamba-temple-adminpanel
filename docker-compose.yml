@@ -8,6 +8,8 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+    environment:
+      - TZ=America/Los_Angeles
     restart: always
 
   backend:
@@ -22,6 +24,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=seva@1633
       - DB_NAME=seva_new
+      - TZ=America/Los_Angeles
     depends_on:
       - mysql
     restart: always
@@ -32,6 +35,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: seva@1633
       MYSQL_DATABASE: seva_new
+      TZ: America/Los_Angeles
     ports:
       - "3307:3306"
     restart: always

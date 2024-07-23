@@ -1,6 +1,12 @@
 # Use the official Node.js image as the base image
 FROM node:14
 
+# Install tzdata for timezone support
+RUN apt-get update && apt-get install -y tzdata
+
+# Set the timezone to PST
+ENV TZ=America/Los_Angeles
+
 # Create and change to the app directory
 WORKDIR /app
 
