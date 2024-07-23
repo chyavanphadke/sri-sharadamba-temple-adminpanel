@@ -1,0 +1,149 @@
+.tv1Container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .slideshow {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .slideshowBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(10px);
+    z-index: 1;
+  }
+  
+  .slideshowImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    z-index: 2;
+  }
+  
+  .progressBar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 3;
+  }
+  
+  .progress {
+    height: 100%;
+    background: #fff;
+    width: 0;
+    transition: width 0.1s linear;
+  }
+  
+  .tableSection {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    z-index: 2;
+  }
+  
+  .card {
+    background: white;
+    padding: 20px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .tableContainer {
+    width: 100%;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 2.5rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  .highlight {
+    background-color: #ffeb3b;
+  }
+  
+  .boldRow {
+    font-weight: bold;
+  }
+  
+  .activitiesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .serviceSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    border: 2px solid #d1e3f8;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .serviceHeading {
+    font-size: 25px;
+    color: #1a73e8;
+    border-bottom: 2px solid #d1e3f8;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .serviceContent {
+    display: flex;
+    gap: 20px;
+    line-height: 2;
+  }
+  
+  .serviceImage {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  .serviceList {
+    list-style-type: disc;
+    padding: 0;
+    margin: 0;
+    padding-left: 15px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  
+  .card h2 {
+    font-size: 2rem; /* Increase font size for card titles */
+    margin-bottom: 20px;
+  }
+  
