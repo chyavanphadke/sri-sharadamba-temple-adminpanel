@@ -2039,7 +2039,7 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
     const activity = await Activity.create({
       DevoteeId: devoteeId,
       ServiceId: serviceId,
-      PaymentMethod: paymentStatus === 'Paid' ? 1 : 2,
+      PaymentMethod: paymentStatus === 'Paid' ? 4 : 2,
       Amount: amount,
       UserId: 'online Paid',
       ServiceDate: serviceDate,

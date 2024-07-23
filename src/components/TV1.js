@@ -180,8 +180,8 @@ const TV1 = () => {
         </div>
       )}
       {!showContent && (
-        <div className={styles.tableSection}>
-          <div className={styles.card} style={{ width: '70%' }}>
+        <div className={styles.tableSection} style={{ width: activities.length > 0 ? '90%' : '90%' }}>
+          <div className={`${styles.card} ${styles.eventsCard}`} style={{ width: activities.length > 0 ? '70%' : '100%' }}>
             <h2>Upcoming Temple Events</h2>
             <div className={styles.tableContainer}>
               <table className={styles.table}>
@@ -205,7 +205,7 @@ const TV1 = () => {
             </div>
           </div>
           {activities.length > 0 && (
-            <div className={styles.card} style={{ width: '30%' }}>
+            <div className={`${styles.card} ${styles.sevasCard}`} style={{ width: '30%' }}>
               <h2>Today's Sevas</h2>
               <div className={styles.activitiesContainer}>
                 {Object.keys(groupedActivities).map((service, index) => (

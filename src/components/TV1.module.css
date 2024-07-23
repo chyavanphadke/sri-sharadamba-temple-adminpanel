@@ -6,18 +6,23 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-  }
-  
-  .slideshow {
+    background-color: #f4f6f9;
+    font-family: 'Roboto', sans-serif;
+}
+
+.slideshow {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-  }
-  
-  .slideshowBackground {
+    border: 2px solid #d1e3f8; /* Light blue border */
+    border-radius: 15px;
+    background-color: #ffffff;
+}
+
+.slideshowBackground {
     position: absolute;
     top: 0;
     left: 0;
@@ -27,16 +32,17 @@
     background-position: center;
     filter: blur(10px);
     z-index: 1;
-  }
-  
-  .slideshowImage {
+}
+
+.slideshowImage {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
     z-index: 2;
-  }
-  
-  .progressBar {
+    border-radius: 10px;
+}
+
+.progressBar {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -44,64 +50,72 @@
     height: 5px;
     background: rgba(255, 255, 255, 0.3);
     z-index: 3;
-  }
-  
-  .progress {
+    border-radius: 0 0 10px 10px;
+}
+
+.progress {
     height: 100%;
-    background: #fff;
+    background: #1a73e8;
     width: 0;
     transition: width 0.1s linear;
-  }
-  
-  .tableSection {
+}
+
+.tableSection {
     width: 90%;
     height: 90%;
     display: flex;
     justify-content: space-between;
     gap: 20px;
     z-index: 2;
-  }
-  
-  .card {
+    margin-top: 20px;
+    border: 2px solid #d1e3f8; /* Light blue border */
+    border-radius: 15px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.card {
     background: white;
     padding: 20px;
     overflow-y: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .tableContainer {
+    border-radius: 15px;
+}
+
+.tableContainer {
     width: 100%;
-  }
-  
-  .table {
+}
+
+.table {
     width: 100%;
     border-collapse: collapse;
     font-size: 2.5rem;
-  }
-  
-  .table th,
-  .table td {
+}
+
+.table th,
+.table td {
     padding: 10px;
     border: 1px solid #ddd;
-  }
-  
-  .highlight {
+}
+
+.highlight {
     background-color: #ffeb3b;
-  }
-  
-  .boldRow {
+}
+
+.boldRow {
     font-weight: bold;
-  }
-  
-  .activitiesContainer {
+}
+
+.activitiesContainer {
     display: flex;
     flex-direction: column;
     gap: 20px;
     width: 100%;
     justify-content: flex-start;
-  }
-  
-  .serviceSection {
+}
+
+.serviceSection {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -110,40 +124,59 @@
     border-radius: 10px;
     background-color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .serviceHeading {
+}
+
+.serviceHeading {
     font-size: 25px;
     color: #1a73e8;
     border-bottom: 2px solid #d1e3f8;
     padding-bottom: 5px;
     margin-bottom: 10px;
-  }
-  
-  .serviceContent {
+}
+
+.serviceContent {
     display: flex;
     gap: 20px;
     line-height: 2;
-  }
-  
-  .serviceImage {
+}
+
+.serviceImage {
     width: 100px;
     height: 100px;
     object-fit: cover;
     border-radius: 10px;
-  }
-  
-  .serviceList {
+}
+
+.serviceList {
     list-style-type: disc;
     padding: 0;
     margin: 0;
     padding-left: 15px;
     font-size: 20px;
     font-weight: bold;
-  }
-  
-  .card h2 {
-    font-size: 2rem; /* Increase font size for card titles */
+}
+
+.card h2 {
+    font-size: 2.5rem; /* Increase font size for card titles */
     margin-bottom: 20px;
-  }
-  
+    color: #1a73e8;
+}
+
+.eventsCard {
+    width: 70%;
+}
+
+.sevasCard {
+    width: 30%;
+}
+
+@media (max-width: 768px) {
+    .tableSection {
+        flex-direction: column;
+    }
+
+    .eventsCard,
+    .sevasCard {
+        width: 100%;
+    }
+}
