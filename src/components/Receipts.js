@@ -30,6 +30,7 @@ const Receipts = () => {
 
   const token = localStorage.getItem('token');
 
+  // Create axios instance with authorization headers
   const axiosInstance = useMemo(() => axios.create({
     baseURL: 'http://localhost:5001',
     headers: {
@@ -37,6 +38,7 @@ const Receipts = () => {
     },
   }), [token]);
 
+  // Fetch access control data based on user type
   const fetchAccessControl = async (userType) => {
     try {
       const response = await axiosInstance.get(`/access-control/${userType}`);
@@ -50,6 +52,7 @@ const Receipts = () => {
     }
   };
 
+  // Fetch email text for PDF generation
   const fetchEmailText = async () => {
     try {
       const response = await axiosInstance.get('/email-text');
@@ -59,12 +62,11 @@ const Receipts = () => {
     }
   };
 
+  // Fetch pending receipts from the server
   const fetchPendingReceipts = useCallback(async (search = '', pageSize) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/receipts/pending', {
-        params: { search, pageSize }
-      });
+      const response = await axiosInstance.get('/receipts/pending', { params: { search, pageSize } });
       setPendingReceipts(response.data);
     } catch (error) {
       message.error('Failed to load pending receipts');
@@ -73,12 +75,11 @@ const Receipts = () => {
     }
   }, [axiosInstance]);
 
+  // Fetch approved receipts from the server
   const fetchApprovedReceipts = useCallback(async (search = '', pageSize) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/receipts/approved', {
-        params: { search, pageSize }
-      });
+      const response = await axiosInstance.get('/receipts/approved', { params: { search, pageSize } });
       setApprovedReceipts(response.data);
     } catch (error) {
       message.error('Failed to load approved receipts');
@@ -87,6 +88,7 @@ const Receipts = () => {
     }
   }, [axiosInstance]);
 
+  // Fetch edited receipts from the server
   const fetchEditedReceipts = useCallback(async () => {
     setLoading(true);
     try {
@@ -99,6 +101,7 @@ const Receipts = () => {
     }
   }, [axiosInstance]);
 
+  // Initial data fetch on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -109,6 +112,7 @@ const Receipts = () => {
     fetchEmailText();
   }, []);
 
+  // Fetch data based on the active tab
   useEffect(() => {
     if (activeTab === 'pending') {
       fetchPendingReceipts(pendingSearch, pageSize);
@@ -119,10 +123,12 @@ const Receipts = () => {
     }
   }, [activeTab, fetchPendingReceipts, fetchApprovedReceipts, fetchEditedReceipts, pendingSearch, approvedSearch, pageSize]);
 
+  // Handle receipt approval
   const handleApprove = async (activityId) => {
     try {
       await axiosInstance.post('/receipts/approve', { activityId });
       message.success('Receipt approved successfully');
+      console.log('Approved receipt:', activityId);
       fetchPendingReceipts(pendingSearch, pageSize);
       fetchApprovedReceipts(approvedSearch, pageSize);
     } catch (error) {
@@ -134,13 +140,15 @@ const Receipts = () => {
     }
   };
 
+  // Handle editing a receipt
   const handleEdit = (activity) => {
     setCurrentActivity(activity);
     form.setFieldsValue(activity);
-    setOriginalPaymentMethod(activity.PaymentMethod); // Store original payment method
+    setOriginalPaymentMethod(activity.PaymentMethod);
     setIsModalVisible(true);
   };
 
+  // Handle updating an edited receipt
   const handleEditOk = async () => {
     try {
       const updatedData = form.getFieldsValue();
@@ -148,7 +156,7 @@ const Receipts = () => {
 
       await axiosInstance.put(`/activities/${currentActivity.ActivityId}`, updatedData);
 
-      // Make an entry in the EditedReceipts table
+      // Log the edited receipt
       await axiosInstance.post('/edited-receipts', {
         Name: currentActivity.Name,
         OldService: originalData.Service,
@@ -159,6 +167,7 @@ const Receipts = () => {
       });
 
       message.success('Activity updated successfully');
+      console.log('Updated activity:', currentActivity.ActivityId);
       setIsModalVisible(false);
       fetchPendingReceipts(pendingSearch, pageSize);
       fetchApprovedReceipts(approvedSearch, pageSize);
@@ -327,6 +336,7 @@ const Receipts = () => {
     },
   ];
   
+  // Generate PDF for a given record
   const generatePDF = (record) => {
     const doc = new jsPDF({
       unit: 'in',
@@ -336,7 +346,7 @@ const Receipts = () => {
 
     doc.setFont('Helvetica');
 
-    const imgData = '/banner.webp'; // Ensure this path is correct and accessible
+    const imgData = '/banner.webp';
     doc.addImage(imgData, 'WEBP', 0.5, 0.5, 7.5, 1.5);
 
     doc.setDrawColor(0, 0, 0);
