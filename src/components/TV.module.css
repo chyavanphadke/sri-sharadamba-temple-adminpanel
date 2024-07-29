@@ -359,3 +359,16 @@
   width: 90%; /* Make sections take full width */
   overflow: hidden; /* Prevent overflow */
 }
+
+.qrCodeContainer {
+  display: flex;
+  justify-content: center;
+  align-items: top;
+  height: 100%;
+  padding: 0;
+}
+
+.qrCode {
+  max-width: 75%;
+  max-height: 75%;
+}
