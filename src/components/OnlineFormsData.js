@@ -6,22 +6,24 @@ import './OnlineFormsData.css'; // Ensure this path is correct
 const { Content } = Layout;
 
 const OnlineFormsData = () => {
+  // State to store fetched data and filtered data
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [amountModalVisible, setAmountModalVisible] = useState(false);
-  const [currentRecord, setCurrentRecord] = useState(null);
-  const [form] = Form.useForm();
-  const [showAll, setShowAll] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sheetServiceMap, setSheetServiceMap] = useState({});
+  const [loading, setLoading] = useState(false); // State to manage loading indicator
+  const [amountModalVisible, setAmountModalVisible] = useState(false); // State to control the visibility of the amount modal
+  const [currentRecord, setCurrentRecord] = useState(null); // State to store the currently selected record for payment status update
+  const [form] = Form.useForm(); // Ant Design form instance
+  const [showAll, setShowAll] = useState(false); // State to toggle showing all records or only unpaid records
+  const [searchQuery, setSearchQuery] = useState(''); // State to store the search query
+  const [sheetServiceMap, setSheetServiceMap] = useState({}); // State to store the service map
 
+  // Fetch service map and Excel Seva data on component mount
   useEffect(() => {
     fetchServiceMap();
     fetchExcelSevaData();
   }, []);
 
-  // Fetch service map data
+  // Fetch the service map data from the server
   const fetchServiceMap = async () => {
     try {
       const response = await axios.get('http://localhost:5001/services');
@@ -33,12 +35,11 @@ const OnlineFormsData = () => {
       }, {});
       setSheetServiceMap(serviceMap);
     } catch (error) {
-      console.error('Error fetching service map:', error);
       message.error('Failed to load service map');
     }
   };
 
-  // Fetch Excel Seva data
+  // Fetch Excel Seva data from the server
   const fetchExcelSevaData = async () => {
     setLoading(true);
     try {
@@ -52,14 +53,13 @@ const OnlineFormsData = () => {
       filterData(sortedData, showAll, searchQuery);
       console.log('Fetched Excel Seva data');
     } catch (error) {
-      console.error('Error fetching ExcelSevaData:', error);
       message.error('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter data based on search query and showAll flag
+  // Filter the data based on search query and showAll flag
   const filterData = (data, showAll, query) => {
     const lowerCaseQuery = query.toLowerCase();
     const filtered = data.filter(entry => 
@@ -87,32 +87,34 @@ const OnlineFormsData = () => {
       fetchExcelSevaData();
       console.log('Fetched data from Google Sheets');
     } catch (error) {
-      console.error('Error fetching data from Google Sheets:', error);
       message.error('Error fetching data from Google Sheets');
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle the toggle change for showing all records
   const handleToggleChange = (e) => {
     const checked = e.target.checked;
     setShowAll(checked);
     filterData(data, checked, searchQuery);
   };
 
+  // Handle the search input change
   const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
     filterData(data, showAll, query);
   };
 
+  // Handle the action of marking a service as paid at the temple
   const handlePaidAtTemple = (record) => {
     setCurrentRecord(record);
     form.setFieldsValue({ amount: record.amount });
     setAmountModalVisible(true);
   };
 
-  // Handle deletion of service
+  // Handle the deletion of a service entry
   const handleDeleteService = (record) => {
     Modal.confirm({
       title: 'Confirm Deletion',
@@ -127,14 +129,13 @@ const OnlineFormsData = () => {
           fetchExcelSevaData();
           console.log('Deleted service and refreshed data');
         } catch (error) {
-          console.error('Error deleting service:', error);
           message.error('Failed to delete service');
         }
       }
     });
   };
 
-  // Update payment status
+  // Handle the update of payment status
   const handleUpdatePaymentStatus = async () => {
     try {
       const values = await form.validateFields();
@@ -147,11 +148,11 @@ const OnlineFormsData = () => {
       fetchExcelSevaData();
       console.log('Updated payment status and refreshed data');
     } catch (error) {
-      console.error('Error updating payment status:', error);
       message.error('Failed to update payment status');
     }
   };
 
+  // Define the columns for the data table
   const columns = [
     { title: 'Status', dataIndex: 'status', key: 'status', align: 'center' },
     { title: 'Devotee ID', dataIndex: 'devotee_id', key: 'devotee_id', align: 'center' },
