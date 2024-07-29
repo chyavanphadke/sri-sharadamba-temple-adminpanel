@@ -80,13 +80,16 @@ const Receipts = () => {
       const response = await axiosInstance.get('/receipts/approved', {
         params: { search, pageSize }
       });
-      setApprovedReceipts(response.data);
+      setApprovedReceipts(response.data.map(receipt => ({
+        ...receipt,
+        ReceiptId: receipt.receiptid // Ensure ReceiptId is included
+      })));
     } catch (error) {
       message.error('Failed to load approved receipts');
     } finally {
       setLoading(false);
     }
-  }, [axiosInstance]);
+  }, [axiosInstance]);  
 
   const fetchEditedReceipts = useCallback(async () => {
     setLoading(true);
@@ -354,48 +357,48 @@ const Receipts = () => {
       format: 'letter',
       orientation: 'portrait'
     });
-
+  
     doc.setFont('Helvetica');
-
+  
     const imgData = '/banner.webp'; // Ensure this path is correct and accessible
     doc.addImage(imgData, 'WEBP', 0.5, 0.5, 7.5, 1.5);
-
+  
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.02);
     doc.rect(0.25, 0.25, 8, 10.5); // Adding border to entire content
-
+  
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
     doc.text(`Name: ${record ? record.Name : ''}`, 0.5, 2.3);
     doc.text(`Address: ${record && record.Address ? record.Address : 'N/A'}`, 0.5, 2.5);
-
+  
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     doc.text('A Note of Appreciation', 4.25, 3, { align: 'center' });
-
+  
     doc.setFontSize(12);
     doc.text(`Dear ${record ? record.Name : ''},`, 0.5, 3.8);
-
+  
     pdfText.forEach((line, index) => {
       doc.text(line, 0.5, 4.1 + index * 0.3); // Adjust the y-coordinate as needed
     });
-
+  
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.04);
     doc.line(0.5, 6.8, 7.5, 6.8);
-
+  
     doc.setFontSize(16);
     doc.text('Receipt', 4.25, 7.2, { align: 'center' });
-
+  
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
     doc.text(`Received from: ${record ? record.Name : ''}`, 0.5, 7.8);
     doc.text(`Donation: $${record ? record.Amount : ''} only`, 0.5, 8.1);
     doc.text(`Receipt No: ${record ? record.ReceiptId : ''}`, 0.5, 8.4);
     doc.text(`Your Check No: ${record ? record.CheckNumber : ''}`, 0.5, 9);
-
+  
     return doc;
-  };
+  };  
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
