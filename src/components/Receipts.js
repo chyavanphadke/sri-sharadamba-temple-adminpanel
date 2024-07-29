@@ -177,6 +177,7 @@ const Receipts = () => {
 
       // Make an entry in the EditedReceipts table
       await axiosInstance.post('/edited-receipts', {
+        ActivityId: currentActivity.ActivityId,
         Name: currentActivity.Name,
         OldService: originalData.Service,
         NewService: updatedData.Service,
@@ -242,7 +243,7 @@ const Receipts = () => {
   };
 
   const columnsPending = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Activity ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center'},
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
@@ -270,7 +271,7 @@ const Receipts = () => {
   ];
 
   const columnsApproved = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Receipt ID', dataIndex: 'receiptid', key: 'receiptid', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text), align: 'center' },
@@ -306,7 +307,7 @@ const Receipts = () => {
   ];
 
   const columnsEdited = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Activity ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
       title: 'Service', 

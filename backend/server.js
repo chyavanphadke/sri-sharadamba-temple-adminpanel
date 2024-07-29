@@ -827,9 +827,10 @@ app.delete('/activities/:id', async (req, res) => {
 
 // Route to insert into EditedReceipts
 app.post('/edited-receipts', async (req, res) => {
-  const { Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
+  const { ActivityId, Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
   try {
     const newEdit = await EditedReceipts.create({
+      ActivityId,
       Name,
       OldService,
       NewService,
@@ -847,11 +848,22 @@ app.post('/edited-receipts', async (req, res) => {
 
 app.get('/edited-receipts', async (req, res) => {
   try {
-    const editedReceipts = await EditedReceipts.findAll();
-    res.status(200).json(editedReceipts);
-  } catch (error) {
-    console.error('Error fetching edited receipts:', error);
-    res.status(500).json({ error: 'Failed to fetch edited receipts' });
+    const editedReceipts = await EditedReceipts.findAll({
+      include: [
+        { model: Activity, attributes: ['ActivityId'] } // Ensure this relationship is defined correctly in your models
+      ],
+      order: [['EditedOn', 'DESC']]
+    });
+
+    const editedReceiptsWithActivityId = editedReceipts.map(editedReceipt => ({
+      ...editedReceipt.get(),
+      ActivityId: editedReceipt.Activity.ActivityId
+    }));
+
+    res.status(200).json(editedReceiptsWithActivityId);
+  } catch (err) {
+    console.error('Error fetching edited receipts:', err);
+    res.status(500).json({ message: 'Error fetching edited receipts', error: err.message });
   }
 });
 
@@ -1131,6 +1143,7 @@ app.get('/receipts/approved', async (req, res) => {
       const assistedBy = activity.AssistedBy || {};
 
       return {
+        receiptid: receipt.receiptid,
         ActivityId: activity.ActivityId,
         Name: `${devotee.FirstName || ''} ${devotee.LastName || ''}`,
         Email: devotee.Email || '',
