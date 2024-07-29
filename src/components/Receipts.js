@@ -258,14 +258,14 @@ const Receipts = () => {
           {accessControl.Receipts?.can_email === 1 && (
             <>
               <Button className="ant-btn-email" onClick={() => {
-                setCurrentRecord(record);
-                setIsEmailModalVisible(true);
+                  setCurrentRecord(record);
+                  setIsEmailModalVisible(true);
               }}>
                 {record.emailsentcount > 0 ? 'Re-Email' : 'Email'}
               </Button>
               <Button className="ant-btn-download" onClick={() => {
-                setCurrentRecord(record);
-                setIsPrintModalVisible(true);
+                  setCurrentRecord(record);
+                  setIsPrintModalVisible(true);
               }} style={{ marginLeft: 8 }}>Download</Button>
               <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
             </>
@@ -279,7 +279,7 @@ const Receipts = () => {
     { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
-      title: 'Old Service', 
+      title: 'Service', 
       dataIndex: 'OldService', 
       key: 'OldService', 
       render: (text, record) => (
@@ -287,16 +287,6 @@ const Receipts = () => {
           {text}
         </span>
       ), align: 'center'
-    },
-    { 
-      title: 'New Service', 
-      dataIndex: 'NewService', 
-      key: 'NewService', 
-      render: (text, record) => (
-        <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
-          {text}
-        </span>
-      ) , align: 'center'
     },
     { 
       title: 'Old Amount', 
@@ -323,7 +313,7 @@ const Receipts = () => {
       title: 'Edited On', 
       dataIndex: 'EditedOn', 
       key: 'EditedOn', 
-      render: (text) => moment(text).tz('America/Los_Angeles').format('MMM D, YYYY h:mm A'), align: 'center'
+      render: (text) => moment(text).format('MMM D, YYYY h:mm A'), align: 'center'
     },
   ];
   
@@ -506,7 +496,7 @@ const Receipts = () => {
       >
         <Form form={form}>
           <Form.Item name="Service" label="Service">
-            <Input />
+            <Input disabled/>
           </Form.Item>
           <Form.Item name="Amount" label="Amount">
             <Input />

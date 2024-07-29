@@ -1131,7 +1131,7 @@ app.get('/receipts/approved', async (req, res) => {
       const assistedBy = activity.AssistedBy || {};
 
       return {
-        ReceiptId: receipt.receiptid,
+        ActivityId: activity.ActivityId,
         Name: `${devotee.FirstName || ''} ${devotee.LastName || ''}`,
         Email: devotee.Email || '',
         Service: receipt.servicetype,
