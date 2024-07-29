@@ -38,12 +38,10 @@ const Calendar = () => {
     }
   }, [token]);
 
+  // Fetch access control settings based on user type
   const fetchAccessControl = async (userType) => {
     try {
       const response = await axiosInstance.get(`/access-control/${userType}`);
-      if (response.status !== 200) {
-        throw new Error('Network response was not ok');
-      }
       const data = await response.data;
       setAccessControl(data);
     } catch (error) {
@@ -60,37 +58,38 @@ const Calendar = () => {
     fetchTodaysActivities();
   }, []);
 
+  // Fetch activities for the current month
   const fetchActivities = async () => {
     try {
       const from = currentMonth.startOf('month').format('YYYY-MM-DD');
       const to = currentMonth.endOf('month').format('YYYY-MM-DD');
-      console.log(`Fetching activities from ${from} to ${to}`);
       const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from, to }
       });
       const filteredActivities = response.data.filter(activity => activity.EventName !== 'DONATION');
-      console.log('Fetched activities:', filteredActivities);
       setActivities(filteredActivities);
+      console.log('Fetched activities from server');
     } catch (error) {
       console.error('Error fetching activities:', error);
     }
   };
 
+  // Fetch today's activities
   const fetchTodaysActivities = async () => {
     try {
       const today = moment().startOf('day').format('YYYY-MM-DD');
-      console.log(`Fetching today's activities for ${today}`);
       const response = await axiosInstance.get('/calendar/activities/range', {
         params: { from: today, to: today }
       });
       const todaysEvents = response.data.filter(activity => activity.EventName !== 'DONATION');
-      console.log('Fetched today\'s activities:', todaysEvents);
-      setSearchResults(todaysEvents); // Set today's events in search results
+      setSearchResults(todaysEvents);
+      console.log('Fetched today\'s activities from server');
     } catch (error) {
       console.error('Error fetching today\'s activities:', error);
     }
   };
 
+  // Handle search input and perform search
   const handleSearch = async (value) => {
     try {
       const response = await axiosInstance.get('/devotees', {
@@ -107,6 +106,7 @@ const Calendar = () => {
 
       setSearchResults(activities.flat());
       setSearchPerformed(true);
+      console.log('Performed search and fetched results');
     } catch (error) {
       console.error('Error searching devotees:', error);
     }
@@ -122,6 +122,7 @@ const Calendar = () => {
     }
   };
 
+  // Handle date change for activities
   const handleDateChange = async (date, activityId) => {
     if (!date) {
       message.error('Invalid date selected');
@@ -133,14 +134,16 @@ const Calendar = () => {
         ServiceDate: date
       });
       message.success('Service Date updated successfully');
-      await fetchActivities(); // Re-fetch activities after date change
-      await fetchTodaysActivities(); // Re-fetch today's activities
+      await fetchActivities();
+      await fetchTodaysActivities();
+      console.log('Updated service date and refreshed data');
     } catch (error) {
       console.error('Error updating Service Date:', error);
       message.error('Failed to update Service Date');
     }
   };
 
+  // Handle marking an event as complete
   const handleComplete = async (activityId) => {
     confirm({
       title: 'Are you sure you want to mark this event as complete?',
@@ -148,15 +151,16 @@ const Calendar = () => {
         try {
           await axiosInstance.put(`/calendar/activities/${activityId}/complete`);
           message.success('Event marked as complete');
-          await fetchActivities(); // Re-fetch activities after completion
-          await fetchTodaysActivities(); // Re-fetch today's activities
+          await fetchActivities();
+          await fetchTodaysActivities();
+          console.log('Marked event as complete and refreshed data');
         } catch (error) {
           console.error('Error marking event as complete:', error);
           message.error('Failed to mark event as complete');
         }
       },
       onCancel() {
-        console.log('Cancel');
+        console.log('Cancelled marking event as complete');
       },
     });
   };
@@ -167,8 +171,9 @@ const Calendar = () => {
         await axiosInstance.put(`/calendar/activities/${selectedActivity.ActivityId}/complete`);
         message.success('Event marked as complete');
         setSelectedActivity(null);
-        await fetchActivities(); // Re-fetch activities after completion
-        await fetchTodaysActivities(); // Re-fetch today's activities
+        await fetchActivities();
+        await fetchTodaysActivities();
+        console.log('Marked event as complete from modal and refreshed data');
       } catch (error) {
         console.error('Error marking event as complete:', error);
         message.error('Failed to mark event as complete');
