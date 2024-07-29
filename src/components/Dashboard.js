@@ -19,7 +19,6 @@ import ReportIcon from '../assets/icons/file.png';
 import LoginAccessIcon from '../assets/icons/log-in.png';
 import SettingIcon from '../assets/icons/cogwheel.png';
 import onlineDataIcon from '../assets/icons/online-data.png';
-//import ListOfSevasIcon from '../assets/icons/cogwheel.png';
 
 const { Header, Content, Sider } = Layout;
 
@@ -52,6 +51,7 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Start inactivity timeout for auto sign-out
   const startInactivityTimeout = () => {
     clearInactivityTimeout();
     timeoutRef.current = setTimeout(() => {
@@ -59,23 +59,23 @@ const Dashboard = () => {
     }, 15 * 60 * 1000); // 15 minutes
   };
 
+  // Clear inactivity timeout
   const clearInactivityTimeout = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
   };
 
+  // Handle user activity to reset timeout
   const handleUserActivity = () => {
     startInactivityTimeout();
   };
 
   useEffect(() => {
-    // Add event listeners for user activity
     window.addEventListener('mousemove', handleUserActivity);
     window.addEventListener('keydown', handleUserActivity);
     window.addEventListener('click', handleUserActivity);
 
-    // Clean up event listeners on component unmount
     return () => {
       window.removeEventListener('mousemove', handleUserActivity);
       window.removeEventListener('keydown', handleUserActivity);
@@ -83,6 +83,7 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Fetch access control data based on user type
   const fetchAccessControl = async (userType) => {
     try {
       console.log(`Fetching access control data for user type: ${userType}`);
@@ -102,12 +103,13 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to fetch access control data:', error);
     }
-  };  
-  
+  };
+
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
+  // Handle user sign out
   const handleSignOut = () => {
     localStorage.removeItem('token');
     navigate('/');
@@ -119,13 +121,12 @@ const Dashboard = () => {
 
   const menuItems = [
     { key: '/dashboard/home', icon: <img src={homeIcon} alt="Home" className="custom-icon" />, label: <Link to="/dashboard/home">Home</Link>, access: accessControl.Home?.can_view },
-    { key: '/dashboard/online-forms-data', icon: <img src={onlineDataIcon} alt="Online Forms Data" className="custom-icon" />, label: <Link to="/dashboard/online-forms-data">Excel Data</Link>, access: accessControl.exceldata?.can_view }, // Adjust access control as needed
+    { key: '/dashboard/online-forms-data', icon: <img src={onlineDataIcon} alt="Online Forms Data" className="custom-icon" />, label: <Link to="/dashboard/online-forms-data">Excel Data</Link>, access: accessControl.exceldata?.can_view },
     { key: '/dashboard/calendar', icon: <img src={CalendarIcon} alt="Calendar" className="custom-icon" />, label: <Link to="/dashboard/calendar">Calendar</Link>, access: accessControl.Calendar?.can_view },
     { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link>, access: accessControl.Receipts?.can_view },
     { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link>, access: accessControl.Reports?.can_view },
     { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
     { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view },
-    //{ key: '/dashboard/list-of-sevas', icon: <img src={ListOfSevasIcon} alt="List of Sevas" className="custom-icon" />, label: <Link to="/dashboard/list-of-sevas" onClick={handleMenuClick}>List of Sevas</Link>, access: accessControl.ListOfSevas?.can_view },
   ].filter(item => item.access);
 
   const getBreadcrumbItems = () => {
