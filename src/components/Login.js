@@ -3,7 +3,7 @@ import { Form, Input, Button, Layout, message, Card, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
-import tvImage from '../assets/icons/tv.png'; // Adjust the path as necessary
+import tvImage from '../assets/icons/tv.png';
 
 const { Content } = Layout;
 
@@ -18,8 +18,7 @@ const Login = () => {
   const [step, setStep] = useState(1);
   const [timer, setTimer] = useState(180); // 3 minutes in seconds
   const [otpSent, setOtpSent] = useState(false); // Flag to track if OTP has been sent
-
-  const [isSignupVisible, setIsSignupVisible] = useState(false); // Add state for signup modal
+  const [isSignupVisible, setIsSignupVisible] = useState(false); // State for signup modal
   const [form] = Form.useForm();
   const [signupForm] = Form.useForm(); // Form for signup
 
@@ -47,6 +46,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:5001/login', values);
       localStorage.setItem('token', response.data.token);
       message.success('Login successful');
+      console.log('User logged in');
       navigate('/dashboard/home');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
@@ -64,6 +64,7 @@ const Login = () => {
       setTimer(180); // Reset timer to 3 minutes
       setEmailError('');
       setOtpSent(true); // Mark OTP as sent
+      console.log('OTP sent');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         setEmailError(error.response.data.message);
@@ -78,6 +79,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:5001/verify-otp', { email: forgotPasswordEmail, otp });
       message.success(response.data.message);
       setStep(3);
+      console.log('OTP verified');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
@@ -92,6 +94,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:5001/reset-password', { email: forgotPasswordEmail, otp, newPassword });
       message.success(response.data.message);
       handleCancel(); // Clear the form on successful reset
+      console.log('Password reset successful');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
@@ -127,6 +130,7 @@ const Login = () => {
     try {
       const response = await axios.post('http://localhost:5001/run-gear-functions');
       message.success(response.data.message);
+      console.log('Gear functions run successfully');
     } catch (error) {
       message.error('Error running gear functions');
     }
@@ -137,6 +141,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:5001/signup', values);
       message.success(response.data.message, 2, () => {
         setIsSignupVisible(false); // Hide the modal on successful signup
+        console.log('User signed up');
       });
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
