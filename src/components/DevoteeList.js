@@ -19,9 +19,6 @@ const DevoteeList = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [services, setServices] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [selectedService, setSelectedService] = useState('');
-  const [sevaForm] = Form.useForm();
-  const [form] = Form.useForm();
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [accessControl, setAccessControl] = useState({});
 
@@ -34,6 +31,7 @@ const DevoteeList = () => {
     },
   }), [token]);
 
+  // Fetch access control data based on user type
   const fetchAccessControl = async (userType) => {
     try {
       const response = await axiosInstance.get(`/access-control/${userType}`);
@@ -43,6 +41,7 @@ const DevoteeList = () => {
     }
   };
 
+  // Fetch devotees data
   const fetchDevotees = useCallback(async () => {
     setLoading(true);
     try {
@@ -50,6 +49,7 @@ const DevoteeList = () => {
       const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
       setDevotees(sortedDevotees);
       setTotalDevotees(sortedDevotees.length);
+      console.log('Fetched devotees data from server');
     } catch (error) {
       message.error('Failed to load devotees');
     } finally {
@@ -57,6 +57,7 @@ const DevoteeList = () => {
     }
   }, [axiosInstance]);
 
+  // Fetch services data
   const fetchServices = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/services');
@@ -66,6 +67,7 @@ const DevoteeList = () => {
     }
   }, [axiosInstance]);
 
+  // Fetch payment methods data
   const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
@@ -86,6 +88,7 @@ const DevoteeList = () => {
     fetchPaymentMethods();
   }, [fetchDevotees, fetchServices, fetchPaymentMethods]);
 
+  // Handle devotee deletion
   const handleDeleteDevotee = async (id) => {
     try {
       const response = await axiosInstance.get(`/devotees/${id}/related-count`);
@@ -99,6 +102,7 @@ const DevoteeList = () => {
             await axiosInstance.delete(`/devotees/${id}`);
             message.success('Devotee deleted');
             fetchDevotees();
+            console.log('Deleted devotee and refreshed data');
           } catch (error) {
             message.error('Failed to delete devotee');
           }
@@ -117,11 +121,11 @@ const DevoteeList = () => {
     sevaForm.resetFields();
     sevaForm.setFieldsValue({
       Name: `${devotee.FirstName} ${devotee.LastName}`,
-      // AmountPaid: 0,
     });
     setIsSevaModalVisible(true);
   };
 
+  // Handle adding a seva
   const handleSevaOk = async (values) => {
     try {
       const service = services.find(s => s.Service === values.Service);
@@ -156,6 +160,7 @@ const DevoteeList = () => {
       message.success('Seva added successfully');
       setIsSevaModalVisible(false);
       sevaForm.resetFields();
+      console.log('Added seva and refreshed data');
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
@@ -170,6 +175,7 @@ const DevoteeList = () => {
     sevaForm.resetFields();
   };
 
+  // Handle editing a devotee
   const handleEditDevotee = async (devotee) => {
     try {
       const familyResponse = await axiosInstance.get(`/devotees/${devotee.DevoteeId}/family`);
@@ -192,6 +198,7 @@ const DevoteeList = () => {
     setIsModalVisible(true);
   };
 
+  // Handle saving a devotee
   const handleOk = async (values) => {
     try {
       const filteredFamilyMembers = familyMembers.filter(member => 
@@ -216,6 +223,7 @@ const DevoteeList = () => {
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
+        console.log('Updated devotee and refreshed data');
       } else {
         const response = await axiosInstance.post('/devotees', payload);
         if (response.data.error) {
@@ -223,6 +231,7 @@ const DevoteeList = () => {
         } else {
           message.success('Devotee added');
         }
+        console.log('Added new devotee and refreshed data');
       }
       form.resetFields();
       setIsModalVisible(false);
@@ -283,6 +292,7 @@ const DevoteeList = () => {
         const response = await axiosInstance.get(`/devotees?search=${value}`);
         const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
         setDevotees(sortedDevotees);
+        console.log('Searched devotees and refreshed data');
       } catch (error) {
         message.error('Failed to search devotees');
       } finally {
@@ -350,7 +360,6 @@ const DevoteeList = () => {
                   onChange={(value) => {
                     const service = services.find(s => s.Service === value);
                     sevaForm.setFieldsValue({ Expected_Donation: service.Rate, AmountPaid: service.Rate });
-                    setSelectedService(value);
                   }}
                   showSearch
                   filterOption={(input, option) =>
@@ -495,11 +504,6 @@ const DevoteeList = () => {
                 <Input placeholder="Email" style={{ height: 50 }} />
               </Form.Item>
             </Col>
-            {/* <Col span={12}>
-              <Form.Item name="DOB" label="Date of Birth">
-                <DatePicker style={{ width: '100%', height: 50 }} placeholder="Date of Birth" />
-              </Form.Item>
-            </Col> */}
           </Row>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
