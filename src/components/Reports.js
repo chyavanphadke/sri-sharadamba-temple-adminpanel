@@ -25,18 +25,17 @@ const Reports = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [devoteeOptions, setDevoteeOptions] = useState([]);
   const [selectedDevoteeId, setSelectedDevoteeId] = useState(null);
-  const [selectedDevoteeName, setSelectedDevoteeName] = useState(''); // New state for selected devotee's name
-  const [isEmailModalVisible, setIsEmailModalVisible] = useState(false); // State for email modal
-  const [currentRecord, setCurrentRecord] = useState(null); // State for current record
-  const [email, setEmail] = useState(''); // State for email
-  const [name, setName] = useState(''); // State for name
-  const [isEmailAllModalVisible, setIsEmailAllModalVisible] = useState(false); // State for email all modal
-  const [emailAll, setEmailAll] = useState(''); // State for email all
-  const [emailAllDevoteeName, setEmailAllDevoteeName] = useState(''); // State for email all devotee name
+  const [selectedDevoteeName, setSelectedDevoteeName] = useState('');
+  const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState(null);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [isEmailAllModalVisible, setIsEmailAllModalVisible] = useState(false);
+  const [emailAll, setEmailAll] = useState('');
+  const [emailAllDevoteeName, setEmailAllDevoteeName] = useState('');
   const [pageSize, setPageSize] = useState(12);
 
   const token = localStorage.getItem('token');
-  
   const axiosInstance = axios.create({
     baseURL: 'http://localhost:5001',
     headers: {
@@ -109,7 +108,7 @@ const Reports = () => {
 
   const handleSearchChange = async (value) => {
     setSearchQuery(value);
-    setSelectedDevoteeName(value); // Update selected devotee name on search change
+    setSelectedDevoteeName(value);
     if (value) {
       try {
         const response = await axiosInstance.get('/devotees/search', { params: { query: value } });
@@ -123,14 +122,14 @@ const Reports = () => {
       }
     } else {
       setDevoteeOptions([]);
-      setSelectedDevoteeId(null); // Reset selected devotee ID when search is cleared
-      generateReport(); // Regenerate report to default state
+      setSelectedDevoteeId(null);
+      generateReport();
     }
   };
 
   const handleDevoteeSelect = (value, option) => {
     setSelectedDevoteeId(value);
-    setSelectedDevoteeName(option.label); // Update selected devotee name on selection
+    setSelectedDevoteeName(option.label);
   };
 
   const handleRePrint = (record) => {
@@ -140,15 +139,13 @@ const Reports = () => {
     const img = new Image();
     img.src = banner;
     img.onload = () => {
-      doc.addImage(img, 'WEBP', 10, 10, 190, 30); // Adjust the size and position as needed
+      doc.addImage(img, 'WEBP', 10, 10, 190, 30);
 
-      // Add header text
       doc.setFontSize(18);
       doc.text('All Transactions', 14, 48);
       doc.setFontSize(10);
       doc.text(`Date From: ${moment(startDate).format('MMMM D, YYYY')} To: ${moment(endDate).format('MMMM D, YYYY')}`, 14, 55);
 
-      // Add transaction details
       doc.setFontSize(14);
       doc.text('Transaction Details', 14, 70);
 
@@ -161,12 +158,10 @@ const Reports = () => {
         ],
       });
 
-      // Add totals
       const finalY = doc.lastAutoTable.finalY || 70;
       doc.setFontSize(10);
       doc.text(`Total Amount: $${totalAmount}`, 14, finalY + 10);
 
-      // Add footer with date and page number
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -186,15 +181,13 @@ const Reports = () => {
     const img = new Image();
     img.src = banner;
     img.onload = () => {
-      doc.addImage(img, 'WEBP', 10, 10, 190, 30); // Adjust the size and position as needed
+      doc.addImage(img, 'WEBP', 10, 10, 190, 30);
 
-      // Add header text
       doc.setFontSize(18);
       doc.text('All Transactions', 14, 48);
       doc.setFontSize(10);
       doc.text(`Date From: ${moment(startDate).format('MMMM D, YYYY')} To: ${moment(endDate).format('MMMM D, YYYY')}`, 14, 55);
 
-      // Add transaction details
       doc.setFontSize(14);
       doc.text('Transaction Details', 14, 70);
 
@@ -214,12 +207,10 @@ const Reports = () => {
         styles: { fontSize: 10 }
       });
 
-      // Add totals
       const finalY = doc.lastAutoTable.finalY || 70;
       doc.setFontSize(10);
       doc.text(`Total Amount: $${totalAmount}`, 14, finalY + 10);
 
-      // Add footer with date and page number
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -246,32 +237,29 @@ const Reports = () => {
     img.src = banner;
 
     img.onload = () => {
-      doc.addImage(img, 'WEBP', 10, 10, 190, 30); // Adjust the size and position as needed
+      doc.addImage(img, 'WEBP', 10, 10, 190, 30);
 
-      // Add header text only on the first page
       doc.setFontSize(18);
       doc.text('All Transactions', 14, 48);
       doc.setFontSize(10);
       doc.text(`Date From: ${moment(startDate).format('MMMM D, YYYY')} To: ${moment(endDate).format('MMMM D, YYYY')}`, 14, 55);
 
-      let finalY = 70; // Start position after banner and header text
+      let finalY = 70;
 
       sortedNames.forEach((name, index) => {
         const records = groupedData[name];
         const totalAmount = records.reduce((sum, record) => sum + record.Amount, 0);
 
-        // Ensure devotee details fit on one page, start on a new page if not
         const pageHeight = doc.internal.pageSize.height;
         const startY = finalY + 10;
-        const tableHeight = records.length * 10 + 10; // Approximate height calculation
+        const tableHeight = records.length * 10 + 10;
 
-        if (startY + tableHeight > pageHeight - 30) { // Ensure there's space for footer
+        if (startY + tableHeight > pageHeight - 30) {
           doc.addPage();
-          finalY = 30; // Reset Y position for new page
+          finalY = 30;
         }
 
         doc.setFontSize(10);
-        
         doc.autoTable({
           startY: finalY,
           head: [['Name', 'Phone', 'Service', 'Amount', 'Date', 'Payment Method']],
@@ -290,18 +278,16 @@ const Reports = () => {
 
         finalY = doc.lastAutoTable.finalY + 5;
 
-        // Add totals and horizontal line
         doc.setFontSize(10);
         doc.text(`Total Amount: $${totalAmount}`, 14, finalY + 5);
         finalY += 10;
 
-        doc.setDrawColor(192, 192, 192); // Gray color
+        doc.setDrawColor(192, 192, 192);
         doc.setLineWidth(0.5);
-        doc.line(14, finalY, 196, finalY); // Adjusted horizontal line to match table width
+        doc.line(14, finalY, 196, finalY);
         finalY += 10;
       });
 
-      // Add footer with date and page number
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -334,15 +320,13 @@ const Reports = () => {
     const img = new Image();
     img.src = banner;
     img.onload = async () => {
-      doc.addImage(img, 'WEBP', 10, 10, 190, 30); // Adjust the size and position as needed
+      doc.addImage(img, 'WEBP', 10, 10, 190, 30);
 
-      // Add header text
       doc.setFontSize(18);
       doc.text('All Transactions', 14, 48);
       doc.setFontSize(10);
       doc.text(`Date From: ${moment(startDate).format('MMMM D, YYYY')} To: ${moment(endDate).format('MMMM D, YYYY')}`, 14, 55);
 
-      // Add transaction details
       doc.setFontSize(14);
       doc.text('Transaction Details', 14, 70);
 
@@ -355,7 +339,6 @@ const Reports = () => {
         ],
       });
 
-      // Add totals
       const finalY = doc.lastAutoTable.finalY || 70;
       doc.setFontSize(10);
       doc.text(`Total Amount: $${totalAmount}`, 14, finalY + 10);
@@ -393,7 +376,6 @@ const Reports = () => {
 
     const devoteeIds = Object.keys(groupedData);
     if (devoteeIds.length === 1) {
-      // Single devotee case
       const singleDevoteeData = groupedData[devoteeIds[0]];
       const { Name, DevoteeId } = singleDevoteeData[0];
 
@@ -406,7 +388,6 @@ const Reports = () => {
         message.error('Error fetching devotee details');
       });
     } else {
-      // Multiple devotees case
       setEmailAll('');
       setIsEmailAllModalVisible(true);
     }
@@ -418,9 +399,8 @@ const Reports = () => {
     img.src = banner;
 
     img.onload = async () => {
-      doc.addImage(img, 'WEBP', 10, 10, 190, 30); // Adjust the size and position as needed
+      doc.addImage(img, 'WEBP', 10, 10, 190, 30);
 
-      // Add header text
       doc.setFontSize(18);
       doc.text('All Transactions', 14, 48);
       doc.setFontSize(10);
@@ -445,7 +425,6 @@ const Reports = () => {
         styles: { fontSize: 10 }
       });
 
-      // Add totals
       const finalY = doc.lastAutoTable.finalY || 70;
       doc.setFontSize(10);
       doc.text(`Total Amount: $${totalAmount}`, 14, finalY + 10);
@@ -483,13 +462,13 @@ const Reports = () => {
       dataIndex: 'Amount', 
       key: 'amount',
       align: 'center',
-      render: (text) => `$${text}` // Format the amount
+      render: (text) => `$${text}`
     },
     { 
       title: 'Date', 
       dataIndex: 'Date', 
       key: 'date',
-      render: (text) => moment(text).format('MMMM D, YYYY'), align: 'center' // Format the date
+      render: (text) => moment(text).format('MMMM D, YYYY'), align: 'center'
     },
     { 
       title: 'Payment Method', 
@@ -501,7 +480,7 @@ const Reports = () => {
           return `${text} (${record.CheckNumber})`;
         }
         return text;
-      } // Show check number in parentheses if payment method is "Check"
+      }
     },
     {
       title: 'Actions',
@@ -556,7 +535,7 @@ const Reports = () => {
                 defaultValue="All"
                 style={{ width: 200, marginRight: 10, marginTop: 10 }}
                 onChange={handleServiceChange}
-                value={selectedService} // Add value to control the component
+                value={selectedService}
               >
                 <Option value="All">All</Option>
                 {services.map(service => (
@@ -574,7 +553,7 @@ const Reports = () => {
               <Select
                 defaultValue="All"
                 style={{ width: 200, marginRight: 10, marginTop: 10 }}
-                value={selectedPaymentMethod} // Add value to control the component
+                value={selectedPaymentMethod}
                 onChange={handlePaymentMethodChange}
               >
                 <Option value="All">All</Option>
@@ -596,7 +575,7 @@ const Reports = () => {
                 onSelect={handleDevoteeSelect}
                 onSearch={handleSearchChange}
                 placeholder="Search by Name, Phone, or Email"
-                value={selectedDevoteeName} // Update to show selected devotee's name
+                value={selectedDevoteeName}
                 onChange={handleSearchChange}
               />
             </Col>
