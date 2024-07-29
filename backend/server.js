@@ -1152,6 +1152,26 @@ app.get('/receipts/approved', async (req, res) => {
   }
 });
 
+// Delete a receipt by ID
+app.delete('/receipts/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Ensure you are deleting the receipt from the correct model/table
+    const result = await Activity.destroy({
+      where: { ActivityId: id } // or use a different identifier if necessary
+    });
+
+    if (result) {
+      res.status(200).json({ message: 'Receipt deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Receipt not found' });
+    }
+  } catch (err) {
+    console.error('Error deleting receipt:', err);
+    res.status(500).json({ message: 'Error deleting receipt', error: err.message });
+  }
+});
+
 // Fetch payment method by ID
 app.get('/payment-method/:id', async (req, res) => {
   try {

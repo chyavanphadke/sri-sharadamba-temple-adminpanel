@@ -7,6 +7,7 @@ import './Receipts.css';
 import { jwtDecode } from 'jwt-decode';
 
 const { Search } = Input;
+const { confirm } = Modal;
 
 const Receipts = () => {
   const [pendingReceipts, setPendingReceipts] = useState([]);
@@ -141,6 +142,32 @@ const Receipts = () => {
     setIsModalVisible(true);
   };
 
+  const showDeleteConfirm = (activityId) => {
+    confirm({
+      title: 'Are you sure you want to delete this receipt?',
+      content: 'This action cannot be undone.',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk() {
+        handleDelete(activityId);
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
+  };
+  
+  const handleDelete = async (activityId) => {
+    try {
+      await axiosInstance.delete(`/receipts/${activityId}`);
+      message.success('Receipt deleted successfully');
+      fetchPendingReceipts(pendingSearch, pageSize);
+    } catch (error) {
+      message.error('Failed to delete receipt');
+    }
+  };  
+
   const handleEditOk = async () => {
     try {
       const updatedData = form.getFieldsValue();
@@ -232,7 +259,10 @@ const Receipts = () => {
             <Button className="ant-btn-approve" onClick={() => handleApprove(record.ActivityId)}>Approve</Button>
           )}
           {accessControl.Receipts?.can_edit === 1 && (
-            <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+            <>
+              <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+              <Button className="ant-btn-delete" onClick={() => showDeleteConfirm(record.ActivityId)} danger style={{ marginLeft: 8 }}>Delete</Button>
+            </>
           )}
         </>
       ), align: 'center'
