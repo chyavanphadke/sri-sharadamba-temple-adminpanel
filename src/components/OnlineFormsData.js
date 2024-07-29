@@ -21,9 +21,10 @@ const OnlineFormsData = () => {
     fetchExcelSevaData();
   }, []);
 
+  // Fetch service map data
   const fetchServiceMap = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/services'); // Assuming you have an endpoint to fetch services
+      const response = await axios.get('http://localhost:5001/services');
       const serviceMap = response.data.reduce((map, service) => {
         if (service.excelSheetLink) {
           map[service.excelSheetLink] = service.ServiceId;
@@ -37,6 +38,7 @@ const OnlineFormsData = () => {
     }
   };
 
+  // Fetch Excel Seva data
   const fetchExcelSevaData = async () => {
     setLoading(true);
     try {
@@ -48,6 +50,7 @@ const OnlineFormsData = () => {
       const sortedData = dataWithServiceName.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setData(sortedData);
       filterData(sortedData, showAll, searchQuery);
+      console.log('Fetched Excel Seva data');
     } catch (error) {
       console.error('Error fetching ExcelSevaData:', error);
       message.error('Failed to load data');
@@ -55,8 +58,8 @@ const OnlineFormsData = () => {
       setLoading(false);
     }
   };
-  
 
+  // Filter data based on search query and showAll flag
   const filterData = (data, showAll, query) => {
     const lowerCaseQuery = query.toLowerCase();
     const filtered = data.filter(entry => 
@@ -75,12 +78,14 @@ const OnlineFormsData = () => {
     setFilteredData(filtered);
   };
 
+  // Fetch data from Google Sheets
   const fetchSheetsData = async () => {
     setLoading(true);
     try {
       const response = await axios.post('http://localhost:5001/fetch-sheets-data');
       message.success(response.data.message);
       fetchExcelSevaData();
+      console.log('Fetched data from Google Sheets');
     } catch (error) {
       console.error('Error fetching data from Google Sheets:', error);
       message.error('Error fetching data from Google Sheets');
@@ -107,6 +112,7 @@ const OnlineFormsData = () => {
     setAmountModalVisible(true);
   };
 
+  // Handle deletion of service
   const handleDeleteService = (record) => {
     Modal.confirm({
       title: 'Confirm Deletion',
@@ -119,6 +125,7 @@ const OnlineFormsData = () => {
           await axios.delete(`http://localhost:5001/delete-entry/${record.id}`);
           message.success('Service deleted successfully');
           fetchExcelSevaData();
+          console.log('Deleted service and refreshed data');
         } catch (error) {
           console.error('Error deleting service:', error);
           message.error('Failed to delete service');
@@ -127,6 +134,7 @@ const OnlineFormsData = () => {
     });
   };
 
+  // Update payment status
   const handleUpdatePaymentStatus = async () => {
     try {
       const values = await form.validateFields();
@@ -137,6 +145,7 @@ const OnlineFormsData = () => {
       message.success('Payment status updated successfully');
       setAmountModalVisible(false);
       fetchExcelSevaData();
+      console.log('Updated payment status and refreshed data');
     } catch (error) {
       console.error('Error updating payment status:', error);
       message.error('Failed to update payment status');
@@ -151,12 +160,7 @@ const OnlineFormsData = () => {
     { title: 'Email', dataIndex: 'email', key: 'email', align: 'center' },
     { title: 'Phone', dataIndex: 'phone', key: 'phone', align: 'center' },
     { title: 'Date', dataIndex: 'date', key: 'date', align: 'center' },
-    { 
-      title: 'Service', 
-      dataIndex: 'serviceName', 
-      key: 'service', 
-      align: 'center' 
-    },
+    { title: 'Service', dataIndex: 'serviceName', key: 'service', align: 'center' },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', align: 'center' },
     { title: 'Payment Status', dataIndex: 'payment_status', key: 'payment_status', align: 'center' },
     { 
