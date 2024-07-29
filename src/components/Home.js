@@ -12,24 +12,11 @@ const { confirm } = Modal;
 
 const emailDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com"];
 
-const maskPhoneNumber = (phone) => {
-  if (!phone) return '';
-  return phone.replace(/.(?=.{4})/g, '*');
-};
+const maskPhoneNumber = (phone) => phone ? phone.replace(/.(?=.{4})/g, '*') : '';
+const maskEmailAddress = (email) => email ? `${email.slice(0, 3)}****@${email.split('@')[1]}` : '';
 
-const maskEmailAddress = (email) => {
-  if (!email) return '';
-  const [localPart, domainPart] = email.split('@');
-  const maskedLocalPart = localPart.slice(0, 3) + '****';
-  return `${maskedLocalPart}@${domainPart}`;
-};
-
-const phoneNumberValidator = (_, value) => {
-  if (value && !/^\d{10}$/.test(value)) {
-    return Promise.reject(new Error('Please enter a valid 10-digit phone number'));
-  }
-  return Promise.resolve();
-};
+const phoneNumberValidator = (_, value) => 
+  value && !/^\d{10}$/.test(value) ? Promise.reject(new Error('Please enter a valid 10-digit phone number')) : Promise.resolve();
 
 const Home = () => {
   const [devotees, setDevotees] = useState([]);
@@ -48,7 +35,7 @@ const Home = () => {
   const [form] = Form.useForm();
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [accessControl, setAccessControl] = useState({});
-  const [formKey, setFormKey] = useState(0); // Add a unique key for the form
+  const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState({
     FirstName: '',
     LastName: '',
@@ -64,7 +51,6 @@ const Home = () => {
     DOB: null,
   });
   const [emailOptions, setEmailOptions] = useState([]);
-
   const [isDeleteErrorModalVisible, setIsDeleteErrorModalVisible] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
@@ -72,9 +58,7 @@ const Home = () => {
 
   const axiosInstance = useMemo(() => axios.create({
     baseURL: 'http://localhost:5001',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   }), [token]);
 
   const fetchAccessControl = async (userType) => {
@@ -93,6 +77,7 @@ const Home = () => {
       const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
       setDevotees(sortedDevotees);
       setTotalDevotees(sortedDevotees.length);
+      console.log('Fetched devotees data');
     } catch (error) {
       message.error('Failed to load devotees');
     } finally {
@@ -106,11 +91,8 @@ const Home = () => {
         axiosInstance.get('/services'),
         axiosInstance.get('/categories')
       ]);
-
       setServices(servicesResponse.data);
       setCategories(categoriesResponse.data);
-
-      // Filter active services based on active categories and service status
       const activeCategories = categoriesResponse.data.filter(category => category.Active);
       const activeCategoryIds = activeCategories.map(category => category.category_id);
       const activeServicesData = servicesResponse.data.filter(service => service.Active && activeCategoryIds.includes(service.category_id));
@@ -143,7 +125,7 @@ const Home = () => {
 
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
-    setFamilyMembers([]); // Start with no family members
+    setFamilyMembers([]);
     setFormData({
       FirstName: '',
       LastName: '',
@@ -158,8 +140,8 @@ const Home = () => {
       Star: '',
       DOB: null,
     });
-    setEmailOptions([]); // Clear email options
-    setFormKey(prevKey => prevKey + 1); // Force form re-render by changing key
+    setEmailOptions([]);
+    setFormKey(prevKey => prevKey + 1);
     setIsModalVisible(true);
   };
 
@@ -182,7 +164,7 @@ const Home = () => {
       ...devotee,
       DOB: devotee.DOB ? moment(devotee.DOB) : null
     });
-    setEmailOptions([]); // Clear email options
+    setEmailOptions([]);
     setIsModalVisible(true);
   };
 
@@ -202,6 +184,7 @@ const Home = () => {
             try {
               await axiosInstance.delete(`/devotees/${id}`);
               message.success('Devotee deleted');
+              console.log('Deleted devotee');
               fetchDevotees();
             } catch (error) {
               message.error('Failed to delete devotee');
@@ -222,7 +205,6 @@ const Home = () => {
     sevaForm.resetFields();
     sevaForm.setFieldsValue({
       Name: `${devotee.FirstName} ${devotee.LastName}`,
-      // AmountPaid: 0,
     });
     setSelectedPaymentMethod('');
     setIsSevaModalVisible(true);
@@ -260,6 +242,7 @@ const Home = () => {
 
       await axiosInstance.post('/activities', payload);
       message.success('Seva added successfully');
+      console.log('Added seva');
       setIsSevaModalVisible(false);
       sevaForm.resetFields();
     } catch (error) {
@@ -278,7 +261,6 @@ const Home = () => {
 
   const handleOk = async (values) => {
     try {
-      // Check for existing email if Email is not null or empty
       if (values.Email) {
         const emailResponse = await axiosInstance.get(`/devotees?search=${values.Email}`);
         if (emailResponse.data.length > 0 && (!currentDevotee || currentDevotee.Email !== values.Email)) {
@@ -287,7 +269,6 @@ const Home = () => {
         }
       }
 
-      // Check for existing phone if Phone is not null or empty
       if (values.Phone) {
         const phoneResponse = await axiosInstance.get(`/devotees?search=${values.Phone}`);
         if (phoneResponse.data.length > 0 && (!currentDevotee || currentDevotee.Phone !== values.Phone)) {
@@ -315,12 +296,14 @@ const Home = () => {
       if (currentDevotee) {
         await axiosInstance.put(`/devotees/${currentDevotee.DevoteeId}`, payload);
         message.success('Devotee updated');
+        console.log('Updated devotee');
       } else {
         const response = await axiosInstance.post('/devotees', payload);
         if (response.data.error) {
           message.error(response.data.error);
         } else {
           message.success('Devotee added');
+          console.log('Added devotee');
         }
       }
       fetchDevotees();
@@ -342,11 +325,7 @@ const Home = () => {
 
   const handleFamilyChange = (index, field, value) => {
     const newFamilyMembers = [...familyMembers];
-    if (field === 'DOB') {
-      newFamilyMembers[index][field] = value ? moment(value) : null;
-    } else {
-      newFamilyMembers[index][field] = value;
-    }
+    newFamilyMembers[index][field] = field === 'DOB' ? (value ? moment(value) : null) : value;
     setFamilyMembers(newFamilyMembers);
   };
 
@@ -366,6 +345,7 @@ const Home = () => {
         const response = await axiosInstance.get(`/devotees?search=${value}`);
         const sortedDevotees = response.data.sort((a, b) => new Date(b.LastModified) - new Date(a.LastModified));
         setDevotees(sortedDevotees);
+        console.log('Searched devotees and refreshed data');
       } catch (error) {
         message.error('Failed to search devotees');
       } finally {
@@ -384,9 +364,7 @@ const Home = () => {
     if (value.includes('@')) {
       const [localPart, domainPart] = value.split('@');
       setEmailOptions(
-        emailDomains
-          .filter(domain => domain.includes(domainPart))
-          .map(domain => `${localPart}@${domain}`)
+        emailDomains.filter(domain => domain.includes(domainPart)).map(domain => `${localPart}@${domain}`)
       );
     } else {
       setEmailOptions([]);
@@ -394,17 +372,16 @@ const Home = () => {
   };
 
   const disabledDate = (current) => {
-    // Disable all dates except Saturdays if selected service is "Annadan or Rathostava"
     const selectedServiceObject = activeServices.find(service => service.Service === selectedService);
     if (selectedServiceObject && (selectedServiceObject.ServiceId === 269 || selectedServiceObject.ServiceId === 270)) {
-      return current && current.day() !== 6; // Disable all dates except Saturdays
+      return current && current.day() !== 6;
     }
     return false;
   };
 
   const columns = [
-    { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName',  align: 'center'},
-    { title: 'Last Name', dataIndex: 'LastName', key: 'LastName',  align: 'center'},
+    { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName', align: 'center' },
+    { title: 'Last Name', dataIndex: 'LastName', key: 'LastName', align: 'center' },
     { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text), align: 'center' },
     { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text), align: 'center' },
     {
@@ -414,7 +391,7 @@ const Home = () => {
           {accessControl.Home?.can_edit === 1 && <Button onClick={() => handleEditDevotee(record)} style={{ marginLeft: 8 }}>Edit</Button>}
           {accessControl.Home?.can_delete === 1 && <Button onClick={() => handleDeleteDevotee(record.DevoteeId)} danger style={{ marginLeft: 8 }}>Delete</Button>}
         </>
-      ),  align: 'center'
+      ), align: 'center'
     }
   ];
 
@@ -452,7 +429,7 @@ const Home = () => {
         onCancel={handleCancel}
         footer={null}
         width={800}
-        key={formKey} // Add the key to force remount
+        key={formKey}
       >
         <Form
           form={form}
@@ -486,11 +463,7 @@ const Home = () => {
               <Form.Item
                 name="Phone"
                 label="Phone Number"
-                rules={[
-                  {
-                    validator: phoneNumberValidator
-                  }
-                ]}
+                rules={[{ validator: phoneNumberValidator }]}
               >
                 <Input placeholder="Phone Number" style={{ height: 50 }} />
               </Form.Item>
@@ -499,11 +472,7 @@ const Home = () => {
               <Form.Item
                 name="AltPhone"
                 label="Alternate Phone Number"
-                rules={[
-                  {
-                    validator: phoneNumberValidator
-                  }
-                ]}
+                rules={[{ validator: phoneNumberValidator }]}
               >
                 <Input placeholder="Alternate Phone Number" style={{ height: 50 }} />
               </Form.Item>
@@ -550,12 +519,7 @@ const Home = () => {
               <Form.Item
                 name="Email"
                 label="Email"
-                rules={[
-                  { 
-                    type: 'email', 
-                    message: 'The input is not valid E-mail!' 
-                  }
-                ]}
+                rules={[{ type: 'email', message: 'The input is not valid E-mail!' }]}
               >
                 <AutoComplete
                   options={emailOptions.map(email => ({ value: email }))}
@@ -568,7 +532,7 @@ const Home = () => {
           </Row>
           <div style={{ marginTop: 16 }}>
             <h3>Family Members</h3>
-            {familyMembers.length === 0 && ( // Check if there are no family members
+            {familyMembers.length === 0 && (
               <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
                 + Add Family Member
               </Button>
@@ -641,7 +605,7 @@ const Home = () => {
                 </Row>
               </div>
             ))}
-            {familyMembers.length > 0 && ( // Show the button only if there are family members
+            {familyMembers.length > 0 && (
               <Button type="dashed" onClick={addFamilyMember} style={{ width: '100%' }}>
                 + Add Family Member
               </Button>
