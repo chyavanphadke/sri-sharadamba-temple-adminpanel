@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './TV.module.css';
 import axios from 'axios';
-
 import rathotsavaImage from '../assets/tv_sevas/Rathotsava.webp';
 import annadanImage from '../assets/tv_sevas/Annadan.webp';
 import vastraImage from '../assets/tv_sevas/Vastra.webp';
@@ -14,6 +13,7 @@ import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
 import generalImage from '../assets/tv_sevas/general.webp';
 
 const TV = () => {
+  // State management
   const [dateTime, setDateTime] = useState(new Date());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -24,6 +24,7 @@ const TV = () => {
   const [showActivities, setShowActivities] = useState(false);
   const [currentMode, setCurrentMode] = useState('slideshow'); // 'slideshow' or 'activities'
 
+  // Update date and time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -32,11 +33,13 @@ const TV = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch data from API
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/events');
         setEvents(response.data);
+        console.log('Fetched events:', response.data);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -46,6 +49,7 @@ const TV = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/panchanga');
         setPanchanga(response.data);
+        console.log('Fetched Panchanga:', response.data);
       } catch (error) {
         console.error('Error fetching Panchanga:', error);
       }
@@ -54,9 +58,9 @@ const TV = () => {
     const fetchImages = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/images');
-        console.log('Fetched images:', response.data); // Log fetched images
         const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
         setImages(imageUrls);
+        console.log('Fetched images:', response.data);
       } catch (error) {
         console.error('Error fetching images:', error);
       }
@@ -68,6 +72,7 @@ const TV = () => {
         const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
         setActivities(filteredActivities);
         setShowActivities(filteredActivities.length > 0);
+        console.log('Fetched activities:', response.data);
       } catch (error) {
         console.error('Error fetching today\'s activities:', error);
       }
@@ -88,6 +93,7 @@ const TV = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Handle slideshow and activity display
   useEffect(() => {
     let imageTimer;
     let activityTimer;
@@ -117,11 +123,13 @@ const TV = () => {
     };
   }, [currentMode, images.length, showActivities]);
 
+  // Format date for display
   const formatDate = (date) => {
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
     return new Date(date).toLocaleDateString(undefined, options);
   };
 
+  // Format day and date for display
   const formatDayDate = (date) => {
     const today = resetTime(new Date());
     const eventDate = resetTime(new Date(date));
@@ -138,21 +146,25 @@ const TV = () => {
     }
   };
 
+  // Check if the given date is today
   const isToday = (date) => {
     const today = resetTime(new Date());
     const eventDate = resetTime(new Date(date));
     return eventDate.toDateString() === today.toDateString();
   };
 
+  // Reset time to midnight for date comparison
   const resetTime = (date) => {
     date.setHours(0, 0, 0, 0);
     return date;
   };
 
+  // Format day for display
   const formatDay = (date) => {
     return new Date(date).toLocaleDateString(undefined, { weekday: 'long' });
   };
 
+  // Group activities by service
   const groupActivitiesByService = () => {
     const grouped = activities.reduce((acc, activity) => {
       const service = activity.Service.Service;
@@ -167,6 +179,7 @@ const TV = () => {
 
   const groupedActivities = groupActivitiesByService();
 
+  // Get service image based on service ID
   const getServiceImage = (serviceId) => {
     switch (serviceId) {
       case 270:
