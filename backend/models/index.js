@@ -1,13 +1,14 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
-const env = process.env.NODE_ENV || 'development';
 
+// Configuration for different environments
+const env = process.env.NODE_ENV || 'development';
 const config = {
   development: {
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'seva@1633',
     database: process.env.DB_NAME || 'seva_new',
-    host: process.env.DB_HOST || 'localhost', // Use the Windows host IP if not set
+    host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql'
   },
   test: {
@@ -26,6 +27,7 @@ const config = {
   }
 };
 
+// Initialize Sequelize
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
   dialect: config[env].dialect,
@@ -116,43 +118,43 @@ const Devotee = sequelize.define('Devotee', {
   },
   Phone: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   AltPhone: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   Address: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   City: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   State: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   Zip: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   Email: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   Gotra: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   Star: {
     type: DataTypes.STRING,
-    allowNull: true // Allow null
+    allowNull: true
   },
   DOB: {
     type: DataTypes.DATE,
-    allowNull: true // Allow null
+    allowNull: true
   },
   LastModified: {
     type: DataTypes.DATE,
@@ -261,7 +263,7 @@ const Service = sequelize.define('Service', {
     allowNull: true
   },
   time: {
-    type: DataTypes.STRING,  // Add the new column here
+    type: DataTypes.STRING,
     allowNull: true
   }
 }, {
@@ -403,6 +405,7 @@ const Receipt = sequelize.define('Receipt', {
   freezeTableName: true
 });
 
+// Define AccessControl model
 const AccessControl = sequelize.define('AccessControl', {
   id: {
     type: DataTypes.INTEGER,
@@ -446,6 +449,7 @@ const AccessControl = sequelize.define('AccessControl', {
   freezeTableName: true
 });
 
+// Define EmailCredential model
 const EmailCredential = sequelize.define('EmailCredential', {
   email: {
     type: Sequelize.STRING,
@@ -477,6 +481,7 @@ const GeneralConfigurations = sequelize.define('GeneralConfigurations', {
   timestamps: false,
 });
 
+// Define EditedReceipts model
 const EditedReceipts = sequelize.define('EditedReceipts', {
   EditId: {
     type: DataTypes.INTEGER,
@@ -517,7 +522,7 @@ const EditedReceipts = sequelize.define('EditedReceipts', {
   freezeTableName: true
 });
 
-// Define the ExcelSevaData model
+// Define ExcelSevaData model
 const ExcelSevaData = sequelize.define('ExcelSevaData', {
   status: {
     type: DataTypes.STRING,
@@ -575,15 +580,15 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   unique_id: {
     type: DataTypes.STRING
   },
-  ServiceId: {  // Add this new column
+  ServiceId: {
     type: DataTypes.INTEGER,
     allowNull: true
   }
 }, {
-  timestamps: true, // Add timestamps
+  timestamps: true,
 });
 
-// Set associations
+// Define associations between models
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
 
