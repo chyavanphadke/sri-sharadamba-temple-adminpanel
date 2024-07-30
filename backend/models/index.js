@@ -8,7 +8,7 @@ const config = {
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'seva@1633',
     database: process.env.DB_NAME || 'seva_new',
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || 'localhost', // Use the Windows host IP if not set
     dialect: 'mysql'
   },
   test: {
