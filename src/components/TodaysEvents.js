@@ -9,15 +9,18 @@ const { Content } = Layout;
 const { Title, Text } = Typography;
 
 const TodaysEvents = () => {
+  // State management
   const [events, setEvents] = useState({});
   const [selectedDate, setSelectedDate] = useState(moment());
   const [panchanga, setPanchanga] = useState({});
 
+  // Fetch events and Panchanga on component mount and date change
   useEffect(() => {
     fetchEvents(selectedDate);
     fetchPanchanga(selectedDate);
   }, [selectedDate]);
 
+  // Fetch events for the selected date
   const fetchEvents = async (date) => {
     try {
       const response = await axios.get(`http://localhost:5001/todays-events?date=${date.format('YYYY-MM-DD')}`);
@@ -28,6 +31,7 @@ const TodaysEvents = () => {
     }
   };
 
+  // Fetch Panchanga details for the selected date
   const fetchPanchanga = async (date) => {
     try {
       const response = await axios.get(`http://localhost:5001/api/panchanga?date=${date.format('M/D/YYYY')}`);
@@ -38,14 +42,17 @@ const TodaysEvents = () => {
     }
   };
 
+  // Handle previous day navigation
   const handlePreviousDay = () => {
     setSelectedDate(selectedDate.clone().subtract(1, 'days'));
   };
 
+  // Handle next day navigation
   const handleNextDay = () => {
     setSelectedDate(selectedDate.clone().add(1, 'days'));
   };
 
+  // Render an event card
   const renderEventCard = (service, activities) => {
     if (service === "DONATION") return null;
     return (
@@ -72,11 +79,12 @@ const TodaysEvents = () => {
     );
   };
 
+  // Render Panchanga details
   const renderPanchanga = () => (
     <Card title="Panchanga" className="panchanga-card">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12}>
-        <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
+          <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
           <Text><strong>Weekday:</strong> {panchanga.Weekday}</Text><br />
           <Text><strong>Nakshatra:</strong> {panchanga.Nakshatra}</Text><br />
           <Text><strong>Yoga:</strong> {panchanga.Yoga}</Text><br />
