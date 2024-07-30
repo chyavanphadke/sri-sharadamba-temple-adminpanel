@@ -2,13 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Layout, Table, Button, message, Input, Modal, Select, Row, Col } from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import './SuperAdmin.css'; // Ensure this is the correct path to your CSS file
 
 const { Content } = Layout;
 const { Option } = Select;
 
 const SuperAdmin = () => {
+  // State management
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -17,6 +18,7 @@ const SuperAdmin = () => {
   const [userMap, setUserMap] = useState({});
   const [loggedInUsername, setLoggedInUsername] = useState('');
 
+  // Initial data fetch on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -27,6 +29,7 @@ const SuperAdmin = () => {
     fetchUserMap();
   }, []);
 
+  // Fetch users from the server
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -38,6 +41,7 @@ const SuperAdmin = () => {
       const filteredUsers = response.data.filter(user => !user.old_users);
       const sortedUsers = filteredUsers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setUsers(sortedUsers);
+      console.log('Users fetched successfully');
     } catch (error) {
       message.error('Failed to load users');
     } finally {
@@ -45,6 +49,7 @@ const SuperAdmin = () => {
     }
   };
 
+  // Fetch user map (mapping of user IDs to usernames)
   const fetchUserMap = async () => {
     try {
       console.log('Fetching user map...');
@@ -65,6 +70,7 @@ const SuperAdmin = () => {
     }
   };
 
+  // Handle user actions (approve, disapprove, delete, update access level)
   const handleAction = async (userid, action) => {
     try {
       const token = localStorage.getItem('token');
@@ -108,18 +114,21 @@ const SuperAdmin = () => {
     }
   };
 
+  // Handle access level change
   const handleAccessLevelChange = (userid, username, accessLevel) => {
     setModalContent(`You want to provide ${accessLevel} access to ${username}?`);
     setModalAction(() => () => handleAction(userid, accessLevel));
     setIsModalVisible(true);
   };
 
+  // Handle user deletion
   const handleDeleteUser = (userid, username) => {
     setModalContent(`Are you sure you want to delete user ${username}?`);
     setModalAction(() => () => handleAction(userid, 'delete'));
     setIsModalVisible(true);
   };
 
+  // Debounced search for users
   const debounceSearch = useCallback(_.debounce(async (value) => {
     if (value.length >= 3) {
       setLoading(true);
@@ -132,6 +141,7 @@ const SuperAdmin = () => {
         const filteredUsers = response.data.filter(user => !user.old_users);
         const sortedUsers = filteredUsers.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         setUsers(sortedUsers);
+        console.log('Users searched successfully');
       } catch (error) {
         message.error('Failed to search users');
       } finally {
@@ -142,14 +152,20 @@ const SuperAdmin = () => {
     }
   }, 300), []);
 
+  // Handle search input change
   const handleSearchChange = (e) => {
     debounceSearch(e.target.value);
   };
 
+  // Table columns definition
   const columns = [
     { title: 'Username', dataIndex: 'username', key: 'username', align: 'center' },
     { title: 'Email', dataIndex: 'email', key: 'email', align: 'center' },
-    { title: 'Access Level', dataIndex: 'usertype', key: 'usertype', render: (text, record) => (
+    {
+      title: 'Access Level',
+      dataIndex: 'usertype',
+      key: 'usertype',
+      render: (text, record) => (
         <Select
           defaultValue={text}
           onChange={(value) => handleAccessLevelChange(record.userid, record.username, value)}
@@ -160,12 +176,21 @@ const SuperAdmin = () => {
           <Option value="Admin">Admin</Option>
           {(loggedInUsername === 'nb' || loggedInUsername === 'aghamya') && <Option value="Super Admin">Super Admin</Option>}
         </Select>
-      ), align: 'center'
+      ),
+      align: 'center'
     },
-    { title: 'Approved By', dataIndex: 'approvedBy', key: 'approvedBy', render: (text) => text === 'Auto Approved' ? 'Auto Approved' : (userMap[text] || 'N/A'), align: 'center' },
+    {
+      title: 'Approved By',
+      dataIndex: 'approvedBy',
+      key: 'approvedBy',
+      render: (text) => text === 'Auto Approved' ? 'Auto Approved' : (userMap[text] || 'N/A'),
+      align: 'center'
+    },
     { title: 'Approved', dataIndex: 'approved', key: 'approved', render: (text) => text ? 'Yes' : 'No', align: 'center' },
     {
-      title: 'Actions', key: 'actions', render: (text, record) => (
+      title: 'Actions',
+      key: 'actions',
+      render: (text, record) => (
         <>
           {record.approved ? (
             <Button onClick={() => handleAction(record.userid, 'disapprove')} style={{ marginRight: 8 }}>Disapprove</Button>
@@ -174,7 +199,8 @@ const SuperAdmin = () => {
           )}
           <Button onClick={() => handleDeleteUser(record.userid, record.username)} danger style={{ marginRight: 8 }}>Delete</Button>
         </>
-      ), align: 'center'
+      ),
+      align: 'center'
     }
   ];
 
