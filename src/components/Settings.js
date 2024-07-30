@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox, Select, Dropdown, Menu } from 'antd';
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import './Settings.css';
 
 const { Content } = Layout;
