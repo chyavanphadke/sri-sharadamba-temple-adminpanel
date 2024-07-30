@@ -519,7 +519,10 @@ const EditedReceipts = sequelize.define('EditedReceipts', {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
-  }
+  },
+  Status: {
+    type: DataTypes.STRING
+  },
 }, {
   timestamps: false,
   freezeTableName: true

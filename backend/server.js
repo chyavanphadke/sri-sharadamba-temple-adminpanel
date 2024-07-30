@@ -930,7 +930,7 @@ app.get('/statistics/most-done-services', async (req, res) => {
 
 // Route to insert into EditedReceipts
 app.post('/edited-receipts', async (req, res) => {
-  const { ActivityId, Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
+  const { ActivityId, Name, OldService, NewService, OldAmount, NewAmount, EditedBy, Status } = req.body;
   try {
     const newEdit = await EditedReceipts.create({
       ActivityId,
@@ -940,6 +940,7 @@ app.post('/edited-receipts', async (req, res) => {
       OldAmount,
       NewAmount,
       EditedBy,
+      Status: Status || 'Edited', // Default status to 'Edited' if not provided
       EditedOn: new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
     });
     res.status(201).json(newEdit);

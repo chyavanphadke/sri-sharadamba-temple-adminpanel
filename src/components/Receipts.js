@@ -172,9 +172,30 @@ const Receipts = () => {
   
   const handleDelete = async (activityId) => {
     try {
+      const activityToDelete = pendingReceipts.find(receipt => receipt.ActivityId === activityId) || approvedReceipts.find(receipt => receipt.ActivityId === activityId);
+      
+      if (!activityToDelete) {
+        message.error('Activity not found');
+        return;
+      }
+      
       await axiosInstance.delete(`/receipts/${activityId}`);
+      
+      // Log the deletion in editedreceipts table
+      await axiosInstance.post('/edited-receipts', {
+        ActivityId: activityToDelete.ActivityId,
+        Name: activityToDelete.Name,
+        OldService: activityToDelete.Service,
+        NewService: activityToDelete.Service,
+        OldAmount: activityToDelete.Amount,
+        NewAmount: activityToDelete.Amount,
+        EditedBy: jwtDecode(localStorage.getItem('token')).username,
+        Status: 'Deleted'
+      });
+  
       message.success('Receipt deleted successfully');
       fetchPendingReceipts(pendingSearch, pageSize);
+      fetchApprovedReceipts(approvedSearch, pageSize);
     } catch (error) {
       message.error('Failed to delete receipt');
     }
@@ -184,9 +205,9 @@ const Receipts = () => {
     try {
       const updatedData = form.getFieldsValue();
       const originalData = currentActivity;
-
+  
       await axiosInstance.put(`/activities/${currentActivity.ActivityId}`, updatedData);
-
+  
       // Log the edited receipt
       await axiosInstance.post('/edited-receipts', {
         ActivityId: currentActivity.ActivityId,
@@ -195,9 +216,10 @@ const Receipts = () => {
         NewService: updatedData.Service,
         OldAmount: originalData.Amount,
         NewAmount: updatedData.Amount,
-        EditedBy: jwtDecode(localStorage.getItem('token')).username
+        EditedBy: jwtDecode(localStorage.getItem('token')).username,
+        Status: 'Edited'
       });
-
+  
       message.success('Activity updated successfully');
       console.log('Updated activity:', currentActivity.ActivityId);
       setIsModalVisible(false);
@@ -206,7 +228,7 @@ const Receipts = () => {
     } catch (error) {
       message.error('Failed to update activity');
     }
-  };
+  };  
 
   const handleEditCancel = () => {
     setIsModalVisible(false);
@@ -320,6 +342,7 @@ const Receipts = () => {
   ];
 
   const columnsEdited = [
+    { title: 'Status', dataIndex: 'Status', key: 'Status', align: 'center' },
     { title: 'Activity ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
@@ -359,7 +382,7 @@ const Receipts = () => {
       key: 'EditedOn', 
       render: (text) => moment(text).format('MMM D, YYYY h:mm A'), align: 'center'
     },
-  ];
+  ];  
   
   // Generate PDF for a given record
   const generatePDF = (record) => {
