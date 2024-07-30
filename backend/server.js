@@ -825,6 +825,109 @@ app.delete('/activities/:id', async (req, res) => {
   }
 });
 
+// Endpoint to get top 10 contributions within a date range and price range
+app.get('/statistics', async (req, res) => {
+  const { from, to, minAmount, maxAmount } = req.query;
+  try {
+    const results = await Activity.findAll({
+      attributes: [
+        'DevoteeId',
+        [sequelize.fn('SUM', sequelize.col('Amount')), 'TotalAmount'],
+        [sequelize.col('Devotee.DevoteeId'), 'Devotee.DevoteeId'],
+        [sequelize.col('Devotee.FirstName'), 'Devotee.FirstName'],
+        [sequelize.col('Devotee.LastName'), 'Devotee.LastName'],
+      ],
+      include: [
+        {
+          model: Devotee,
+          attributes: [],
+        },
+      ],
+      where: {
+        ActivityDate: {
+          [Op.between]: [new Date(from), new Date(new Date(to).setHours(23, 59, 59, 999))],
+        },
+        Amount: {
+          [Op.between]: [minAmount, maxAmount],
+        },
+      },
+      group: ['DevoteeId'],
+      order: [[sequelize.fn('SUM', sequelize.col('Amount')), 'DESC']],
+      limit: 10,
+      raw: true,
+    });
+
+    const data = results.map((item) => ({
+      DevoteeId: item['Devotee.DevoteeId'],
+      DevoteeName: `${item['Devotee.FirstName']} ${item['Devotee.LastName']}`,
+      TotalAmount: item.TotalAmount,
+    }));
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error('Error fetching statistics:', err);
+    res.status(500).json({ message: 'Error fetching statistics', error: err.message });
+  }
+});
+
+// Endpoint to get the maximum Total Contribution value for a selected date range
+app.get('/statistics/max-contribution', async (req, res) => {
+  const { from, to } = req.query;
+  try {
+    const result = await Activity.findOne({
+      attributes: [[sequelize.fn('MAX', sequelize.col('Amount')), 'maxAmount']],
+      where: {
+        ActivityDate: {
+          [Op.between]: [new Date(from), new Date(new Date(to).setHours(23, 59, 59, 999))],
+        },
+      },
+      raw: true,
+    });
+    res.status(200).json(result.maxAmount);
+  } catch (err) {
+    console.error('Error fetching max contribution:', err);
+    res.status(500).json({ message: 'Error fetching max contribution', error: err.message });
+  }
+});
+
+// Add this endpoint to fetch the most done services within a date range
+app.get('/statistics/most-done-services', async (req, res) => {
+  const { from, to } = req.query;
+
+  try {
+    const mostDoneServices = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.between]: [new Date(from), new Date(to)],
+        },
+      },
+      attributes: [
+        'ServiceId',
+        [sequelize.fn('COUNT', sequelize.col('Activity.ServiceId')), 'serviceCount'],
+      ],
+      group: ['ServiceId'],
+      order: [[sequelize.fn('COUNT', sequelize.col('Activity.ServiceId')), 'DESC']],
+      limit: 10,
+      include: [
+        {
+          model: Service,
+          attributes: ['Service'],
+        },
+      ],
+    });
+
+    const formattedData = mostDoneServices.map((service) => ({
+      Service: service.Service.Service,
+      Count: service.dataValues.serviceCount,
+    }));
+
+    res.status(200).json(formattedData);
+  } catch (error) {
+    console.error('Error fetching most done services:', error);
+    res.status(500).json({ message: 'Error fetching most done services', error: error.message });
+  }
+});
+
 // Route to insert into EditedReceipts
 app.post('/edited-receipts', async (req, res) => {
   const { ActivityId, Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
