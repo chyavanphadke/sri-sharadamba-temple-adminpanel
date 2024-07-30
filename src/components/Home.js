@@ -665,7 +665,7 @@ const Home = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="Expected_Donation" label="Expected Donation">
+              <Form.Item name="Expected_Donation" label="Suggested Donation">
                 <Input disabled />
               </Form.Item>
             </Col>
