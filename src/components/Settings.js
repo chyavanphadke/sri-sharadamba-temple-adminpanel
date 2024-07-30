@@ -48,6 +48,18 @@ const Settings = () => {
     fetchGeneralConfigurations();
   }, []);
 
+  const sortServices = (services, categories) => {
+    return services.sort((a, b) => {
+      const categoryA = categories.find(cat => cat.category_id === a.category_id)?.Category_name || '';
+      const categoryB = categories.find(cat => cat.category_id === b.category_id)?.Category_name || '';
+      if (categoryA < categoryB) return -1;
+      if (categoryA > categoryB) return 1;
+      if (a.Service < b.Service) return -1;
+      if (a.Service > b.Service) return 1;
+      return 0;
+    });
+  };
+   
   // Fetch services
   const fetchServices = async () => {
     try {
