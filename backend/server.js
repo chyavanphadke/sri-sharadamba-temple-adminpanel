@@ -825,11 +825,115 @@ app.delete('/activities/:id', async (req, res) => {
   }
 });
 
+// Endpoint to get top 10 contributions within a date range and price range
+app.get('/statistics', async (req, res) => {
+  const { from, to, minAmount, maxAmount } = req.query;
+  try {
+    const results = await Activity.findAll({
+      attributes: [
+        'DevoteeId',
+        [sequelize.fn('SUM', sequelize.col('Amount')), 'TotalAmount'],
+        [sequelize.col('Devotee.DevoteeId'), 'Devotee.DevoteeId'],
+        [sequelize.col('Devotee.FirstName'), 'Devotee.FirstName'],
+        [sequelize.col('Devotee.LastName'), 'Devotee.LastName'],
+      ],
+      include: [
+        {
+          model: Devotee,
+          attributes: [],
+        },
+      ],
+      where: {
+        ActivityDate: {
+          [Op.between]: [new Date(from), new Date(new Date(to).setHours(23, 59, 59, 999))],
+        },
+        Amount: {
+          [Op.between]: [minAmount, maxAmount],
+        },
+      },
+      group: ['DevoteeId'],
+      order: [[sequelize.fn('SUM', sequelize.col('Amount')), 'DESC']],
+      limit: 10,
+      raw: true,
+    });
+
+    const data = results.map((item) => ({
+      DevoteeId: item['Devotee.DevoteeId'],
+      DevoteeName: `${item['Devotee.FirstName']} ${item['Devotee.LastName']}`,
+      TotalAmount: item.TotalAmount,
+    }));
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error('Error fetching statistics:', err);
+    res.status(500).json({ message: 'Error fetching statistics', error: err.message });
+  }
+});
+
+// Endpoint to get the maximum Total Contribution value for a selected date range
+app.get('/statistics/max-contribution', async (req, res) => {
+  const { from, to } = req.query;
+  try {
+    const result = await Activity.findOne({
+      attributes: [[sequelize.fn('MAX', sequelize.col('Amount')), 'maxAmount']],
+      where: {
+        ActivityDate: {
+          [Op.between]: [new Date(from), new Date(new Date(to).setHours(23, 59, 59, 999))],
+        },
+      },
+      raw: true,
+    });
+    res.status(200).json(result.maxAmount);
+  } catch (err) {
+    console.error('Error fetching max contribution:', err);
+    res.status(500).json({ message: 'Error fetching max contribution', error: err.message });
+  }
+});
+
+// Add this endpoint to fetch the most done services within a date range
+app.get('/statistics/most-done-services', async (req, res) => {
+  const { from, to } = req.query;
+
+  try {
+    const mostDoneServices = await Activity.findAll({
+      where: {
+        ServiceDate: {
+          [Op.between]: [new Date(from), new Date(to)],
+        },
+      },
+      attributes: [
+        'ServiceId',
+        [sequelize.fn('COUNT', sequelize.col('Activity.ServiceId')), 'serviceCount'],
+      ],
+      group: ['ServiceId'],
+      order: [[sequelize.fn('COUNT', sequelize.col('Activity.ServiceId')), 'DESC']],
+      limit: 10,
+      include: [
+        {
+          model: Service,
+          attributes: ['Service'],
+        },
+      ],
+    });
+
+    const formattedData = mostDoneServices.map((service) => ({
+      Service: service.Service.Service,
+      Count: service.dataValues.serviceCount,
+    }));
+
+    res.status(200).json(formattedData);
+  } catch (error) {
+    console.error('Error fetching most done services:', error);
+    res.status(500).json({ message: 'Error fetching most done services', error: error.message });
+  }
+});
+
 // Route to insert into EditedReceipts
 app.post('/edited-receipts', async (req, res) => {
-  const { Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
+  const { ActivityId, Name, OldService, NewService, OldAmount, NewAmount, EditedBy } = req.body;
   try {
     const newEdit = await EditedReceipts.create({
+      ActivityId,
       Name,
       OldService,
       NewService,
@@ -847,11 +951,22 @@ app.post('/edited-receipts', async (req, res) => {
 
 app.get('/edited-receipts', async (req, res) => {
   try {
-    const editedReceipts = await EditedReceipts.findAll();
-    res.status(200).json(editedReceipts);
-  } catch (error) {
-    console.error('Error fetching edited receipts:', error);
-    res.status(500).json({ error: 'Failed to fetch edited receipts' });
+    const editedReceipts = await EditedReceipts.findAll({
+      include: [
+        { model: Activity, attributes: ['ActivityId'] } // Ensure this relationship is defined correctly in your models
+      ],
+      order: [['EditedOn', 'DESC']]
+    });
+
+    const editedReceiptsWithActivityId = editedReceipts.map(editedReceipt => ({
+      ...editedReceipt.get(),
+      ActivityId: editedReceipt.Activity.ActivityId
+    }));
+
+    res.status(200).json(editedReceiptsWithActivityId);
+  } catch (err) {
+    console.error('Error fetching edited receipts:', err);
+    res.status(500).json({ message: 'Error fetching edited receipts', error: err.message });
   }
 });
 
@@ -1131,7 +1246,8 @@ app.get('/receipts/approved', async (req, res) => {
       const assistedBy = activity.AssistedBy || {};
 
       return {
-        ReceiptId: receipt.receiptid,
+        receiptid: receipt.receiptid,
+        ActivityId: activity.ActivityId,
         Name: `${devotee.FirstName || ''} ${devotee.LastName || ''}`,
         Email: devotee.Email || '',
         Service: receipt.servicetype,
@@ -1149,6 +1265,26 @@ app.get('/receipts/approved', async (req, res) => {
   } catch (err) {
     console.error('Error fetching approved receipts:', err);
     res.status(500).json({ message: 'Error fetching approved receipts', error: err.message });
+  }
+});
+
+// Delete a receipt by ID
+app.delete('/receipts/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Ensure you are deleting the receipt from the correct model/table
+    const result = await Activity.destroy({
+      where: { ActivityId: id } // or use a different identifier if necessary
+    });
+
+    if (result) {
+      res.status(200).json({ message: 'Receipt deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Receipt not found' });
+    }
+  } catch (err) {
+    console.error('Error deleting receipt:', err);
+    res.status(500).json({ message: 'Error deleting receipt', error: err.message });
   }
 });
 

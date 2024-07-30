@@ -9,6 +9,7 @@ import Reports from './Reports';
 import Receipts from './Receipts';
 import Settings from './Settings';
 import OnlineFormsData from './OnlineFormsData'; // New import for OnlineFormsData
+import Statistics from './Statistics'; // New import for Statistics
 import { GoogleSpreadsheet } from 'google-spreadsheet'; // Import GoogleSpreadsheet for Sheets API
 import { jwtDecode } from 'jwt-decode';
 import './Dashboard.css';
@@ -19,6 +20,8 @@ import ReportIcon from '../assets/icons/file.png';
 import LoginAccessIcon from '../assets/icons/log-in.png';
 import SettingIcon from '../assets/icons/cogwheel.png';
 import onlineDataIcon from '../assets/icons/online-data.png';
+import StatisticsIcon from '../assets/icons/trend.png'; // New icon for Statistics
+//import ListOfSevasIcon from '../assets/icons/cogwheel.png';
 
 const { Header, Content, Sider } = Layout;
 
@@ -126,6 +129,7 @@ const Dashboard = () => {
     { key: '/dashboard/receipts', icon: <img src={ReceiptIcon} alt="Receipts" className="custom-icon" />, label: <Link to="/dashboard/receipts">Receipts</Link>, access: accessControl.Receipts?.can_view },
     { key: '/dashboard/reports', icon: <img src={ReportIcon} alt="Reports" className="custom-icon" />, label: <Link to="/dashboard/reports">Reports</Link>, access: accessControl.Reports?.can_view },
     { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
+    { key: '/dashboard/statistics', icon: <img src={StatisticsIcon} alt="Statistics" className="custom-icon" />, label: <Link to="/dashboard/statistics">Statistics</Link>, access: accessControl.Reports?.can_view }, // New menu item for Statistics
     { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view },
   ].filter(item => item.access);
 
@@ -140,6 +144,7 @@ const Dashboard = () => {
       '/dashboard/login-access': 'Login Access',
       '/dashboard/settings': 'Settings',
       '/dashboard/online-forms-data': 'Online Forms Data',
+      '/dashboard/statistics': 'Statistics',
       '/dashboard/list-of-sevas': 'List of Sevas',
     };
     const breadcrumbItems = pathSnippets.map((_, index) => {
@@ -206,6 +211,7 @@ const Dashboard = () => {
               <Route path="login-access" element={<SuperAdmin />} />
               <Route path="settings" element={<Settings />} />
               <Route path="online-forms-data" element={<OnlineFormsData />} />
+              <Route path="statistics" element={<Statistics />} /> {/* New route for Statistics */}
               <Route path="/" element={<Navigate to="/dashboard/home" />} />
             </Routes>
           </Content>

@@ -488,6 +488,13 @@ const EditedReceipts = sequelize.define('EditedReceipts', {
     autoIncrement: true,
     primaryKey: true
   },
+  ActivityId: { // Add this field
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'Activity', // Name of the target model
+      key: 'ActivityId' // Key in the target model that we're referencing
+    }
+  },
   Name: {
     type: DataTypes.STRING,
     allowNull: false
@@ -612,6 +619,9 @@ Receipt.belongsTo(Service, { foreignKey: 'servicetype', as: 'Service' });
 
 ExcelSevaData.belongsTo(Service, { foreignKey: 'ServiceId' });
 Service.hasMany(ExcelSevaData, { foreignKey: 'ServiceId' });
+
+Activity.hasMany(EditedReceipts, { foreignKey: 'ActivityId' });
+EditedReceipts.belongsTo(Activity, { foreignKey: 'ActivityId' });
 
 // Sync the models with the database
 sequelize.sync()

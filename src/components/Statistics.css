@@ -1,0 +1,28 @@
+.custom-date-picker {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .ant-card {
+    background: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  
+  .ant-table {
+    border-radius: 10px;
+  }
+  
+  .ant-table-thead > tr > th {
+    text-align: center;
+    background-color: #fafafa;
+    font-weight: bold;
+  }
+  
+  .ant-table-tbody > tr > td {
+    text-align: center;
+  }
+  

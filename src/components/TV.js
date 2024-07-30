@@ -11,6 +11,7 @@ import sankataHaraChaturthiImage from '../assets/tv_sevas/Sankata_Hara_Chaturthi
 import sarvaSevaImage from '../assets/tv_sevas/sarva_seva.webp';
 import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
 import generalImage from '../assets/tv_sevas/general.webp';
+import qrCodeImage from '../assets/qr-code.png';
 
 const TV = () => {
   // State management
@@ -233,21 +234,9 @@ const TV = () => {
           </div>
         </div>
         <div className={`${styles.section} ${styles.panchangaCard}`}>
-          <h2>Today's Panchanga</h2>
-          <div className={styles.panchangaContent}>
-            <div className={styles.panchangaLeft}>
-              <p><strong>Sunrise:</strong> {panchanga.Sunrise}</p>
-              <p><strong>Sunset:</strong> {panchanga.Sunset}</p>
-              <p><strong>Moonrise:</strong> {panchanga.Moonrise}</p>
-              <p><strong>Moonset:</strong> {panchanga.Moonset}</p>
-            </div>
-            <div className={styles.panchangaRight}>
-              <p><strong>Weekday:</strong> {panchanga.Weekday}</p>
-              <p><strong>Tithi:</strong> {panchanga.Tithi}</p>
-              <p><strong>Nakshatra:</strong> {panchanga.Nakshatra}</p>
-              <p><strong>Yoga:</strong> {panchanga.Yoga}</p>
-              <p><strong>Karana:</strong> {panchanga.Karana}</p>
-            </div>
+          <h2>Events Update - Scan to Join</h2>
+          <div className={styles.qrCodeContainer}>
+            <img src={qrCodeImage} alt="QR Code" className={styles.qrCode} />
           </div>
         </div>
         <div className={styles.cardsContainer}>

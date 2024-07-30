@@ -7,6 +7,7 @@ import './Receipts.css';
 import { jwtDecode } from 'jwt-decode';
 
 const { Search } = Input;
+const { confirm } = Modal;
 
 const Receipts = () => {
   const [pendingReceipts, setPendingReceipts] = useState([]);
@@ -79,14 +80,19 @@ const Receipts = () => {
   const fetchApprovedReceipts = useCallback(async (search = '', pageSize) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/receipts/approved', { params: { search, pageSize } });
-      setApprovedReceipts(response.data);
+      const response = await axiosInstance.get('/receipts/approved', {
+        params: { search, pageSize }
+      });
+      setApprovedReceipts(response.data.map(receipt => ({
+        ...receipt,
+        ReceiptId: receipt.receiptid // Ensure ReceiptId is included
+      })));
     } catch (error) {
       message.error('Failed to load approved receipts');
     } finally {
       setLoading(false);
     }
-  }, [axiosInstance]);
+  }, [axiosInstance]);  
 
   // Fetch edited receipts from the server
   const fetchEditedReceipts = useCallback(async () => {
@@ -148,7 +154,32 @@ const Receipts = () => {
     setIsModalVisible(true);
   };
 
-  // Handle updating an edited receipt
+  const showDeleteConfirm = (activityId) => {
+    confirm({
+      title: 'Are you sure you want to delete this receipt?',
+      content: 'This action cannot be undone.',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk() {
+        handleDelete(activityId);
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
+  };
+  
+  const handleDelete = async (activityId) => {
+    try {
+      await axiosInstance.delete(`/receipts/${activityId}`);
+      message.success('Receipt deleted successfully');
+      fetchPendingReceipts(pendingSearch, pageSize);
+    } catch (error) {
+      message.error('Failed to delete receipt');
+    }
+  };  
+
   const handleEditOk = async () => {
     try {
       const updatedData = form.getFieldsValue();
@@ -158,6 +189,7 @@ const Receipts = () => {
 
       // Log the edited receipt
       await axiosInstance.post('/edited-receipts', {
+        ActivityId: currentActivity.ActivityId,
         Name: currentActivity.Name,
         OldService: originalData.Service,
         NewService: updatedData.Service,
@@ -224,7 +256,7 @@ const Receipts = () => {
   };
 
   const columnsPending = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Activity ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center'},
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'Date', key: 'Date', render: (text) => formatDate(text), align: 'center' },
@@ -241,7 +273,10 @@ const Receipts = () => {
             <Button className="ant-btn-approve" onClick={() => handleApprove(record.ActivityId)}>Approve</Button>
           )}
           {accessControl.Receipts?.can_edit === 1 && (
-            <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+            <>
+              <Button className="ant-btn-edit" onClick={() => handleEdit(record)} style={{ marginLeft: 8 }}>Edit</Button>
+              <Button className="ant-btn-delete" onClick={() => showDeleteConfirm(record.ActivityId)} danger style={{ marginLeft: 8 }}>Delete</Button>
+            </>
           )}
         </>
       ), align: 'center'
@@ -249,7 +284,7 @@ const Receipts = () => {
   ];
 
   const columnsApproved = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Receipt ID', dataIndex: 'receiptid', key: 'receiptid', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { title: 'Service', dataIndex: 'Service', key: 'Service', align: 'center' },
     { title: 'Activity Date', dataIndex: 'ActivityDate', key: 'ActivityDate', render: (text) => formatDate(text), align: 'center' },
@@ -267,14 +302,14 @@ const Receipts = () => {
           {accessControl.Receipts?.can_email === 1 && (
             <>
               <Button className="ant-btn-email" onClick={() => {
-                setCurrentRecord(record);
-                setIsEmailModalVisible(true);
+                  setCurrentRecord(record);
+                  setIsEmailModalVisible(true);
               }}>
                 {record.emailsentcount > 0 ? 'Re-Email' : 'Email'}
               </Button>
               <Button className="ant-btn-download" onClick={() => {
-                setCurrentRecord(record);
-                setIsPrintModalVisible(true);
+                  setCurrentRecord(record);
+                  setIsPrintModalVisible(true);
               }} style={{ marginLeft: 8 }}>Download</Button>
               <Button className="ant-btn-print" onClick={() => handlePrint(record)} style={{ marginLeft: 8 }}>Print</Button>
             </>
@@ -285,10 +320,10 @@ const Receipts = () => {
   ];
 
   const columnsEdited = [
-    { title: 'Receipt ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
+    { title: 'Activity ID', dataIndex: 'ActivityId', key: 'ActivityId', align: 'center' },
     { title: 'Name', dataIndex: 'Name', key: 'Name', align: 'center' },
     { 
-      title: 'Old Service', 
+      title: 'Service', 
       dataIndex: 'OldService', 
       key: 'OldService', 
       render: (text, record) => (
@@ -296,16 +331,6 @@ const Receipts = () => {
           {text}
         </span>
       ), align: 'center'
-    },
-    { 
-      title: 'New Service', 
-      dataIndex: 'NewService', 
-      key: 'NewService', 
-      render: (text, record) => (
-        <span style={{ color: record.OldService !== record.NewService ? 'red' : 'inherit', fontWeight: record.OldService !== record.NewService ? 'bold' : 'normal' }}>
-          {text}
-        </span>
-      ) , align: 'center'
     },
     { 
       title: 'Old Amount', 
@@ -332,7 +357,7 @@ const Receipts = () => {
       title: 'Edited On', 
       dataIndex: 'EditedOn', 
       key: 'EditedOn', 
-      render: (text) => moment(text).tz('America/Los_Angeles').format('MMM D, YYYY h:mm A'), align: 'center'
+      render: (text) => moment(text).format('MMM D, YYYY h:mm A'), align: 'center'
     },
   ];
   
@@ -343,48 +368,48 @@ const Receipts = () => {
       format: 'letter',
       orientation: 'portrait'
     });
-
+  
     doc.setFont('Helvetica');
-
-    const imgData = '/banner.webp';
+  
+    const imgData = '/banner.webp'; // Ensure this path is correct and accessible
     doc.addImage(imgData, 'WEBP', 0.5, 0.5, 7.5, 1.5);
-
+  
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.02);
     doc.rect(0.25, 0.25, 8, 10.5); // Adding border to entire content
-
+  
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
     doc.text(`Name: ${record ? record.Name : ''}`, 0.5, 2.3);
     doc.text(`Address: ${record && record.Address ? record.Address : 'N/A'}`, 0.5, 2.5);
-
+  
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'normal');
     doc.text('A Note of Appreciation', 4.25, 3, { align: 'center' });
-
+  
     doc.setFontSize(12);
     doc.text(`Dear ${record ? record.Name : ''},`, 0.5, 3.8);
-
+  
     pdfText.forEach((line, index) => {
       doc.text(line, 0.5, 4.1 + index * 0.3); // Adjust the y-coordinate as needed
     });
-
+  
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.04);
     doc.line(0.5, 6.8, 7.5, 6.8);
-
+  
     doc.setFontSize(16);
     doc.text('Receipt', 4.25, 7.2, { align: 'center' });
-
+  
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
     doc.text(`Received from: ${record ? record.Name : ''}`, 0.5, 7.8);
     doc.text(`Donation: $${record ? record.Amount : ''} only`, 0.5, 8.1);
     doc.text(`Receipt No: ${record ? record.ReceiptId : ''}`, 0.5, 8.4);
     doc.text(`Your Check No: ${record ? record.CheckNumber : ''}`, 0.5, 9);
-
+  
     return doc;
-  };
+  };  
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
@@ -516,7 +541,7 @@ const Receipts = () => {
       >
         <Form form={form}>
           <Form.Item name="Service" label="Service">
-            <Input />
+            <Input disabled/>
           </Form.Item>
           <Form.Item name="Amount" label="Amount">
             <Input />
