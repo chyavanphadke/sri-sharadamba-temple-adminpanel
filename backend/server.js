@@ -952,18 +952,10 @@ app.post('/edited-receipts', async (req, res) => {
 app.get('/edited-receipts', async (req, res) => {
   try {
     const editedReceipts = await EditedReceipts.findAll({
-      include: [
-        { model: Activity, attributes: ['ActivityId'] } // Ensure this relationship is defined correctly in your models
-      ],
       order: [['EditedOn', 'DESC']]
     });
 
-    const editedReceiptsWithActivityId = editedReceipts.map(editedReceipt => ({
-      ...editedReceipt.get(),
-      ActivityId: editedReceipt.Activity.ActivityId
-    }));
-
-    res.status(200).json(editedReceiptsWithActivityId);
+    res.status(200).json(editedReceipts);
   } catch (err) {
     console.error('Error fetching edited receipts:', err);
     res.status(500).json({ message: 'Error fetching edited receipts', error: err.message });
