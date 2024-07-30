@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Layout, message, Modal, Table, Checkbox, Select, Dropdown, Menu } from 'antd';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import './Settings.css'; // Import CSS file for styling
+import jwtDecode from 'jwt-decode';
+import './Settings.css';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -17,7 +17,7 @@ const Settings = () => {
   const [emailCredentialsModalVisible, setEmailCredentialsModalVisible] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [services, setServices] = useState([]);
-  const [originalServices, setOriginalServices] = useState([]); // Backup of original services
+  const [originalServices, setOriginalServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,8 +28,8 @@ const Settings = () => {
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [emailText, setEmailText] = useState([]);
   const [autoApprove, setAutoApprove] = useState(false);
-  const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false); // New state
-  const [tempServices, setTempServices] = useState([]); // Temporary state for services
+  const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false);
+  const [tempServices, setTempServices] = useState([]);
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
 
@@ -48,43 +48,31 @@ const Settings = () => {
     fetchGeneralConfigurations();
   }, []);
 
-  const sortServices = (services, categories) => {
-    return services.sort((a, b) => {
-      const categoryA = categories.find(cat => cat.category_id === a.category_id)?.Category_name || '';
-      const categoryB = categories.find(cat => cat.category_id === b.category_id)?.Category_name || '';
-      if (categoryA < categoryB) return -1;
-      if (categoryA > categoryB) return 1;
-      if (a.Service < b.Service) return -1;
-      if (a.Service > b.Service) return 1;
-      return 0;
-    });
-  };
-
+  // Fetch services
   const fetchServices = async () => {
     try {
       const response = await axios.get('http://localhost:5001/services');
       const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
       setServices(sortedServices);
-      setOriginalServices(sortedServices); // Backup original services
+      setOriginalServices(sortedServices);
       setFilteredServices(sortedServices);
-      setTempServices(sortedServices); // Initialize tempServices with fetched data
+      setTempServices(sortedServices);
     } catch (error) {
       message.error('Failed to load services');
     }
   };
 
+  // Fetch categories
   const fetchCategories = async () => {
     try {
-      console.log('Fetching categories...');
       const response = await axios.get('http://localhost:5001/categories');
-      console.log('Categories fetched:', response.data);
       setCategories(response.data);
     } catch (error) {
-      console.error('Error fetching categories:', error.message, error.response);
       message.error('Failed to load categories');
     }
   };
 
+  // Fetch email text
   const fetchEmailText = async () => {
     try {
       const response = await axios.get('http://localhost:5001/email-text');
@@ -95,16 +83,18 @@ const Settings = () => {
     }
   };
 
+  // Fetch general configurations
   const fetchGeneralConfigurations = async () => {
     try {
       const response = await axios.get('http://localhost:5001/general-configurations');
       setAutoApprove(response.data.autoApprove);
-      setExcelSevaEmailConformation(response.data.excelSevaEmailConformation); // Fetch new setting
+      setExcelSevaEmailConformation(response.data.excelSevaEmailConformation);
     } catch (error) {
       message.error('Failed to load general configurations');
     }
   };
 
+  // Save general configurations
   const saveGeneralConfigurations = async (newConfigurations) => {
     try {
       await axios.put('http://localhost:5001/general-configurations', newConfigurations);
@@ -114,6 +104,7 @@ const Settings = () => {
     }
   };
 
+  // Save auto approve setting
   const saveAutoApprove = async (value) => {
     const newConfigurations = {
       autoApprove: value,
@@ -123,6 +114,7 @@ const Settings = () => {
     saveGeneralConfigurations(newConfigurations);
   };
 
+  // Save Excel Seva email confirmation setting
   const saveExcelSevaEmailConformation = async (value) => {
     const newConfigurations = {
       autoApprove,
@@ -132,6 +124,7 @@ const Settings = () => {
     saveGeneralConfigurations(newConfigurations);
   };
 
+  // Change password
   const onFinishPasswordChange = async (values) => {
     try {
       await axios.post('http://localhost:5001/change-password', values, {
@@ -140,14 +133,11 @@ const Settings = () => {
       message.success('Password changed successfully');
       setPasswordModalVisible(false);
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.message) {
-        message.error(error.response.data.message);
-      } else {
-        message.error('Error changing password');
-      }
+      message.error('Error changing password');
     }
   };
 
+  // Handle service change
   const onTempServiceChange = (index, field, value) => {
     const serviceId = filteredServices[index].ServiceId;
     const updatedServices = services.map(service => {
@@ -168,8 +158,8 @@ const Settings = () => {
     setFilteredServices(updatedFilteredServices);
   };
 
+  // Change category active status
   const onCategoryActiveChange = async (index, isActive) => {
-    const serviceId = filteredServices[index].ServiceId;
     const categoryId = filteredServices[index].category_id;
 
     const updatedCategories = categories.map(cat => {
@@ -202,15 +192,14 @@ const Settings = () => {
         Category_name: updatedCategories.find(cat => cat.category_id === categoryId).Category_name,
         Active: isActive,
       });
-
       await axios.put('http://localhost:5001/services', updatedServices);
-
       message.success('Category and associated services updated successfully');
     } catch (error) {
       message.error('Failed to update category and services');
     }
   };
 
+  // Save services
   const handleServiceSave = async () => {
     try {
       await axios.put('http://localhost:5001/services', services);
@@ -222,6 +211,7 @@ const Settings = () => {
     }
   };
 
+  // Handle search
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -236,6 +226,7 @@ const Settings = () => {
     }
   };
 
+  // Add new service
   const handleAddService = async (values) => {
     try {
       const newService = {
@@ -258,6 +249,7 @@ const Settings = () => {
     }
   };
 
+  // Add new category
   const handleAddCategory = async (values) => {
     try {
       const existingCategory = categories.find(category => category.Category_name.toLowerCase() === values.Category_name.toLowerCase());
@@ -280,26 +272,31 @@ const Settings = () => {
     }
   };
 
+  // Open new service modal
   const handleNewServiceModalOpen = () => {
     form.resetFields();
     setNewServiceModalVisible(true);
   };
 
+  // Close new service modal
   const handleNewServiceModalCancel = () => {
     setNewServiceModalVisible(false);
     form.resetFields();
   };
 
+  // Open new category modal
   const handleNewCategoryModalOpen = () => {
     categoryForm.resetFields();
     setNewCategoryModalVisible(true);
   };
 
+  // Close new category modal
   const handleNewCategoryModalCancel = () => {
     setNewCategoryModalVisible(false);
     categoryForm.resetFields();
   };
 
+  // Clear forms
   const handleClearForm = () => {
     form.resetFields();
   };
@@ -308,28 +305,33 @@ const Settings = () => {
     categoryForm.resetFields();
   };
 
+  // Clear search
   const handleClearSearch = () => {
     setSearchTerm('');
     setFilteredServices(services);
   };
 
+  // Clear changes
   const handleClearChanges = () => {
-    setServices(originalServices); // Restore original services
-    setFilteredServices(originalServices); // Restore filtered services to original state
+    setServices(originalServices);
+    setFilteredServices(originalServices);
   };
 
+  // Change theme colors
   const handleChangeColor = () => {
     localStorage.setItem('headerColor', headerColor);
     localStorage.setItem('sidebarColor', sidebarColor);
     window.location.reload();
   };
 
+  // Reset theme colors
   const handleResetColors = () => {
     localStorage.removeItem('headerColor');
     localStorage.removeItem('sidebarColor');
     window.location.reload();
   };
 
+  // Save access rights
   const handleAccessRightsSave = async () => {
     try {
       await axios.put('http://localhost:5001/access-control', accessRights);
@@ -340,6 +342,7 @@ const Settings = () => {
     }
   };
 
+  // Change access rights
   const handleAccessChange = (record, field, value) => {
     const updatedRights = accessRights.map((item) => {
       if (item.id === record.id) {
@@ -350,6 +353,7 @@ const Settings = () => {
     setAccessRights(updatedRights);
   };
 
+  // Fetch access control data
   const fetchAccessControlData = async () => {
     setLoading(true);
     try {
@@ -362,6 +366,7 @@ const Settings = () => {
     }
   };
 
+  // Fetch email credentials
   const fetchEmailCredentials = async () => {
     try {
       const response = await axios.get('http://localhost:5001/email-credentials');
@@ -371,16 +376,19 @@ const Settings = () => {
     }
   };
 
+  // Open access rights modal
   const handleOpenAccessRightsModal = () => {
     fetchAccessControlData();
     setAccessRightsModalVisible(true);
   };
 
+  // Open email credentials modal
   const handleOpenEmailCredentialsModal = () => {
     fetchEmailCredentials();
     setEmailCredentialsModalVisible(true);
   };
 
+  // Save email credentials
   const handleEmailCredentialsSave = async () => {
     try {
       await axios.put('http://localhost:5001/email-credentials', emailCredentials);
@@ -391,32 +399,36 @@ const Settings = () => {
     }
   };
 
+  // Change email credentials
   const handleEmailChange = (field, value) => {
     setEmailCredentials({ ...emailCredentials, [field]: value });
   };
 
+  // Save email text
   const handleSaveEmailText = async () => {
     try {
       const updatedText = form.getFieldValue('emailText').split('\n');
       await axios.put('http://localhost:5001/email-text', updatedText);
       message.success('Email text updated successfully');
       setEmailModalVisible(false);
-      fetchEmailText(); // Refresh the text after saving
+      fetchEmailText();
     } catch (error) {
       message.error('Failed to update email text');
     }
   };
 
+  // Reset email text
   const handleResetEmailText = async () => {
     try {
       await axios.put('http://localhost:5001/email-text/reset');
       message.success('Email text reset to default');
-      fetchEmailText(); // Refresh the text after resetting
+      fetchEmailText();
     } catch (error) {
       message.error('Failed to reset email text');
     }
   };
 
+  // Handle search select
   const handleSearchSelect = (value) => {
     const selectedCategory = categories.find(category => category.Category_name === value);
     if (selectedCategory) {
@@ -427,7 +439,7 @@ const Settings = () => {
         setFilteredServices([selectedService]);
       }
     }
-    setSearchTerm(value); // Set the search term to the selected value
+    setSearchTerm(value);
   };
 
   const getDropdownMenu = () => {
@@ -440,9 +452,7 @@ const Settings = () => {
     ];
 
     return (
-      <Menu
-        onClick={({ key }) => handleSearchSelect(menuItems.find(item => item.key === key).label)}
-      >
+      <Menu onClick={({ key }) => handleSearchSelect(menuItems.find(item => item.key === key).label)}>
         {menuItems.map(item => (
           <Menu.Item key={item.key}>{item.label}</Menu.Item>
         ))}
@@ -450,19 +460,22 @@ const Settings = () => {
     );
   };
 
+  // Open service modal
   const handleOpenServiceModal = () => {
-    setOriginalServices([...services]); // Backup current services
+    setOriginalServices([...services]);
     setSearchTerm('');
     setFilteredServices(services);
     setServiceModalVisible(true);
   };
 
+  // Close service modal
   const handleCloseServiceModal = () => {
     setServiceModalVisible(false);
-    setServices(originalServices); // Restore original services
-    setFilteredServices(originalServices); // Also restore filtered services to original state
+    setServices(originalServices);
+    setFilteredServices(originalServices);
   };
 
+  // Run gear functions
   const handleEditEmailText = async () => {
     try {
       const response = await axios.post('http://localhost:5001/run-gear-functions');
@@ -652,27 +665,15 @@ const Settings = () => {
             onCancel={() => setPasswordModalVisible(false)}
             footer={null}
           >
-            <Form
-              name="change_password"
-              className="change-password-form"
-              onFinish={onFinishPasswordChange}
-            >
-              <Form.Item
-                name="currentPassword"
-                rules={[{ required: true, message: 'Please input your current password!' }]}
-              >
+            <Form name="change_password" className="change-password-form" onFinish={onFinishPasswordChange}>
+              <Form.Item name="currentPassword" rules={[{ required: true, message: 'Please input your current password!' }]}>
                 <Input.Password placeholder="Current Password" />
               </Form.Item>
-              <Form.Item
-                name="newPassword"
-                rules={[{ required: true, message: 'Please input your new password!' }]}
-              >
+              <Form.Item name="newPassword" rules={[{ required: true, message: 'Please input your new password!' }]}>
                 <Input.Password placeholder="New Password" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit">
-                  Change Password
-                </Button>
+                <Button type="primary" htmlType="submit">Change Password</Button>
               </Form.Item>
             </Form>
           </Modal>
@@ -684,15 +685,9 @@ const Settings = () => {
             onOk={handleServiceSave}
             width={1100}
             footer={[
-              <Button key="cancel" onClick={handleCloseServiceModal}>
-                Cancel
-              </Button>,
-              <Button key="clear" onClick={handleClearChanges}>
-                Clear
-              </Button>,
-              <Button key="modify" type="primary" onClick={handleServiceSave}>
-                Modify
-              </Button>,
+              <Button key="cancel" onClick={handleCloseServiceModal}>Cancel</Button>,
+              <Button key="clear" onClick={handleClearChanges}>Clear</Button>,
+              <Button key="modify" type="primary" onClick={handleServiceSave}>Modify</Button>,
             ]}
           >
             <div>
@@ -722,7 +717,7 @@ const Settings = () => {
               rowKey="ServiceId"
               pagination={false}
               size="small"
-              scroll={{ x: true }} // Ensure horizontal scrolling if needed
+              scroll={{ x: true }}
               rowClassName={(record, index) => {
                 const category = categories.find(cat => cat.category_id === record.category_id);
                 const isFirstRow = index === 0 || services[index - 1].category_id !== record.category_id;
@@ -737,39 +732,19 @@ const Settings = () => {
             visible={newServiceModalVisible}
             onCancel={handleNewServiceModalCancel}
             footer={[
-              <Button key="cancel" onClick={handleNewServiceModalCancel}>
-                Cancel
-              </Button>,
-              <Button key="clear" onClick={handleClearForm}>
-                Clear
-              </Button>,
-              <Button key="submit" type="primary" form="add_service" htmlType="submit">
-                Add Service
-              </Button>,
+              <Button key="cancel" onClick={handleNewServiceModalCancel}>Cancel</Button>,
+              <Button key="clear" onClick={handleClearForm}>Clear</Button>,
+              <Button key="submit" type="primary" form="add_service" htmlType="submit">Add Service</Button>,
             ]}
           >
-            <Form
-              name="add_service"
-              className="add-service-form"
-              onFinish={handleAddService}
-              form={form}
-            >
-              <Form.Item
-                name="Service"
-                rules={[{ required: true, message: 'Please input the service name!' }]}
-              >
+            <Form name="add_service" className="add-service-form" onFinish={handleAddService} form={form}>
+              <Form.Item name="Service" rules={[{ required: true, message: 'Please input the service name!' }]}>
                 <Input placeholder="Service Name" />
               </Form.Item>
-              <Form.Item
-                name="Rate"
-                rules={[{ required: true, message: 'Please input the rate!' }]}
-              >
+              <Form.Item name="Rate" rules={[{ required: true, message: 'Please input the rate!' }]}>
                 <Input placeholder="Rate" />
               </Form.Item>
-              <Form.Item
-                name="category_id"
-                rules={[{ required: true, message: 'Please select a category!' }]}
-              >
+              <Form.Item name="category_id" rules={[{ required: true, message: 'Please select a category!' }]}>
                 <Select placeholder="Select Category">
                   {categories.map(category => (
                     <Option key={category.category_id} value={category.category_id}>
@@ -778,10 +753,7 @@ const Settings = () => {
                   ))}
                 </Select>
               </Form.Item>
-              <Form.Item
-                name="time"
-                rules={[{ required: true, message: 'Please select a time!' }]}
-              >
+              <Form.Item name="time" rules={[{ required: true, message: 'Please select a time!' }]}>
                 <Input type="time" placeholder="Select Time" />
               </Form.Item>
             </Form>
@@ -792,23 +764,12 @@ const Settings = () => {
             visible={newCategoryModalVisible}
             onCancel={handleNewCategoryModalCancel}
             footer={[
-              <Button key="cancel" onClick={handleNewCategoryModalCancel}>
-                Cancel
-              </Button>,
-              <Button key="clear" onClick={handleClearCategoryForm}>
-                Clear
-              </Button>,
-              <Button key="submit" type="primary" form="add_category" htmlType="submit">
-                Add Category
-              </Button>,
+              <Button key="cancel" onClick={handleNewCategoryModalCancel}>Cancel</Button>,
+              <Button key="clear" onClick={handleClearCategoryForm}>Clear</Button>,
+              <Button key="submit" type="primary" form="add_category" htmlType="submit">Add Category</Button>,
             ]}
           >
-            <Form
-              name="add_category"
-              className="add-category-form"
-              onFinish={handleAddCategory}
-              form={categoryForm}
-            >
+            <Form name="add_category" className="add-category-form" onFinish={handleAddCategory} form={categoryForm}>
               <Form.Item
                 name="Category_name"
                 rules={[
@@ -867,12 +828,8 @@ const Settings = () => {
             visible={accessRightsModalVisible}
             onCancel={() => setAccessRightsModalVisible(false)}
             footer={[
-              <Button key="cancel" onClick={() => setAccessRightsModalVisible(false)}>
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleAccessRightsSave}>
-                Save
-              </Button>,
+              <Button key="cancel" onClick={() => setAccessRightsModalVisible(false)}>Cancel</Button>,
+              <Button key="save" type="primary" onClick={handleAccessRightsSave}>Save</Button>,
             ]}
           >
             <Table
@@ -881,11 +838,7 @@ const Settings = () => {
               pagination={false}
               loading={loading}
               columns={[
-                {
-                  title: 'Role',
-                  dataIndex: 'role',
-                  key: 'role',
-                },
+                { title: 'Role', dataIndex: 'role', key: 'role' },
                 {
                   title: 'Permission',
                   dataIndex: 'permission',
@@ -910,12 +863,8 @@ const Settings = () => {
             visible={emailCredentialsModalVisible}
             onCancel={() => setEmailCredentialsModalVisible(false)}
             footer={[
-              <Button key="cancel" onClick={() => setEmailCredentialsModalVisible(false)}>
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleEmailCredentialsSave}>
-                Save
-              </Button>,
+              <Button key="cancel" onClick={() => setEmailCredentialsModalVisible(false)}>Cancel</Button>,
+              <Button key="save" type="primary" onClick={handleEmailCredentialsSave}>Save</Button>,
             ]}
           >
             <Form>
@@ -940,12 +889,8 @@ const Settings = () => {
             visible={emailModalVisible}
             onCancel={() => setEmailModalVisible(false)}
             footer={[
-              <Button key="cancel" onClick={() => setEmailModalVisible(false)}>
-                Cancel
-              </Button>,
-              <Button key="save" type="primary" onClick={handleSaveEmailText}>
-                Save
-              </Button>,
+              <Button key="cancel" onClick={() => setEmailModalVisible(false)}>Cancel</Button>,
+              <Button key="save" type="primary" onClick={handleSaveEmailText}>Save</Button>,
             ]}
           >
             <Form form={form}>
