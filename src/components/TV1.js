@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './TV1.module.css';
 
+// Import images for different services
 import rathotsavaImage from '../assets/tv_sevas/Rathotsava.webp';
 import annadanImage from '../assets/tv_sevas/Annadan.webp';
 import vastraImage from '../assets/tv_sevas/Vastra.webp';
@@ -14,6 +15,7 @@ import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
 import generalImage from '../assets/tv_sevas/general.webp';
 
 const TV1 = () => {
+  // State management
   const [dateTime, setDateTime] = useState(new Date());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -22,6 +24,7 @@ const TV1 = () => {
   const [activities, setActivities] = useState([]);
   const [showContent, setShowContent] = useState(true); // Toggle between image and tables
 
+  // Update date and time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -30,6 +33,7 @@ const TV1 = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch data from API
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -73,6 +77,7 @@ const TV1 = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Handle slideshow and content display
   useEffect(() => {
     let contentTimer;
     let progressTimer;
@@ -97,11 +102,13 @@ const TV1 = () => {
     };
   }, [images.length, showContent]);
 
+  // Format date for display
   const formatDate = (date) => {
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
     return new Date(date).toLocaleDateString(undefined, options);
   };
 
+  // Format day and date for display
   const formatDayDate = (date) => {
     const today = resetTime(new Date());
     const eventDate = resetTime(new Date(date));
@@ -118,17 +125,20 @@ const TV1 = () => {
     }
   };
 
+  // Check if the given date is today
   const isToday = (date) => {
     const today = resetTime(new Date());
     const eventDate = resetTime(new Date(date));
     return eventDate.toDateString() === today.toDateString();
   };
 
+  // Reset time to midnight for date comparison
   const resetTime = (date) => {
     date.setHours(0, 0, 0, 0);
     return date;
   };
 
+  // Group activities by service
   const groupActivitiesByService = () => {
     const grouped = activities.reduce((acc, activity) => {
       const service = activity.Service.Service;
@@ -143,6 +153,7 @@ const TV1 = () => {
 
   const groupedActivities = groupActivitiesByService();
 
+  // Get service image based on service ID
   const getServiceImage = (serviceId) => {
     switch (serviceId) {
       case 270:
