@@ -233,28 +233,12 @@ const TV = () => {
             </table>
           </div>
         </div>
-        <div className={`${styles.section} ${styles.panchangaCard}`}>
-          <h2>Events Update - Scan to Join</h2>
-          <div className={styles.qrCodeContainer}>
-            <img src={qrCodeImage} alt="QR Code" className={styles.qrCode} />
-          </div>
-        </div>
-        <div className={styles.cardsContainer}>
-          <div className={`${styles.card} ${styles.dateTimeCard}`}>
-            <h2> </h2>
-            <div className={styles.dateTime}>
-              <h1>{formatDay(dateTime)}</h1>
-              <p>{formatDate(dateTime)}</p>
-              <p>{dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</p>
-            </div>
-          </div>
-          <div className={`${styles.cardTimings} ${styles.timingsCard}`}>
-            <h2>Temple Timings</h2>
-            <div className={styles.templeTimingsContent}>
-              <div className="weekday">
-                <p><strong>Weekdays  | 6:00 PM – 8:00 PM</strong></p>
-                <p><strong>Weekends | 5:30 PM – 8:30 PM</strong></p>
-              </div>
+        <div className={`${styles.sectionQr} ${styles.panchangaCard}`}>
+          <h2>Announcements</h2>
+          <div className={styles.qrCodeWrapper}>
+            <p className={styles.qrText}>Scan and Join the Whatsapp group to get all the event updates.</p>
+            <div className={styles.qrCodeContainer}>
+              <img src={qrCodeImage} alt="QR Code" className={styles.qrCode} />
             </div>
           </div>
         </div>

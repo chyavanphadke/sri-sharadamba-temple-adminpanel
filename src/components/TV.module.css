@@ -360,15 +360,53 @@
   overflow: hidden; /* Prevent overflow */
 }
 
+.sectionQr {
+  background-color: #ffffff; /* White for card background */
+  border: 2px solid #d1e3f8; /* Light blue for card border */
+  border-radius: 15px;
+  margin-bottom: 20px; /* Reduced space between cards */
+  padding: 10px; /* Adjusted padding */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 90%; /* Make sections take full width */
+  height: 35%; /* Adjust height as needed */
+  overflow: hidden; /* Prevent overflow */
+}
+
+.sectionQr h2 {
+  font-size: 24px; /* Adjusted font size for headings */
+  color: #1a73e8; /* Google blue for headings */
+  margin-bottom: 10px;
+  border-bottom: 2px solid #d1e3f8; /* Light blue for border */
+  padding-bottom: 5px;
+}
+
+.qrCodeWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.qrText {
+  flex: 1;
+  font-size: 25px;
+  color: #333;
+  margin-right: 25px; /* Add more space between text and QR code */
+  margin-left: 25px; /* Add more space between text and QR code */
+  line-height: 2; /* Adjust line height for better readability */
+}
+
 .qrCodeContainer {
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  align-items: top;
+  align-items: center;
   height: 100%;
   padding: 0;
 }
 
 .qrCode {
-  max-width: 75%;
-  max-height: 75%;
+  max-width: auto; /* Set a fixed max width */
+  max-height: 320px; /* Set a fixed max height */
+  padding-right: 10px;
 }
