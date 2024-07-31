@@ -1405,7 +1405,7 @@ app.get('/reports', authenticateToken, async (req, res) => {
 
   const whereClause = {
     ActivityDate: {
-      [Op.between]: [new Date(startDate), new Date(endDate)]
+      [Op.between]: [new Date(startDate), new Date(new Date(endDate).setHours(23, 59, 59, 999))]
     }
   };
 
@@ -1427,7 +1427,12 @@ app.get('/reports', authenticateToken, async (req, res) => {
       include: [
         { model: Devotee, attributes: ['DevoteeId', 'FirstName', 'LastName', 'Phone'], required: true },
         { model: Service, attributes: ['Service'], required: true },
-        { model: ModeOfPayment, attributes: ['MethodName'], required: true }
+        { model: ModeOfPayment, attributes: ['MethodName'], required: true },
+        {
+          model: Receipt,
+          attributes: [],
+          required: true // Only include activities that have a corresponding receipt
+        }
       ],
       attributes: ['ActivityId', 'DevoteeId', 'ServiceId', 'Amount', 'ActivityDate', 'ServiceDate', 'PaymentMethod', 'CheckNumber'],
       order: [['ActivityDate', 'DESC']]

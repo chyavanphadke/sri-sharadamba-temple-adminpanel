@@ -78,7 +78,7 @@ const Reports = () => {
 
       const params = {
         startDate: moment(startDate).format('YYYY-MM-DD'),
-        endDate: moment(endDate).format('YYYY-MM-DD'),
+        endDate: moment(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
         service: serviceParam,
         paymentMethod: paymentMethodParam,
         devoteeId: selectedDevoteeId,
@@ -602,7 +602,7 @@ const Reports = () => {
           <Table
             columns={columns}
             dataSource={reportData}
-            rowKey={record => record.id}
+            rowKey={record => record.ActivityId}
             style={{ marginTop: 20 }}
             pagination={{
               pageSize,
