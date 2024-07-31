@@ -1151,8 +1151,7 @@ app.get('/receipts/pending', async (req, res) => {
   try {
     const { search } = req.query;
     const whereClause = {
-      '$Receipt.activityid$': { [Op.is]: null },
-      PrintDate: { [Op.is]: null }
+      '$Receipt.activityid$': { [Op.is]: null }
     };
 
     if (search) {
