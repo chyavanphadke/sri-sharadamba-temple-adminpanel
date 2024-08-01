@@ -31,6 +31,71 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Email error reporting function
+async function reportError(error, context = {}) {
+  try {
+    // Check if error reporting is enabled
+    const config = await GeneralConfigurations.findOne({ where: { configuration: 'errorreport' } });
+    if (!config || config.value !== '1') {
+      console.log('Error reporting is disabled.');
+      return;
+    }
+
+    // Fetch email credentials
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      console.error('Email credentials not found');
+      return;
+    }
+
+    // Configure the email transporter
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword
+      }
+    });
+
+    // Calculate the current date and time in PST
+    const currentTimeUTC = moment().utc();
+    const currentTimePST = currentTimeUTC.subtract(7, 'hours'); // PST is UTC-7 during daylight saving time
+
+    // Format the time for the subject line
+    const formattedTimePST = currentTimePST.format('MMMM Do [at] h:mm A');
+
+    // Collect detailed error information
+    const errorDetails = `
+      An error occurred:
+      - Message: ${error.message}
+      - Stack trace: ${error.stack}
+      - Time: ${formattedTimePST}
+      - Function/Endpoint: ${context.endpoint || 'Unknown'}
+      - Request Parameters: ${JSON.stringify(context.params || {})}
+      - Additional Info: ${context.info || 'None'}
+    `;
+
+    // Define mail options
+    const mailOptions = {
+      from: emailCredential.email,
+      to: ['chyavanphadke@gmail.com', 'yadavmm.30@gmail.com'],
+      subject: `Error Reported at ${formattedTimePST}`,
+      text: errorDetails
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error('Error sending error report email:', err);
+      } else {
+        console.log('Error report email sent:', info.response);
+      }
+    });
+  } catch (err) {
+    console.error('Error reporting the original error:', err);
+  }
+}
+
 // Fetch all users with their details
 app.get('/users', async (req, res) => {
   try {
@@ -39,6 +104,7 @@ app.get('/users', async (req, res) => {
     });
     res.status(200).json(users);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching users:', err);
     res.status(500).json({ message: 'Error fetching users', error: err.message });
   }
@@ -55,6 +121,7 @@ app.get('/user/:userid', async (req, res) => {
     }
     res.status(200).json(user);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching user details:', error);
     res.status(500).json({ message: 'Error fetching user details', error: error.message });
   }
@@ -95,6 +162,7 @@ app.post('/signup', async (req, res) => {
 
     res.status(200).json({ message });
   } catch (err) {
+    await reportError(err);
     console.error('Error signing up:', err);
     res.status(500).json({ message: 'Error signing up', error: err.message });
   }
@@ -126,6 +194,7 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign({ userid: user.userid, username: user.username, usertype: user.usertype }, 'secret_key', { expiresIn: '1h' });
     res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
+    await reportError(err);
     console.error('Error logging in:', err);
     res.status(500).json({ message: 'Error logging in', error: err.message });
   }
@@ -155,6 +224,7 @@ app.post('/change-password', authenticateToken, async (req, res) => {
     await user.save();
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error changing password:', err);
     res.status(500).json({ message: 'Error changing password', error: err.message });
   }
@@ -209,6 +279,7 @@ app.post('/forgot-password', async (req, res) => {
 
     res.status(200).json({ message: `OTP sent to ${email}` });
   } catch (err) {
+    await reportError(err);
     console.error('Error sending OTP email:', err);
     res.status(500).json({ message: 'Error sending OTP email', error: err.message });
   }
@@ -230,6 +301,7 @@ app.post('/verify-otp', async (req, res) => {
 
     res.status(200).json({ message: 'OTP verified successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error verifying OTP:', err);
     res.status(500).json({ message: 'Error verifying OTP', error: err.message });
   }
@@ -257,6 +329,7 @@ app.post('/reset-password', async (req, res) => {
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (err) {
+    await reportError(err);
     console.error('Error resetting password:', err);
     res.status(500).json({ message: 'Error resetting password', error: err.message });
   }
@@ -273,6 +346,7 @@ app.post('/invalidate-token', async (req, res) => {
     }
     res.status(200).json({ message: 'Token invalidated' });
   } catch (err) {
+    await reportError(err);
     console.error('Error invalidating token:', err);
     res.status(500).json({ message: 'Error invalidating token', error: err.message });
   }
@@ -284,6 +358,7 @@ app.get('/user', async (req, res) => {
     const user = await User.findAll();
     res.status(200).json(user);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching user:', err);
     res.status(500).json({ message: 'Error fetching user', error: err.message });
   }
@@ -308,6 +383,7 @@ app.put('/user/:userid/approve', authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: 'User approved successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error approving user:', err);
     res.status(500).json({ message: 'Error approving user', error: err.message });
   }
@@ -327,6 +403,7 @@ app.put('/user/:userid/disapprove', authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: 'User disapproved successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error disapproving user:', err);
     res.status(500).json({ message: 'Error disapproving user', error: err.message });
   }
@@ -343,6 +420,7 @@ app.put('/user/:userid/usertype', async (req, res) => {
     await user.save();
     res.status(200).json({ message: 'User usertype updated successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error updating user usertype:', err);
     res.status(500).json({ message: 'Error updating user usertype', error: err.message });
   }
@@ -357,6 +435,7 @@ app.delete('/user/:userid', async (req, res) => {
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error deleting user:', err);
     res.status(500).json({ message: 'Error deleting user', error: err.message });
   }
@@ -404,6 +483,7 @@ app.get('/devotees/:id/activities', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching activities for devotee:', err);
     res.status(500).json({ message: 'Error fetching activities for devotee', error: err.message });
   }
@@ -420,6 +500,7 @@ app.put('/calendar/activities/:id', async (req, res) => {
     await activity.update(updatedData);
     res.status(200).json({ message: 'Activity updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating activity:', error);
     res.status(500).json({ message: 'Error updating activity', error: error.message });
   }
@@ -462,6 +543,7 @@ app.get('/calendar/activities/today', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching today\'s activities:', err);
     res.status(500).json({ message: 'Error fetching today\'s activities', error: err.message });
   }
@@ -498,6 +580,7 @@ app.get('/devotees', async (req, res) => {
 
     res.status(200).json(devotees);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching devotees:', err);
     res.status(500).json({ message: 'Error fetching devotees', error: err.message });
   }
@@ -508,6 +591,7 @@ app.get('/devotees/:id/family', async (req, res) => {
     const families = await Family.findAll({ where: { DevoteeId: req.params.id }, order: [['LastModified', 'DESC']] });
     res.status(200).json(families);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching family members:', err);
     res.status(500).json({ message: 'Error fetching family members', error: err.message });
   }
@@ -521,6 +605,7 @@ app.get('/devotees/:id/related-count', authenticateToken, async (req, res) => {
 
     res.status(200).json({ activityCount, familyMemberCount });
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching related counts:', err);
     res.status(500).json({ message: 'Error fetching related counts', error: err.message });
   }
@@ -568,6 +653,7 @@ app.post('/devotees', authenticateToken, async (req, res) => {
     await transaction.commit();
     res.status(201).json(devotee);
   } catch (error) {
+    await reportError(error);
     await transaction.rollback();
     console.error('Error adding devotee:', error);
     res.status(500).json({ message: 'Error adding devotee', error: error.message });
@@ -591,6 +677,7 @@ app.put('/devotees/:id', authenticateToken, async (req, res) => {
     await transaction.commit();
     res.status(200).json({ message: 'Devotee updated successfully' });
   } catch (err) {
+    await reportError(err);
     await transaction.rollback();
     console.error('Error updating devotee:', err);
     res.status(500).json({ message: 'Error updating devotee', error: err.message });
@@ -611,6 +698,7 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
     await transaction.commit();
     res.status(200).json({ message: 'Devotee deleted successfully' });
   } catch (err) {
+    await reportError(err);
     await transaction.rollback();
     console.error('Error deleting devotee:', err);
     res.status(500).json({ message: 'Error deleting devotee', error: err.message });
@@ -624,6 +712,7 @@ app.get('/services', async (req, res) => {
     const services = await Service.findAll();
     res.status(200).json(services);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching services:', err);
     res.status(500).json({ message: 'Error fetching services', error: err.message });
   }
@@ -644,6 +733,7 @@ app.post('/services', async (req, res) => {
     });
     res.status(201).json(newService);
   } catch (err) {
+    await reportError(err);
     console.error('Error creating service:', err);
     res.status(500).json({ message: 'Error creating service', error: err.message });
   }
@@ -663,6 +753,7 @@ app.put('/services', async (req, res) => {
     await transaction.commit();
     res.status(200).json({ message: 'Services updated successfully' });
   } catch (error) {
+    await reportError(error);
     await transaction.rollback();
     console.error('Error updating services:', error);
     res.status(500).json({ message: 'Error updating services', error: error.message });
@@ -676,6 +767,7 @@ app.get('/categories', async (req, res) => {
     console.log('Categories fetched:', categories);
     res.status(200).json(categories);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching categories:', err.message, err.stack);
     res.status(500).json({ message: 'Error fetching categories', error: err.message });
   }
@@ -690,6 +782,7 @@ app.post('/categories', async (req, res) => {
     const newCategory = await ServiceCategory.create({ Category_name, Active });
     res.status(201).json(newCategory);
   } catch (err) {
+    await reportError(err);
     console.error('Error creating category:', err);
     res.status(500).json({ message: 'Error creating category', error: err.message });
   }
@@ -722,6 +815,7 @@ app.put('/categories/:id', async (req, res) => {
 
     res.status(200).json(category);
   } catch (err) {
+    await reportError(err);
     console.error('Error updating category:', err);
     res.status(500).json({ message: 'Error updating category', error: err.message });
   }
@@ -736,6 +830,7 @@ app.delete('/categories/:id', async (req, res) => {
     await category.destroy();
     res.status(204).json({ message: 'Category deleted successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error deleting category:', err);
     res.status(500).json({ message: 'Error deleting category', error: err.message });
   }
@@ -747,6 +842,7 @@ app.get('/payment-methods', async (req, res) => {
     const paymentMethods = await ModeOfPayment.findAll();
     res.status(200).json(paymentMethods);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching payment methods:', err);
     res.status(500).json({ message: 'Error fetching payment methods', error: err.message });
   }
@@ -770,6 +866,7 @@ app.post('/activities', async (req, res) => {
     });
     res.status(201).json({ message: 'Activity added successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error adding activity:', error); // Log the error
     res.status(500).json({ message: 'Error adding activity', error: error.message });
   }
@@ -781,6 +878,7 @@ app.get('/activities', async (req, res) => {
     const activities = await Activity.findAll();
     res.json(activities);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching activities:', error);
     res.status(500).send('Failed to fetch activities');
   }
@@ -792,6 +890,7 @@ app.get('/devotees', async (req, res) => {
     const devotees = await Devotee.findAll();
     res.json(devotees);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching devotees:', error);
     res.status(500).send('Failed to fetch devotees');
   }
@@ -803,6 +902,7 @@ app.get('/services', async (req, res) => {
     const services = await Service.findAll();
     res.json(services);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching services:', error);
     res.status(500).send('Failed to fetch services');
   }
@@ -820,6 +920,7 @@ app.delete('/activities/:id', async (req, res) => {
     await activity.destroy();
     res.status(200).json({ message: 'Activity deleted successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error deleting activity:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
@@ -865,6 +966,7 @@ app.get('/statistics', async (req, res) => {
 
     res.status(200).json(data);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching statistics:', err);
     res.status(500).json({ message: 'Error fetching statistics', error: err.message });
   }
@@ -885,6 +987,7 @@ app.get('/statistics/max-contribution', async (req, res) => {
     });
     res.status(200).json(result.maxAmount);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching max contribution:', err);
     res.status(500).json({ message: 'Error fetching max contribution', error: err.message });
   }
@@ -923,6 +1026,7 @@ app.get('/statistics/most-done-services', async (req, res) => {
 
     res.status(200).json(formattedData);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching most done services:', error);
     res.status(500).json({ message: 'Error fetching most done services', error: error.message });
   }
@@ -945,6 +1049,7 @@ app.post('/edited-receipts', async (req, res) => {
     });
     res.status(201).json(newEdit);
   } catch (error) {
+    await reportError(error);
     console.error('Error creating edited receipt:', error);
     res.status(500).json({ error: 'Failed to create edited receipt' });
   }
@@ -958,6 +1063,7 @@ app.get('/edited-receipts', async (req, res) => {
 
     res.status(200).json(editedReceipts);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching edited receipts:', err);
     res.status(500).json({ message: 'Error fetching edited receipts', error: err.message });
   }
@@ -997,6 +1103,7 @@ app.get('/calendar/activities', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching activities for calendar:', err);
     res.status(500).json({ message: 'Error fetching activities for calendar', error: err.message });
   }
@@ -1015,6 +1122,7 @@ app.put('/calendar/activities/:id/complete', async (req, res) => {
 
     res.status(200).json({ message: 'Activity marked as complete' });
   } catch (err) {
+    await reportError(err);
     console.error('Error marking activity as complete:', err);
     res.status(500).json({ message: 'Error marking activity as complete', error: err.message });
   }
@@ -1062,6 +1170,7 @@ app.get('/calendar/activities/range', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching activities for calendar:', err);
     res.status(500).json({ message: 'Error fetching activities for calendar', error: err.message });
   }
@@ -1103,6 +1212,7 @@ app.get('/calendar/activities/past', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching past activities for calendar:', err);
     res.status(500).json({ message: 'Error fetching past activities for calendar', error: err.message });
   }
@@ -1141,6 +1251,7 @@ app.get('/services/upcoming-count', async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching services and upcoming counts:', err);
     res.status(500).json({ message: 'Error fetching services and upcoming counts', error: err.message });
   }
@@ -1192,6 +1303,7 @@ app.get('/receipts/pending', async (req, res) => {
 
     res.status(200).json(pendingReceipts);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching pending receipts:', err);
     res.status(500).json({ message: 'Error fetching pending receipts', error: err.message });
   }
@@ -1255,6 +1367,7 @@ app.get('/receipts/approved', async (req, res) => {
 
     res.status(200).json(approvedReceipts);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching approved receipts:', err);
     res.status(500).json({ message: 'Error fetching approved receipts', error: err.message });
   }
@@ -1275,6 +1388,7 @@ app.delete('/receipts/:id', async (req, res) => {
       res.status(404).json({ message: 'Receipt not found' });
     }
   } catch (err) {
+    await reportError(err);
     console.error('Error deleting receipt:', err);
     res.status(500).json({ message: 'Error deleting receipt', error: err.message });
   }
@@ -1289,6 +1403,7 @@ app.get('/payment-method/:id', async (req, res) => {
     }
     res.status(200).json(paymentMethod);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching payment method:', err);
     res.status(500).json({ message: 'Error fetching payment method', error: err.message });
   }
@@ -1315,6 +1430,7 @@ app.post('/receipts/approve', authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: 'Receipt approved successfully' });
   } catch (err) {
+    await reportError(err);
     console.error('Error approving receipt:', err);
     res.status(500).json({ message: 'Error approving receipt', error: err.message });
   }
@@ -1393,6 +1509,7 @@ app.put('/activities/:id', async (req, res) => {
     await activity.update(updatedData);
     res.status(200).json({ message: 'Activity updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating activity:', error);
     res.status(500).json({ message: 'Error updating activity', error: error.message });
   }
@@ -1452,6 +1569,7 @@ app.get('/reports', authenticateToken, async (req, res) => {
 
     res.status(200).json(reportData);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching reports:', err);
     res.status(500).json({ message: 'Error fetching reports', error: err.message });
   }
@@ -1469,6 +1587,7 @@ app.get('/general-configurations', async (req, res) => {
       excelSevaEmailConformation: excelSevaEmailConfig ? excelSevaEmailConfig.value === '1' : false,
     });
   } catch (error) {
+    await reportError(error);
     res.status(500).json({ message: 'Error fetching general configurations', error });
   }
 });
@@ -1489,6 +1608,7 @@ app.put('/general-configurations', async (req, res) => {
 
     res.json({ message: 'General configurations updated successfully' });
   } catch (error) {
+    await reportError(error);
     res.status(500).json({ message: 'Error updating general configurations', error });
   }
 });
@@ -1514,6 +1634,7 @@ app.get('/devotees/search', async (req, res) => {
     });
     res.status(200).json(devotees);
   } catch (err) {
+    await reportError(err);
     console.error('Error searching devotees:', err);
     res.status(500).json({ message: 'Error searching devotees', error: err.message });
   }
@@ -1532,6 +1653,7 @@ app.get('/devotee/:id', async (req, res) => {
 
     res.status(200).json(devotee);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching devotee details:', error);
     res.status(500).json({ message: 'Error fetching devotee details', error: error.message });
   }
@@ -1586,6 +1708,7 @@ Sringeri Education and Vedic Academy.`,
       res.send('Email sent: ' + info.response);
     });
   } catch (error) {
+    await reportError(error);
     console.error('Error sending email:', error);
     res.status(500).json({ message: 'Error sending email', error: error.message });
   }
@@ -1623,6 +1746,7 @@ app.get('/access-control/:userType', async (req, res) => {
     console.log(`Access control data found: ${JSON.stringify(accessMap)}`);
     res.status(200).json(accessMap);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching access control data:', error);
     res.status(500).json({ message: 'Error fetching access control data', error: error.message });
   }
@@ -1637,6 +1761,7 @@ app.get('/access-control', async (req, res) => {
     }
     res.status(200).json(accessControl);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching access control data:', error);
     res.status(500).json({ message: 'Error fetching access control data', error: error.message });
   }
@@ -1648,6 +1773,7 @@ app.get('/access-control', async (req, res) => {
     const accessControl = await AccessControl.findAll();
     res.status(200).json(accessControl);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching access control data:', error);
     res.status(500).json({ message: 'Error fetching access control data', error: error.message });
   }
@@ -1681,6 +1807,7 @@ app.put('/access-control', async (req, res) => {
 
     res.status(200).json({ message: 'Access controls updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating access controls:', error);
     res.status(500).json({ message: 'Error updating access controls', error: error.message });
   }
@@ -1695,6 +1822,7 @@ app.get('/email-credentials', async (req, res) => {
     }
     res.status(200).json(emailCredential);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching email credentials:', error);
     res.status(500).json({ message: 'Error fetching email credentials', error: error.message });
   }
@@ -1714,6 +1842,7 @@ app.put('/email-credentials', async (req, res) => {
     }
     res.status(200).json({ message: 'Email credentials updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating email credentials:', error);
     res.status(500).json({ message: 'Error updating email credentials', error: error.message });
   }
@@ -1766,6 +1895,7 @@ app.get('/todays-events', async (req, res) => {
 
     res.status(200).json(groupedActivities);
   } catch (err) {
+    await reportError(err);
     console.error('Error fetching activities for date:', err);
     res.status(500).json({ message: 'Error fetching activities for date', error: err.message });
   }
@@ -1798,6 +1928,7 @@ const fetchPanchangaForDate = async (date) => {
     }
     return {};
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching Panchanga from Google Sheets:', error);
     return {};
   }
@@ -1862,6 +1993,7 @@ async function initializeSheetServiceMap() {
       return map;
     }, {});
   } catch (error) {
+    await reportError(error);
     console.error('Error initializing sheet service map:', error);
     throw error;
   }
@@ -1906,6 +2038,7 @@ async function fetchDataFromSheets() {
     }
     return newEntriesCount;
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching data from Google Sheets:', error);
     throw error;
   }
@@ -2136,6 +2269,7 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       }
     });
   } catch (error) {
+    await reportError(error);
     console.error('Error in sendSevaEmail:', error.message);
     console.error(error.stack);
   }
@@ -2162,6 +2296,7 @@ async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
     }
     return devotee;
   } catch (error) {
+    await reportError(error);
     console.error('Error finding or creating devotee:', error);
     throw error;
   }
@@ -2180,6 +2315,7 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
     });
     return activity.ActivityId;
   } catch (error) {
+    await reportError(error);
     console.error('Error creating activity:', error);
     throw error;
   }
@@ -2190,6 +2326,7 @@ async function updateExcelSevaData(data) {
     const entry = await ExcelSevaData.create(data);
     return entry;
   } catch (error) {
+    await reportError(error);
     console.error('Error updating excelsevadata:', error);
     throw error;
   }
@@ -2204,6 +2341,7 @@ async function updateSheetStatus(sheetId, rowIndex, status) {
       resource: { values: [[status]] }
     });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating Google Sheets status:', error);
     throw error;
   }
@@ -2218,6 +2356,7 @@ async function updateSheetSevaId(sheetId, rowIndex, sevaId) {
       resource: { values: [[sevaId]] }
     });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating Google Sheets Seva ID:', error);
     throw error;
   }
@@ -2228,6 +2367,7 @@ app.post('/fetch-sheets-data', async (req, res) => {
     const newEntriesCount = await fetchDataFromSheets();
     res.status(200).json({ message: `${newEntriesCount} new entries fetched` });
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching data from Google Sheets:', error);
     res.status(500).json({ message: 'Error fetching data from Google Sheets', error: error.message });
   }
@@ -2244,6 +2384,7 @@ app.get('/excel-seva-data', async (req, res) => {
     });
     res.status(200).json(excelSevaData);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching ExcelSevaData:', error);
     res.status(500).json({ message: 'Error fetching ExcelSevaData', error: error.message });
   }
@@ -2288,6 +2429,7 @@ app.put('/update-payment-status/:id', async (req, res) => {
 
     res.status(200).json({ message: 'Payment status updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating payment status:', error);
     res.status(500).json({ message: 'Error updating payment status', error: error.message });
   }
@@ -2305,6 +2447,7 @@ app.delete('/delete-entry/:id', async (req, res) => {
     await ExcelSevaData.destroy({ where: { id: entry.id } });
     res.status(200).json({ message: 'Entry deleted successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error deleting entry:', error);
     res.status(500).json({ message: 'Error deleting entry', error: error.message });
   }
@@ -2339,6 +2482,7 @@ app.put('/access-control', async (req, res) => {
 
     res.status(200).json({ message: 'Access controls updated successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error updating access controls:', error);
     res.status(500).json({ message: 'Error updating access controls', error: error.message });
   }
@@ -2352,6 +2496,7 @@ app.get('/email-credentials', async (req, res) => {
     }
     res.status(200).json(emailCredential);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching email credentials:', error);
     res.status(500).json({ message: 'Error fetching email credentials', error: error.message });
   }
@@ -2411,6 +2556,7 @@ const fetchEvents = async () => {
       cachedEvents = [];
     }
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching data from Google Sheets:', error);
   }
 };
@@ -2449,6 +2595,7 @@ const fetchPanchanga = async () => {
       }
     }
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching Panchanga from Google Sheets:', error);
   }
 };
@@ -2503,6 +2650,7 @@ const fetchImages = async () => {
       });
     }
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching images from Google Drive:', error);
   }
 };
@@ -2598,6 +2746,7 @@ app.get('/api/today-activities', async (req, res) => {
 
     res.status(200).json(activities);
   } catch (error) {
+    await reportError(error);
     console.error('Error fetching today\'s activities:', error);
     res.status(500).send('Error fetching today\'s activities');
   }
@@ -2632,6 +2781,7 @@ app.post('/run-gear-functions', async (req, res) => {
     await delay(2000);
     res.status(200).json({ message: 'Gear functions executed successfully' });
   } catch (error) {
+    await reportError(error);
     console.error('Error executing gear functions:', error);
     res.status(500).send('Error executing gear functions');
   }
