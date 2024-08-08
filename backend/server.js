@@ -1316,7 +1316,7 @@ app.get('/receipts/approved', async (req, res) => {
     const whereClause = search
       ? {
           [Op.or]: [
-            { '$Activity.ActivityId$': { [Op.like]: `%${search}%` } }, // Add search by ActivityId
+            { '$Activity.ActivityId$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.DevoteeId$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.FirstName$': { [Op.like]: `%${search}%` } },
             { '$Activity.Devotee.LastName$': { [Op.like]: `%${search}%` } },
@@ -1332,10 +1332,10 @@ app.get('/receipts/approved', async (req, res) => {
         {
           model: Activity,
           include: [
-            { model: Devotee, attributes: ['FirstName', 'LastName', 'Email'] },
+            { model: Devotee, attributes: ['FirstName', 'LastName', 'Email', 'Address', 'City', 'State', 'Zip'] },
             { model: Service, attributes: ['Service'] },
             { model: User, as: 'AssistedBy', attributes: ['username'] },
-            { model: ModeOfPayment, attributes: ['MethodName'] } // Include ModeOfPayment to get MethodName
+            { model: ModeOfPayment, attributes: ['MethodName'] }
           ]
         }
       ],
@@ -1353,15 +1353,19 @@ app.get('/receipts/approved', async (req, res) => {
         receiptid: receipt.receiptid,
         ActivityId: activity.ActivityId,
         Name: `${devotee.FirstName || ''} ${devotee.LastName || ''}`,
+        Address1: devotee.Address,
+        Address2: `${devotee.City || ''} ${devotee.State || ''} ${devotee.Zip || ''}`,
         Email: devotee.Email || '',
         Service: receipt.servicetype,
         ActivityDate: activity.ActivityDate,
         ServiceDate: activity.ServiceDate,
         ApprovedDate: receipt.approvaldate,
-        PaymentMethod: modeOfPayment.MethodName === 'Check' ? `Check (${activity.CheckNumber})` : modeOfPayment.MethodName,
+        CheckNumber: activity.CheckNumber,
+        PaymentMethod: modeOfPayment.MethodName,
+        PaymentDate: activity.ServiceDate,
         Amount: activity.Amount,
         AssistedBy: assistedBy.username || '',
-        emailsentcount: receipt.emailsentcount || 0 // Make sure emailsentcount is included
+        emailsentcount: receipt.emailsentcount || 0
       };
     });
 
@@ -1499,7 +1503,7 @@ Sringeri Education and Vedic Academy.`,
 
 
 app.put('/activities/:id', async (req, res) => {
-  try {
+  try { 
     const { id } = req.params;
     const activity = await Activity.findByPk(id);
     if (!activity) {

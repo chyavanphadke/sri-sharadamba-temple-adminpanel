@@ -24,7 +24,7 @@ const Receipts = () => {
   const [currentRecord, setCurrentRecord] = useState(null);
   const [originalPaymentMethod, setOriginalPaymentMethod] = useState('');
   const [accessControl, setAccessControl] = useState({});
-  const [pdfText, setPdfText] = useState([]);
+  
   const [activeTab, setActiveTab] = useState('pending');
   const [pageSize, setPageSize] = useState(12);
   const [userType, setUserType] = useState('');
@@ -50,16 +50,6 @@ const Receipts = () => {
       setAccessControl(data);
     } catch (error) {
       console.error('Failed to fetch access control data:', error);
-    }
-  };
-
-  // Fetch email text for PDF generation
-  const fetchEmailText = async () => {
-    try {
-      const response = await axiosInstance.get('/email-text');
-      setPdfText(response.data);
-    } catch (error) {
-      message.error('Failed to load email text');
     }
   };
 
@@ -115,7 +105,6 @@ const Receipts = () => {
       setUserType(decodedToken.usertype);
       fetchAccessControl(decodedToken.usertype);
     }
-    fetchEmailText();
   }, []);
 
   // Fetch data based on the active tab
@@ -391,48 +380,72 @@ const Receipts = () => {
       format: 'letter',
       orientation: 'portrait'
     });
-  
+
     doc.setFont('Helvetica');
-  
+
     const imgData = '/banner.webp'; // Ensure this path is correct and accessible
     doc.addImage(imgData, 'WEBP', 0.5, 0.5, 7.5, 1.5);
-  
+
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.02);
     doc.rect(0.25, 0.25, 8, 10.5); // Adding border to entire content
-  
+
     doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
-    doc.text(`Name: ${record ? record.Name : ''}`, 0.5, 2.3);
-    doc.text(`Address: ${record && record.Address ? record.Address : 'N/A'}`, 0.5, 2.5);
-  
-    doc.setFontSize(16);
+    doc.text(`Name:     ${record ? record.Name : ''}`, 0.5, 2.3);
     doc.setFont('Helvetica', 'normal');
-    doc.text('A Note of Appreciation', 4.25, 3, { align: 'center' });
-  
+    doc.text(`Address: ${record && record.Address1 ? record.Address1 : 'NA'}`, 0.5, 2.5);
+    doc.text(`                ${record && record.Address2 ? record.Address2 : 'NA'}`, 0.5, 2.7);
+
+    doc.setFontSize(16);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('A Note of Appreciation', 4.25, 3.8, { align: 'center' });
+
     doc.setFontSize(12);
-    doc.text(`Dear ${record ? record.Name : ''},`, 0.5, 3.8);
-  
+    doc.setFont('Helvetica', 'normal');
+    doc.text(`Dear ${record ? record.Name : ''},`, 0.5, 4.2);
+
+    const pdfText = [
+      "Thank you very much for your generous donation to the Sringeri Education and Vedic Academy. Your",
+      "donation will go a long way in helping us accomplish our goal of creating a modern facility to support",
+      "the religious, social, and cultural needs of our community. ",
+      "No goods or services were provided in exchange for this donation.",
+      "",
+      "May God's blessings always be with you and your family.",
+      "",
+      "Sincerely,",
+      "Sringeri Education and Vedic Academy."
+    ];
+
     pdfText.forEach((line, index) => {
-      doc.text(line, 0.5, 4.1 + index * 0.3); // Adjust the y-coordinate as needed
+      doc.text(line, 0.5, 4.6 + index * 0.3); // Adjust the y-coordinate as needed
     });
-  
+
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.04);
-    doc.line(0.5, 6.8, 7.5, 6.8);
-  
+    doc.line(0.5, 7.4, 7.5, 7.4); // Adjusted y-coordinate for the line
+
     doc.setFontSize(16);
-    doc.text('Receipt', 4.25, 7.2, { align: 'center' });
-  
-    doc.setFontSize(12);
     doc.setFont('Helvetica', 'bold');
-    doc.text(`Received from: ${record ? record.Name : ''}`, 0.5, 7.8);
-    doc.text(`Donation: $${record ? record.Amount : ''} only`, 0.5, 8.1);
-    doc.text(`Receipt No: ${record ? record.ReceiptId : ''}`, 0.5, 8.4);
-    doc.text(`Your Check No: ${record ? record.CheckNumber : ''}`, 0.5, 9);
-  
+    doc.text('Receipt', 4.25, 7.9, { align: 'center' }); // Adjusted y-coordinate for 'Receipt' title
+
+    doc.setFontSize(12);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(`Received from: ${record ? record.Name : ''}`, 0.5, 8.3);
+    doc.text(`Donation: $${record ? record.Amount : ''} only`, 0.5, 8.6);
+    doc.text(`Receipt No: ${record ? record.receiptid : ''}`, 0.5, 8.9);
+    doc.text(`Mode of Payment: ${record ? record.PaymentMethod : ''}`, 0.5, 9.2);
+
+    if (record && record.PaymentMethod === 'Check') {
+      doc.text(`Check Number: ${record.CheckNumber ? record.CheckNumber : 'NA'}`, 0.5, 9.5);
+      doc.text(`Payment Date: ${record ? new Date(record.PaymentDate).toLocaleDateString() : ''}`, 0.5, 9.8);
+    } else {
+      doc.text(`Payment Date: ${record ? new Date(record.PaymentDate).toLocaleDateString() : ''}`, 0.5, 9.5);
+    }
+
     return doc;
-  };  
+  };
+  
 
   const handleDownload = () => {
     setIsPrintModalVisible(false);
