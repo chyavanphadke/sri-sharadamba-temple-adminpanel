@@ -63,7 +63,7 @@ const OnlineFormsData = () => {
   const filterData = (data, showAll, query) => {
     const lowerCaseQuery = query.toLowerCase();
     const filtered = data.filter(entry => 
-      (showAll || entry.payment_status.toLowerCase() !== 'paid') && (
+      (showAll || (entry.payment_status.toLowerCase() !== 'paid' && entry.payment_status.toLowerCase() !== 'benevity')) && (
         entry.seva_id.toString().includes(lowerCaseQuery) ||
         `${entry.first_name.toLowerCase()} ${entry.last_name.toLowerCase()}`.includes(lowerCaseQuery) ||
         entry.email.toLowerCase().includes(lowerCaseQuery) ||
@@ -141,7 +141,7 @@ const OnlineFormsData = () => {
       const values = await form.validateFields();
       await axios.put(`http://localhost:5001/update-payment-status/${currentRecord.id}`, {
         amount: values.amount,
-        paymentStatus: 'Paid'
+        paymentStatus: currentRecord.payment_status === 'Benevity' ? 'Benevity' : 'Paid'
       });
       message.success('Payment status updated successfully');
       setAmountModalVisible(false);
@@ -167,9 +167,9 @@ const OnlineFormsData = () => {
     { 
       title: 'Actions', 
       key: 'actions', 
-      render: (text, record) => record.payment_status === 'Paid' ? 'Paid' : (
+      render: (text, record) => (record.payment_status === 'Paid' || record.payment_status === 'Benevity') ? 'Paid' : (
         <>
-          <Button onClick={() => handlePaidAtTemple(record)} style={{ marginRight: 8 }}>Paid at Temple</Button>
+          <Button onClick={() => handlePaidAtTemple(record)} style={{ marginRight: 8 }}>Confirm Payment</Button>
           <Button onClick={() => handleDeleteService(record)} danger>Delete</Button>
         </>
       ),

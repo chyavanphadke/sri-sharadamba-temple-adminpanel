@@ -2003,7 +2003,6 @@ async function initializeSheetServiceMap() {
   }
 }
 
-
 async function fetchDataFromSheets() {
   try {
     await initializeSheetServiceMap(); // Initialize the map before fetching data
@@ -2090,7 +2089,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   const devotee = await findOrCreateDevotee({ firstName, lastName, email, phone });
 
   let activityId = null;
-  if (paymentStatus === 'Paid') {
+  if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
     activityId = await createActivity({
       devoteeId: devotee.DevoteeId,
       serviceId,
@@ -2116,7 +2115,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     amount,
     status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
     row_index: rowIndex,
-    ServiceId: serviceId // Add ServiceId here
+    ServiceId: serviceId
   });
 
   await sendSevaEmail({
@@ -2131,7 +2130,7 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
 
   if (rowIndex <= 1000) {
     await updateSheetStatus(sheetId, rowIndex, devotee.isNew ? 'New Devotee' : 'Existing Devotee');
-    if (paymentStatus === 'Paid') {
+    if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
       await updateSheetSevaId(sheetId, rowIndex, sevaId || activityId);
     }
   } else {
@@ -2311,7 +2310,7 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
     const activity = await Activity.create({
       DevoteeId: devoteeId,
       ServiceId: serviceId,
-      PaymentMethod: paymentStatus === 'Paid' ? 4 : 2,
+      PaymentMethod: paymentStatus === 'Paid' ? 4 : ( paymentStatus === 'Benevity' ? 8 : 2), 
       Amount: amount,
       UserId: 'online Paid',
       ServiceDate: serviceDate,
@@ -2394,7 +2393,6 @@ app.get('/excel-seva-data', async (req, res) => {
   }
 });
 
-
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
@@ -2405,7 +2403,7 @@ app.put('/update-payment-status/:id', async (req, res) => {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
-    if (paymentStatus === 'Paid') {
+    if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
       const activityId = await createActivity({
         devoteeId: entry.devotee_id,
         serviceId: sheetServiceMap[entry.sheet_name],
@@ -2421,8 +2419,6 @@ app.put('/update-payment-status/:id', async (req, res) => {
       await entry.save();
 
       if (entry.row_index <= 1000) {
-        // TODO: Add if required
-        //await updateSheetStatus(entry.sheet_name, entry.row_index, 'Paid');
         await updateSheetSevaId(entry.sheet_name, entry.row_index, activityId);
       } else {
         console.error(`Row index ${entry.row_index} exceeds Google Sheets limit.`);
@@ -2457,7 +2453,6 @@ app.delete('/delete-entry/:id', async (req, res) => {
   }
 });
 
-// Existing API endpoints for reference
 app.put('/access-control', async (req, res) => {
   try {
     const accessControls = req.body;
