@@ -2307,10 +2307,16 @@ async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
 
 async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate, comments }) {
   try {
+    // Retrieve the payment method ID from ModeOfPayment table based on paymentStatus
+    const modeOfPayment = await ModeOfPayment.findOne({ where: { MethodName: paymentStatus } });
+
+    if (!modeOfPayment) {
+      throw new Error(`Mode of Payment not found for payment status: ${paymentStatus}`);
+    }
     const activity = await Activity.create({
       DevoteeId: devoteeId,
       ServiceId: serviceId,
-      PaymentMethod: paymentStatus === 'Paid' ? 4 : ( paymentStatus === 'Benevity' ? 8 : 2), 
+      PaymentMethod: modeOfPayment.PaymentMethodId, 
       Amount: amount,
       UserId: 'online Paid',
       ServiceDate: serviceDate,
