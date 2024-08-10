@@ -163,7 +163,23 @@ const OnlineFormsData = () => {
     { title: 'Date', dataIndex: 'date', key: 'date', align: 'center' },
     { title: 'Service', dataIndex: 'serviceName', key: 'service', align: 'center' },
     { title: 'Amount', dataIndex: 'amount', key: 'amount', align: 'center' },
-    { title: 'Payment Status', dataIndex: 'payment_status', key: 'payment_status', align: 'center' },
+    { 
+      title: 'Payment Status', 
+      dataIndex: 'payment_status', 
+      key: 'payment_status', 
+      align: 'center',
+      render: (text, record) => {
+        if (record.payment_status === 'Paid') {
+          return 'Paid';
+        } else if (record.payment_status === 'At-Temple') {
+          return 'To be Paid';
+        } else if (record.payment_status === 'Benevity') {
+          return 'Paid via Benevity';
+        } else {
+          return record.payment_status;
+        }
+      },
+    },
     { 
       title: 'Actions', 
       key: 'actions', 

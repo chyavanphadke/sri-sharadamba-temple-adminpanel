@@ -2318,7 +2318,7 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
       ServiceId: serviceId,
       PaymentMethod: modeOfPayment.PaymentMethodId, 
       Amount: amount,
-      UserId: 'online Paid',
+      UserId: 'Website',
       ServiceDate: serviceDate,
       Comments: comments
     });
