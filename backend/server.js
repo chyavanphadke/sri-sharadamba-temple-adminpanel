@@ -2218,17 +2218,16 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       from: emailCredential.email,
       to: email,
       subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
-      text: `
-        Seva: ${service.Service}
-        When: ${dayOfWeek}, ${formattedDate}
-        Where: Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)
-
-        ${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}
-        Priest Dakshina is as per your wish, please pay it in the temple directly.
-
-        Please visit https://sharadaseva.org to get the latest updates and upcoming events.
-        Contact (510) 565-1411 / (925) 663-5962 if you have any questions.
-        Thank you.
+      html: `
+        <p>Seva: ${service.Service}</p>
+        <p>When: ${dayOfWeek}, ${formattedDate}</p>
+        <p>Where: Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</p>
+    
+        <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
+    
+        <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
+    
+        <p>For event updates, please join our temple <a href="https://chat.whatsapp.com/Gu7jSLiov9nHaWrf4LHNYe">community link</a>.</p>
       `,
       attachments: [
         {
@@ -2248,15 +2247,17 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
             <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
             <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
             <div style="margin-bottom: 20px;"></div>
-            <p>${paymentStatus === 'Paid' ? `We have received a payment of $${amount}.` : `If you have not paid for this seva already please pay it at the temple.`}</p>
-            <p>Priest Dakshina is as per your wish, please pay it in the temple directly.</p>
+            <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
+            <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
+            <p>For event updates, please join our temple <a href="https://chat.whatsapp.com/Gu7jSLiov9nHaWrf4LHNYe">WhatsApp Group Link</a>.</p>
             <div style="margin-bottom: 20px;"></div>
             <a href="${googleCalendarUrl}" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">Add to Calendar</a>
             <a href="https://www.google.com/maps/search/?api=1&query=Sri+Sharadamba+Temple+(SEVA)" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px;">Navigate</a>
             <div style="margin-bottom: 20px;"></div>
             <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
             <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962)</a> if you have any questions.</p>
-            <p style="color: grey;">Thank you.</p>
+            <p style="color: grey;">Our organization is enrolled with Benevity. If possible, please consider using the company match program to amplify your support.</p>
+            <p style="color: black;">Thank you. <br>Pandit Nagaraja Bhat <br>SEVA Management.</p>
           </div>
         </div>
       `
