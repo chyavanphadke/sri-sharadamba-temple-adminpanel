@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, Table, Button, message, Modal, Input, Form, Checkbox, Row, Col } from 'antd';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import './OnlineFormsData.css'; // Ensure this path is correct
 
 const { Content } = Layout;
@@ -63,7 +64,7 @@ const OnlineFormsData = () => {
   const filterData = (data, showAll, query) => {
     const lowerCaseQuery = query.toLowerCase();
     const filtered = data.filter(entry => 
-      (showAll || (entry.payment_status.toLowerCase() !== 'paid' && entry.payment_status.toLowerCase() !== 'benevity')) && (
+      (showAll || (entry.payment_status.toLowerCase() !== 'paid at temple' && entry.payment_status.toLowerCase() !== 'paid' && entry.payment_status.toLowerCase() !== 'benevity')) && (
         entry.seva_id.toString().includes(lowerCaseQuery) ||
         `${entry.first_name.toLowerCase()} ${entry.last_name.toLowerCase()}`.includes(lowerCaseQuery) ||
         entry.email.toLowerCase().includes(lowerCaseQuery) ||
@@ -139,9 +140,15 @@ const OnlineFormsData = () => {
   const handleUpdatePaymentStatus = async () => {
     try {
       const values = await form.validateFields();
+
+      const token = localStorage.getItem('token');
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.userid;
+
       await axios.put(`http://localhost:5001/update-payment-status/${currentRecord.id}`, {
         amount: values.amount,
-        paymentStatus: currentRecord.payment_status === 'Benevity' ? 'Benevity' : 'Paid'
+        paymentStatus: 'Paid at temple',
+        userId: userId
       });
       message.success('Payment status updated successfully');
       setAmountModalVisible(false);
@@ -170,7 +177,7 @@ const OnlineFormsData = () => {
       align: 'center',
       render: (text, record) => {
         if (record.payment_status === 'Paid') {
-          return 'Paid';
+          return 'Paid Online';
         } else if (record.payment_status === 'At-Temple') {
           return 'To be Paid';
         } else if (record.payment_status === 'Benevity') {
@@ -183,7 +190,7 @@ const OnlineFormsData = () => {
     { 
       title: 'Actions', 
       key: 'actions', 
-      render: (text, record) => (record.payment_status === 'Paid' || record.payment_status === 'Benevity') ? 'Paid' : (
+      render: (text, record) => (record.payment_status === 'Paid at temple' || record.payment_status === 'Paid' || record.payment_status === 'Benevity') ? 'Paid' : (
         <>
           <Button onClick={() => handlePaidAtTemple(record)} style={{ marginRight: 8 }}>Confirm Payment</Button>
           <Button onClick={() => handleDeleteService(record)} danger>Delete</Button>
