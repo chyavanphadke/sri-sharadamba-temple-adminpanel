@@ -2087,16 +2087,29 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   }
 
   const devotee = await findOrCreateDevotee({ firstName, lastName, email, phone });
+  // const websiteUser = await User.findOne({ where: { username: 'Website' } });
+  // console.log("website user ------------>",websiteUser.username,"------", websiteUser.userid)
 
   let activityId = null;
-  if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
+  if (paymentStatus === 'Paid') {
+    activityId = await createActivity({
+      devoteeId: devotee.DevoteeId,
+      serviceId,
+      paymentStatus:'Paid Online',
+      amount,
+      serviceDate: date,
+      comments: message,
+      UserId: 'Website'
+    });
+  } else if (paymentStatus === 'Benevity'){
     activityId = await createActivity({
       devoteeId: devotee.DevoteeId,
       serviceId,
       paymentStatus,
       amount,
       serviceDate: date,
-      comments: message
+      comments: message,
+      UserId: 'Website'
     });
   }
 
@@ -2306,7 +2319,7 @@ async function findOrCreateDevotee({ firstName, lastName, email, phone }) {
   }
 }
 
-async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate, comments }) {
+async function createActivity({ devoteeId, serviceId, paymentStatus, amount, serviceDate, comments, UserId}) {
   try {
     // Retrieve the payment method ID from ModeOfPayment table based on paymentStatus
     const modeOfPayment = await ModeOfPayment.findOne({ where: { MethodName: paymentStatus } });
@@ -2314,15 +2327,20 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
     if (!modeOfPayment) {
       throw new Error(`Mode of Payment not found for payment status: ${paymentStatus}`);
     }
+
+    // Set UserId based on payment status
+    const assignedUserId = (paymentStatus === 'Paid' || paymentStatus === 'Benevity') ? 'Website' : UserId;
+
     const activity = await Activity.create({
       DevoteeId: devoteeId,
       ServiceId: serviceId,
-      PaymentMethod: modeOfPayment.PaymentMethodId, 
+      PaymentMethod: modeOfPayment.PaymentMethodId,
       Amount: amount,
-      UserId: 'Website',
+      UserId: assignedUserId,
       ServiceDate: serviceDate,
       Comments: comments
     });
+
     return activity.ActivityId;
   } catch (error) {
     await reportError(error);
@@ -2330,6 +2348,7 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
     throw error;
   }
 }
+
 
 async function updateExcelSevaData(data) {
   try {
@@ -2403,21 +2422,22 @@ app.get('/excel-seva-data', async (req, res) => {
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
-    const { amount, paymentStatus } = req.body;
+    const { amount, paymentStatus, userId } = req.body;
     const entry = await ExcelSevaData.findByPk(req.params.id);
 
     if (!entry) {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
-    if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
+    if (paymentStatus === 'Paid at temple') {
       const activityId = await createActivity({
         devoteeId: entry.devotee_id,
         serviceId: sheetServiceMap[entry.sheet_name],
-        paymentStatus,
+        paymentStatus:'Paid at temple',
         amount,
         serviceDate: entry.date,
-        comments: entry.message
+        comments: entry.message,
+        UserId: userId
       });
 
       entry.seva_id = activityId;
