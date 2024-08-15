@@ -2068,7 +2068,8 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     'Suggested Donation': amount1,
     'Yearly (USD)': yearlyAmount,
     'Monthly Pledge (USD)': monthlyAmount,
-    'Select': selectOption
+    'Select': selectOption,
+    'Batch': batchInfo,
   } = rowData;
 
   const firstName = firstName1 || firstName2;
@@ -2078,6 +2079,10 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   const paymentStatus = paymentStatus1 || paymentStatus2;
   const cardDetails = cardDetails1 || cardDetails2;
   const amount = selectOption === 'Yearly' ? yearlyAmount : selectOption === 'Monthly' ? monthlyAmount : amount1;
+
+  const batchTimeMatch = batchInfo ? batchInfo.match(/\(([^)]+)\)/) : null;
+  const batchTime = batchTimeMatch ? batchTimeMatch[1] : null;
+
 
   console.log('Processing row with values:', { firstName, lastName, email, phone, message });
 
@@ -2125,7 +2130,8 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
     amount,
     paymentStatus,
     firstName,
-    lastName
+    lastName,
+    batchTime
   });
 
   if (rowIndex <= 1000) {
@@ -2142,7 +2148,7 @@ const { createICalEvent } = require('./ical');
 const path = require('path');
 const fs = require('fs');
 
-async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName }) {
+async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName, batchTime }) {
   try {
     // Fetch service details
     console.log('Fetching service details for ServiceId:', serviceId);
@@ -2182,8 +2188,22 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     });
 
     // Determine service time
-    console.log('Determining service time');
-    const serviceTime = service.time ? service.time : '18:00'; // Default time is 6:00 PM
+    console.log('Determining service time', batchTime);
+    const convertTo24HourFormat = (time) => {
+      const [hourMinute, period] = time.match(/(\d+:\d+)([ap]m)/i).slice(1);
+      let [hours, minutes] = hourMinute.split(':').map(Number);
+    
+      if (period.toLowerCase() === 'pm' && hours !== 12) {
+        hours += 12;
+      } else if (period.toLowerCase() === 'am' && hours === 12) {
+        hours = 0;
+      }
+    
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+    
+    const serviceTime = batchTime ? convertTo24HourFormat(batchTime) : (service.time ? service.time : '18:00');
+    
     console.log('Service time:', serviceTime);
 
     // Combine service date and time
