@@ -88,7 +88,6 @@ const Settings = () => {
   const fetchEmailText = async () => {
     try {
       const response = await axios.get('http://localhost:5001/email-text');
-      setEmailText(response.data);
       form.setFieldsValue({ emailText: response.data.join('\n') });
     } catch (error) {
       message.error('Failed to load email text');
