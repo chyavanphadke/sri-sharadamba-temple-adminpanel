@@ -8,12 +8,15 @@ const { Content } = Layout;
 const { Option } = Select;
 
 const Settings = () => {
+  const [accessRights, setAccessRights] = useState([]);
+  const [originalAccessRights, setOriginalAccessRights] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [newServiceModalVisible, setNewServiceModalVisible] = useState(false);
   const [newCategoryModalVisible, setNewCategoryModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
-  const [accessRightsModalVisible, setAccessRightsModalVisible] = useState(false);
   const [emailCredentialsModalVisible, setEmailCredentialsModalVisible] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [services, setServices] = useState([]);
@@ -23,10 +26,7 @@ const Settings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [headerColor, setHeaderColor] = useState('#001529');
   const [sidebarColor, setSidebarColor] = useState('#001529');
-  const [accessRights, setAccessRights] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
-  const [emailText, setEmailText] = useState([]);
   const [autoApprove, setAutoApprove] = useState(false);
   const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false);
   const [tempServices, setTempServices] = useState([]);
@@ -59,7 +59,7 @@ const Settings = () => {
       return 0;
     });
   };
-   
+
   // Fetch services
   const fetchServices = async () => {
     try {
@@ -343,7 +343,7 @@ const Settings = () => {
     window.location.reload();
   };
 
-  // Save access rights
+  // Access Control Functionality
   const handleAccessRightsSave = async () => {
     try {
       await axios.put('http://localhost:5001/access-control', accessRights);
@@ -354,28 +354,88 @@ const Settings = () => {
     }
   };
 
-  // Change access rights
-  const handleAccessChange = (record, field, value) => {
-    const updatedRights = accessRights.map((item) => {
-      if (item.id === record.id) {
-        return { ...item, [field]: value };
-      }
-      return item;
-    });
+  const handleAccessChange = (index, field, value) => {
+    const updatedRights = [...accessRights];
+    updatedRights[index][field] = value;
     setAccessRights(updatedRights);
   };
+
+  const handleResetChanges = () => {
+    setAccessRights(JSON.parse(JSON.stringify(originalAccessRights))); // Reset to the original state with a deep copy
+  };
+
+  const handleCancel = () => {
+    setAccessRightsModalVisible(false);
+  };
+
+  const renderCheckbox = (value, index, field) => (
+    <Checkbox
+      checked={value === 1}
+      disabled={value === 2}
+      onChange={(e) => handleAccessChange(index, field, e.target.checked ? 1 : 0)}
+    />
+  );
+
+  const accessColumns = [
+    { title: 'Component', dataIndex: 'component', key: 'component' },
+    { title: 'User Type', dataIndex: 'usertype', key: 'usertype' },
+    {
+      title: 'Can View',
+      dataIndex: 'can_view',
+      key: 'can_view',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_view'),
+    },
+    {
+      title: 'Can Add',
+      dataIndex: 'can_add',
+      key: 'can_add',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_add'),
+    },
+    {
+      title: 'Can Edit',
+      dataIndex: 'can_edit',
+      key: 'can_edit',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_edit'),
+    },
+    {
+      title: 'Can Delete',
+      dataIndex: 'can_delete',
+      key: 'can_delete',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_delete'),
+    },
+    {
+      title: 'Can Approve',
+      dataIndex: 'can_approve',
+      key: 'can_approve',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_approve'),
+    },
+    {
+      title: 'Can Email',
+      dataIndex: 'can_email',
+      key: 'can_email',
+      render: (value, record, index) => renderCheckbox(value, index, 'can_email'),
+    },
+  ];
 
   // Fetch access control data
   const fetchAccessControlData = async () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5001/access-control');
-      setAccessRights(response.data);
+      const accessRightsData = response.data;
+      setAccessRights([...accessRightsData]); // Shallow copy for current state
+      setOriginalAccessRights(JSON.parse(JSON.stringify(accessRightsData))); // Deep copy for reset state
     } catch (error) {
       message.error('Failed to load access control data');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Open access rights modal
+  const handleOpenAccessRightsModal = () => {
+    fetchAccessControlData(); // Fetch fresh data each time modal is opened
+    setAccessRightsModalVisible(true);
   };
 
   // Fetch email credentials
@@ -386,12 +446,6 @@ const Settings = () => {
     } catch (error) {
       message.error('Failed to load email credentials');
     }
-  };
-
-  // Open access rights modal
-  const handleOpenAccessRightsModal = () => {
-    fetchAccessControlData();
-    setAccessRightsModalVisible(true);
   };
 
   // Open email credentials modal
@@ -838,35 +892,20 @@ const Settings = () => {
           <Modal
             title="Change Access Rights"
             visible={accessRightsModalVisible}
-            onCancel={() => setAccessRightsModalVisible(false)}
+            onCancel={handleCancel}
             footer={[
-              <Button key="cancel" onClick={() => setAccessRightsModalVisible(false)}>Cancel</Button>,
-              <Button key="save" type="primary" onClick={handleAccessRightsSave}>Save</Button>,
+              <Button key="cancel" onClick={handleCancel}>Cancel</Button>,
+              <Button key="reset" onClick={handleResetChanges}>Reset</Button>,
+              <Button key="save" type="primary" onClick={handleAccessRightsSave}>Modify</Button>,
             ]}
+            className="access-rights-modal" // This is important to apply the CSS
           >
             <Table
               dataSource={accessRights}
               rowKey="id"
               pagination={false}
               loading={loading}
-              columns={[
-                { title: 'Role', dataIndex: 'role', key: 'role' },
-                {
-                  title: 'Permission',
-                  dataIndex: 'permission',
-                  key: 'permission',
-                  render: (text, record) => (
-                    <Select
-                      value={text}
-                      onChange={(value) => handleAccessChange(record, 'permission', value)}
-                    >
-                      <Option value="read">Read</Option>
-                      <Option value="write">Write</Option>
-                      <Option value="admin">Admin</Option>
-                    </Select>
-                  ),
-                },
-              ]}
+              columns={accessColumns}
             />
           </Modal>
 

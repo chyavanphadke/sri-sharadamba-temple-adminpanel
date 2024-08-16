@@ -39,7 +39,7 @@
 }
 
 .category-group-first > td {
-  border-top: 2px solid #1890ff; /* Thick  line at the start of the category */
+  border-top: 2px solid #1890ff; /* Thick line at the start of the category */
 }
 
 @media (max-width: 768px) {
@@ -57,10 +57,8 @@
     max-width: none;
   }
 
-  .service-table {
-    .ant-table {
-      overflow-x: auto;
-    }
+  .service-table .ant-table {
+    overflow-x: auto;
   }
 
   .buttons-container {
@@ -72,4 +70,16 @@
 .general-configurations-container {
   display: flex;
   flex-direction: column;
+}
+
+/* Increase the width of the Change Access Rights modal */
+.access-rights-modal .ant-modal-content {
+  width: 150% !important; /* Increase the width of the modal */
+  max-width: 1200px; /* Set a maximum width for the modal */
+  margin: auto; /* Center the modal horizontally */
+}
+
+/* Optionally, increase the width of the table inside the modal */
+.access-rights-modal .ant-table-wrapper {
+  max-width: 100%; /* Ensure the table takes up the full width of the modal */
 }

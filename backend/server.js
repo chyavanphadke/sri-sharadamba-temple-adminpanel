@@ -2377,18 +2377,19 @@ async function updateSheetStatus(sheetId, rowIndex, status) {
 }
 
 async function updateSheetSevaId(sheetId, rowIndex, sevaId) {
-  try {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: `Sheet1!B${rowIndex}:B${rowIndex}`,
-      valueInputOption: 'RAW',
-      resource: { values: [[sevaId]] }
-    });
-  } catch (error) {
-    await reportError(error);
-    console.error('Error updating Google Sheets Seva ID:', error);
-    throw error;
-  }
+  // Disabled.
+  // try {
+  //   await sheets.spreadsheets.values.update({
+  //     spreadsheetId: sheetId,
+  //     range: `Sheet1!B${rowIndex}:B${rowIndex}`,
+  //     valueInputOption: 'RAW',
+  //     resource: { values: [[sevaId]] }
+  //   });
+  // } catch (error) {
+  //   await reportError(error);
+  //   console.error('Error updating Google Sheets Seva ID:', error);
+  //   throw error;
+  // }
 }
 
 app.post('/fetch-sheets-data', async (req, res) => {
