@@ -2078,8 +2078,8 @@ async function processRow(rowData, sheetId, rowIndex, serviceId) {
   const message = messageToPriest || gotraDetails || '';
   const paymentStatus = paymentStatus1 || paymentStatus2;
   const cardDetails = cardDetails1 || cardDetails2;
-  const amount = selectOption === 'Yearly' ? yearlyAmount : selectOption === 'Monthly' ? monthlyAmount : amount1;
-
+  const temp_amount = selectOption === 'Yearly' ? yearlyAmount : selectOption === 'Monthly' ? monthlyAmount : amount1;
+  const amount = temp_amount ? temp_amount:0;
   const batchTimeMatch = batchInfo ? batchInfo.match(/\(([^)]+)\)/) : null;
   const batchTime = batchTimeMatch ? batchTimeMatch[1] : null;
 
