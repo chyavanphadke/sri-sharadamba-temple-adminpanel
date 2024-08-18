@@ -407,6 +407,6 @@
 
 .qrCode {
   max-width: auto; /* Set a fixed max width */
-  max-height: 320px; /* Set a fixed max height */
+  max-height: 240px; /* Set a fixed max height */
   padding-right: 10px;
 }
