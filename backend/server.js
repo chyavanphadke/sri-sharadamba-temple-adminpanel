@@ -2645,6 +2645,7 @@ app.get('/excel-seva-data', async (req, res) => {
 });
 
 // Example API route for updating payment status
+// Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
     const { amount, paymentStatus, userId } = req.body;
@@ -2654,11 +2655,30 @@ app.put('/update-payment-status/:id', async (req, res) => {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
+    // Check if the entry's sheet_name exists in sheetServiceMap and determine type (service or category)
+    const sheetInfo = sheetServiceMap[entry.sheet_name];
+    if (!sheetInfo) {
+      return res.status(400).json({ message: 'Sheet not mapped to any service or category' });
+    }
+
+    let serviceId;
+    if (sheetInfo.type === 'service') {
+      serviceId = sheetInfo.id;  // Use the mapped service ID
+    } else if (sheetInfo.type === 'category') {
+      // Handle case for category (you might want to find a default service or create a category-specific activity)
+      // Assuming you might want to link to a general service for categories, or choose one based on logic
+      const service = await Service.findOne({ where: { category_id: sheetInfo.id } });
+      if (!service) {
+        return res.status(400).json({ message: 'No service found for the category' });
+      }
+      serviceId = service.ServiceId;  // Use service found for the category
+    }
+
     if (paymentStatus === 'Paid at temple') {
       const activityId = await createActivity({
         devoteeId: entry.devotee_id,
-        serviceId: sheetServiceMap[entry.sheet_name],
-        paymentStatus:'Paid at temple',
+        serviceId,  // Pass the determined serviceId
+        paymentStatus: 'Paid at temple',
         amount,
         serviceDate: entry.date,
         comments: entry.message,
