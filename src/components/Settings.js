@@ -211,16 +211,24 @@ const Settings = () => {
   };
 
   // Save services
-  const handleServiceSave = async () => {
-    try {
-      await axios.put('http://localhost:5001/services', services);
-      message.success('Services updated successfully');
-      setServiceModalVisible(false);
-      fetchServices();
-    } catch (error) {
-      message.error('Failed to update services');
+const handleServiceSave = async () => {
+  try {
+    // Update categories
+    for (const category of categories) {
+      await axios.put(`http://localhost:5001/categories/${category.category_id}`, category);
     }
-  };
+
+    // Update services
+    await axios.put('http://localhost:5001/services', services);
+    
+    message.success('Services and categories updated successfully');
+    setServiceModalVisible(false);
+    fetchServices();
+    fetchCategories();
+  } catch (error) {
+    message.error('Failed to update services or categories');
+  }
+};
 
   // Handle search
   const handleSearch = (e) => {
@@ -492,6 +500,12 @@ const Settings = () => {
       message.error('Failed to reset email text');
     }
   };
+
+  const handleCategoryExcelSheetChange = (index, value) => {
+    const updatedCategories = [...categories];
+    updatedCategories[index].excelSheetLink = value;
+    setCategories(updatedCategories);
+  };  
 
   // Handle search select
   const handleSearchSelect = (value) => {
@@ -776,6 +790,31 @@ const Settings = () => {
                 Clear Search
               </Button>
             </div>
+
+            {/* Section for listing and editing ServiceCategories */}
+            <div style={{ marginBottom: '20px' }}>
+              <h3>Service Categories</h3>
+              {categories.map((category, index) => (
+                <div key={category.category_id} style={{ display: 'flex', marginBottom: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      value={category.Category_name}
+                      disabled // You can choose to make it editable if needed
+                    />
+                  </div>
+                  <div style={{ flex: 3 }}>
+                    <Input
+                      placeholder="Excel Sheet Link"
+                      value={category.excelSheetLink || ''}
+                      onChange={(e) => handleCategoryExcelSheetChange(index, e.target.value)}
+                      style={{ marginLeft: '10px' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Existing Services Table */}
             <Table
               columns={serviceColumns}
               dataSource={sortServices(filteredServices, categories)}

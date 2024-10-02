@@ -773,7 +773,28 @@ app.get('/categories', async (req, res) => {
   }
 });
 
+// Update an existing category including excelSheetLink
+app.put('/categories/:category_id', async (req, res) => {
+  const { category_id } = req.params;
+  const { Category_name, Active, excelSheetLink } = req.body;
 
+  try {
+    const category = await ServiceCategory.findByPk(category_id);
+
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    category.Category_name = Category_name;
+    category.Active = Active;
+    category.excelSheetLink = excelSheetLink;
+
+    await category.save();
+    res.status(200).json({ message: 'Category updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update category' });
+  }
+});
 
 
 app.post('/categories', async (req, res) => {
@@ -1982,20 +2003,45 @@ async function initializeSheetServiceMap() {
   try {
     const services = await Service.findAll({
       where: {
-        [Op.and]: [
-          { excelSheetLink: { [Op.not]: null } },
-          { excelSheetLink: { [Op.not]: '' } }
-        ]
+        excelSheetLink: {
+          [Op.not]: null,
+          [Op.ne]: '',
+        },
+      },
+    });
+
+    const categories = await ServiceCategory.findAll({
+      where: {
+        excelSheetLink: {
+          [Op.not]: null,
+          [Op.ne]: '',
+        },
+      },
+    });
+
+    sheetServiceMap = {};
+
+    // Map service-level sheets
+    services.forEach((service) => {
+      const documentId = extractDocumentId(service.excelSheetLink);
+      if (documentId) {
+        sheetServiceMap[documentId] = {
+          type: 'service',
+          id: service.ServiceId,
+        };
       }
     });
 
-    sheetServiceMap = services.reduce((map, service) => {
-      const documentId = extractDocumentId(service.excelSheetLink);
+    // Map category-level sheets
+    categories.forEach((category) => {
+      const documentId = extractDocumentId(category.excelSheetLink);
       if (documentId) {
-        map[documentId] = service.ServiceId;
+        sheetServiceMap[documentId] = {
+          type: 'category',
+          id: category.category_id,
+        };
       }
-      return map;
-    }, {});
+    });
   } catch (error) {
     await reportError(error);
     console.error('Error initializing sheet service map:', error);
@@ -2008,10 +2054,10 @@ async function fetchDataFromSheets() {
     await initializeSheetServiceMap(); // Initialize the map before fetching data
 
     let newEntriesCount = 0;
-    for (const [sheetId, serviceId] of Object.entries(sheetServiceMap)) {
+    for (const [sheetId, mapping] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A:S'  // Adjusted to new range
+        range: 'Sheet1!A:S', // Adjust range as needed
       });
 
       const rows = response.data.values;
@@ -2022,7 +2068,7 @@ async function fetchDataFromSheets() {
 
       if (rows.length) {
         console.log(`Fetched ${rows.length} rows from sheet ${sheetId}`);
-        const headers = rows[0].map(header => header.split('|')[0]); // Extract headers
+        const headers = rows[0].map((header) => header.split('|')[0]); // Extract headers
         for (let index = 1; index < rows.length; index++) {
           const row = rows[index];
           if (!row[0]) {
@@ -2031,7 +2077,13 @@ async function fetchDataFromSheets() {
               acc[header] = row[i];
               return acc;
             }, {});
-            await processRow(rowData, sheetId, index + 1, serviceId);
+
+            if (mapping.type === 'service') {
+              await processServiceRow(rowData, sheetId, index + 1, mapping.id);
+            } else if (mapping.type === 'category') {
+              await processCategoryRow(rowData, sheetId, index + 1, mapping.id);
+            }
+
             newEntriesCount++;
           }
         }
@@ -2047,7 +2099,159 @@ async function fetchDataFromSheets() {
   }
 }
 
-async function processRow(rowData, sheetId, rowIndex, serviceId) {
+async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
+  const {
+    Status,
+    'Seva ID': sevaId,
+    'First Name': firstName,
+    'Last Name': lastName,
+    'Email Address': email,
+    Phone: phone,
+    Date: date,
+    'Message to Priest': messageToPriest,
+    'Payment Option': paymentStatus,
+    'Card Details': cardDetails,
+    'Donation Amount': amountStr,
+    'Select Event': selectEventStr,
+  } = rowData;
+
+  const message = messageToPriest || '';
+  
+  // Parse selected events
+  let selectedEvents = [];
+  try {
+    selectedEvents = JSON.parse(selectEventStr);
+  } catch (e) {
+    console.error('Error parsing Select Event:', selectEventStr);
+    selectedEvents = [];
+  }
+
+  console.log('Processing row with values:', {
+    firstName,
+    lastName,
+    email,
+    phone,
+    message,
+    selectedEvents,
+  });
+
+  if (!firstName || !lastName || !email || !phone) {
+    console.error('Required fields are missing:', {
+      firstName,
+      lastName,
+      email,
+      phone,
+    });
+    return;
+  }
+
+  const devotee = await findOrCreateDevotee({
+    firstName,
+    lastName,
+    email,
+    phone,
+  });
+
+  for (const eventName of selectedEvents) {
+    // Find service under the same category
+    let service = await Service.findOne({
+      where: {
+        Service: eventName,
+        category_id: categoryId,
+      },
+    });
+
+    let rate = 0;
+
+    if (service) {
+      // Use service's specific rate
+      rate = service.Rate;
+    } else {
+      // If not found, use General -> Donation
+      service = await Service.findOne({
+        where: {
+          Service: 'Donation',
+        },
+      });
+      if (service) {
+        rate = service.Rate; // Use Donation rate if the service is not found
+      } else {
+        console.error('General Donation service not found');
+        continue;
+      }
+    }
+
+    // Create activity for each service with its rate
+    let activityId = null;
+    if (paymentStatus === 'Paid') {
+      activityId = await createActivity({
+        devoteeId: devotee.DevoteeId,
+        serviceId: service.ServiceId,
+        paymentStatus: 'Paid Online',
+        amount: rate, // Use the rate from the service
+        serviceDate: date,
+        comments: message,
+        UserId: 'Website',
+      });
+    } else if (paymentStatus === 'Benevity') {
+      activityId = await createActivity({
+        devoteeId: devotee.DevoteeId,
+        serviceId: service.ServiceId,
+        paymentStatus,
+        amount: rate, // Use the rate from the service
+        serviceDate: date,
+        comments: message,
+        UserId: 'Website',
+      });
+    }
+
+    // Update ExcelSevaData
+    await updateExcelSevaData({
+      seva_id: sevaId || activityId || 'Unknown',
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      date,
+      message,
+      payment_status: paymentStatus,
+      card_details: cardDetails || '',
+      sheet_name: sheetId,
+      devotee_id: devotee.DevoteeId,
+      amount: rate, // Use the service rate
+      status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
+      row_index: rowIndex,
+      ServiceId: service.ServiceId,
+    });
+
+    // Send email confirmation
+    await sendSevaEmail({
+      email,
+      serviceId: service.ServiceId,
+      serviceDate: date,
+      amount: rate, // Use the service rate
+      paymentStatus,
+      firstName,
+      lastName,
+    });
+  }
+
+  // Update sheet status
+  if (rowIndex <= 1000) {
+    await updateSheetStatus(
+      sheetId,
+      rowIndex,
+      devotee.isNew ? 'New Devotee' : 'Existing Devotee'
+    );
+    if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
+      await updateSheetSevaId(sheetId, rowIndex, sevaId || 'Multiple');
+    }
+  } else {
+    console.error(`Row index ${rowIndex} exceeds Google Sheets limit.`);
+  }
+}
+
+async function processServiceRow(rowData, sheetId, rowIndex, serviceId) {
   const {
     Status,
     'Seva ID': sevaId,

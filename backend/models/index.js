@@ -285,6 +285,10 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
   Active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  excelSheetLink: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   freezeTableName: true,
