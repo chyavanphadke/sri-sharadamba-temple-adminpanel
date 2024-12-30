@@ -102,6 +102,38 @@ const Home = () => {
     }
   }, [axiosInstance]);
 
+  // Use this function to fetch services for a specific category
+  const fetchServicesByCategory = useCallback(async (categoryId) => {
+    try {
+      const response = await axiosInstance.get(`/services-by-category?categoryId=${categoryId}`);
+      setActiveServices(response.data);
+    } catch (error) {
+      message.error('Failed to load services for the selected category');
+    }
+  }, [axiosInstance]);
+
+  const fetchServiceCategories = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get('/active-servicecategories');
+      setCategories(response.data);
+  
+      // Automatically select the default category
+      const defaultCategory = response.data.find(category => category.category_id === 1 && category.active) 
+        || response.data[0]; // Fallback to the first available category
+      if (defaultCategory) {
+        sevaForm.setFieldsValue({ ServiceCategory: defaultCategory.category_id });
+        fetchServicesByCategory(defaultCategory.category_id);
+      }
+    } catch (error) {
+      message.error('Failed to load service categories');
+    }
+  }, [axiosInstance, fetchServicesByCategory]);
+  
+  const handleCategoryChange = (value) => {
+    sevaForm.setFieldsValue({ Service: null }); // Reset Service dropdown
+    fetchServicesByCategory(value); // Fetch services for the selected category
+  };
+  
   const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
@@ -120,8 +152,10 @@ const Home = () => {
     }
     fetchDevotees();
     fetchServices();
+    fetchServiceCategories();
+    fetchServicesByCategory();
     fetchPaymentMethods();
-  }, [fetchDevotees, fetchServices, fetchPaymentMethods]);
+  }, [fetchDevotees, fetchServices, fetchServiceCategories, fetchServicesByCategory, fetchPaymentMethods]);
 
   const handleAddDevotee = () => {
     setCurrentDevotee(null);
@@ -645,12 +679,41 @@ const Home = () => {
           </div>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="Service" label="Service" rules={[{ required: true, message: 'Please select a service!' }]}>
+              <Form.Item
+                name="ServiceCategory"
+                label="Service Category"
+                rules={[{ required: true, message: 'Please select a service category!' }]}
+              >
+                <Select
+                  placeholder="Select a service category"
+                  onChange={handleCategoryChange}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
+                >
+                  {categories.map(category => (
+                    <Option key={category.category_id} value={category.category_id}>
+                      {category.Category_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="Service"
+                label="Service"
+                rules={[{ required: true, message: 'Please select a service!' }]}
+              >
                 <Select
                   placeholder="Select a service"
                   onChange={(value) => {
                     const service = activeServices.find(s => s.Service === value);
-                    sevaForm.setFieldsValue({ Expected_Donation: service.Rate, AmountPaid: service.Rate });
+                    sevaForm.setFieldsValue({
+                      Expected_Donation: service?.Rate || '',
+                      AmountPaid: service?.Rate || '',
+                    });
                     setSelectedService(value);
                   }}
                   showSearch
@@ -659,9 +722,22 @@ const Home = () => {
                   }
                 >
                   {activeServices.map(service => (
-                    <Option key={service.ServiceId} value={service.Service}>{service.Service}</Option>
+                    <Option key={service.ServiceId} value={service.Service}>
+                      {service.Service}
+                    </Option>
                   ))}
                 </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="AmountPaid"
+                label="Amount Paid"
+                rules={[{ required: true, message: 'Please input the amount paid!' }]}
+              >
+                <Input placeholder="Enter the amount paid" type="number" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -672,24 +748,18 @@ const Home = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="AmountPaid" label="Amount Paid" rules={[{ required: true, message: 'Please input the amount paid!' }]}>
-                <Input placeholder="Select a payment method" type="number" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="PaymentMethod" label="Payment Method" rules={[{ required: true, message: 'Please select a payment method!' }]}>
+              <Form.Item
+                name="PaymentMethod"
+                label="Payment Method"
+                rules={[{ required: true, message: 'Please select a payment method!' }]}
+              >
                 <Select placeholder="Select a payment method">
                   {paymentMethods.map(method => (
-                    <Option key={method.PaymentMethodId} value={method.MethodName}>{method.MethodName}</Option>
+                    <Option key={method.PaymentMethodId} value={method.MethodName}>
+                      {method.MethodName}
+                    </Option>
                   ))}
                 </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="ServiceDate" label="Service Date" rules={[{ required: true, message: 'Please select a service date!' }]}>
-                <DatePicker style={{ width: '100%' }} disabledDate={disabledDate} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -698,9 +768,24 @@ const Home = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="Comments" label="Comments">
-            <Input.TextArea />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="ServiceDate"
+                label="Service Date"
+                rules={[{ required: true, message: 'Please select a service date!' }]}
+              >
+                <DatePicker style={{ width: '100%' }} disabledDate={disabledDate} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="Comments" label="Comments">
+                <Input.TextArea placeholder="Enter any comments" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Add Seva

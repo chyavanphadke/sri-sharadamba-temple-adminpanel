@@ -705,6 +705,37 @@ app.delete('/devotees/:id', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/active-servicecategories', async (req, res) => {
+  try {
+    console.log('Fetching active service categories...');
+    const categories = await ServiceCategory.findAll({ where: { active: 1 } });
+    console.log('Active categories fetched:', categories);
+    res.status(200).json(categories);
+  } catch (err) {
+    await reportError(err);
+    console.error('Error fetching active categories:', err.message, err.stack);
+    res.status(500).json({ message: 'Error fetching active categories', error: err.message });
+  }
+});
+
+app.get('/services-by-category', async (req, res) => {
+  try {
+    const { categoryId } = req.query;
+    if (!categoryId) {
+      return res.status(400).json({ message: 'Category ID is required' });
+    }
+
+    console.log(`Fetching services for category ID: ${categoryId}...`);
+    const services = await Service.findAll({ where: { category_id: categoryId, Active: 1 } });
+    console.log('Services fetched:', services);
+    res.status(200).json(services);
+  } catch (err) {
+    await reportError(err);
+    console.error('Error fetching services by category:', err.message, err.stack);
+    res.status(500).json({ message: 'Error fetching services by category', error: err.message });
+  }
+});
+
 // Service Management Routes
 
 app.get('/services', async (req, res) => {
