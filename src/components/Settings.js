@@ -28,6 +28,7 @@ const Settings = () => {
   const [sidebarColor, setSidebarColor] = useState('#001529');
   const [emailCredentials, setEmailCredentials] = useState({ email: '', appPassword: '' });
   const [autoApprove, setAutoApprove] = useState(false);
+  const [sareeCollectRemainder, setSareeCollectRemainder] = useState(false);
   const [excelSevaEmailConformation, setExcelSevaEmailConformation] = useState(false);
   const [tempServices, setTempServices] = useState([]);
   const [form] = Form.useForm();
@@ -100,10 +101,11 @@ const Settings = () => {
       const response = await axios.get('http://localhost:5001/general-configurations');
       setAutoApprove(response.data.autoApprove);
       setExcelSevaEmailConformation(response.data.excelSevaEmailConformation);
+      setSareeCollectRemainder(response.data.sareeCollectRemainder);
     } catch (error) {
       message.error('Failed to load general configurations');
     }
-  };
+  };  
 
   // Save general configurations
   const saveGeneralConfigurations = async (newConfigurations) => {
@@ -114,6 +116,16 @@ const Settings = () => {
       message.error('Failed to update general configurations');
     }
   };
+
+  const saveSareeCollectRemainder = async (value) => {
+    const newConfigurations = {
+      autoApprove,
+      excelSevaEmailConformation,
+      sareeCollectRemainder: value,
+    };
+    setSareeCollectRemainder(value);
+    saveGeneralConfigurations(newConfigurations);
+  };  
 
   // Save auto approve setting
   const saveAutoApprove = async (value) => {
@@ -733,6 +745,13 @@ const handleServiceSave = async () => {
                   style={{ marginTop: '10px', fontSize: '20px'}}
                 >
                   Send Email Confirmation for entrees from Website
+                </Checkbox>
+                <Checkbox
+                  checked={sareeCollectRemainder}
+                  onChange={(e) => saveSareeCollectRemainder(e.target.checked)}
+                  style={{ marginTop: '10px', fontSize: '20px'}}
+                >
+                  Saree Collection Remainder Email (After 1 week of Service Date)
                 </Checkbox>
               </div>
             </>

@@ -1632,15 +1632,16 @@ app.get('/reports', authenticateToken, async (req, res) => {
 });
 
 // General Configurations Routes
-// General Configurations Routes
 app.get('/general-configurations', async (req, res) => {
   try {
     const autoApproveConfig = await GeneralConfigurations.findOne({ where: { configuration: 'autoApprove' } });
     const excelSevaEmailConfig = await GeneralConfigurations.findOne({ where: { configuration: 'excelSevaEmailConformation' } });
+    const sareeCollectRemainderConfig = await GeneralConfigurations.findOne({ where: { configuration: 'sareeCollectRemainder' } });
 
     res.json({
       autoApprove: autoApproveConfig ? autoApproveConfig.value === '1' : false,
       excelSevaEmailConformation: excelSevaEmailConfig ? excelSevaEmailConfig.value === '1' : false,
+      sareeCollectRemainder: sareeCollectRemainderConfig ? sareeCollectRemainderConfig.value === '1' : false,
     });
   } catch (error) {
     await reportError(error);
@@ -1650,7 +1651,7 @@ app.get('/general-configurations', async (req, res) => {
 
 app.put('/general-configurations', async (req, res) => {
   try {
-    const { autoApprove, excelSevaEmailConformation } = req.body;
+    const { autoApprove, excelSevaEmailConformation, sareeCollectRemainder } = req.body;
 
     await GeneralConfigurations.update(
       { value: autoApprove ? '1' : '0' },
@@ -1660,6 +1661,11 @@ app.put('/general-configurations', async (req, res) => {
     await GeneralConfigurations.update(
       { value: excelSevaEmailConformation ? '1' : '0' },
       { where: { configuration: 'excelSevaEmailConformation' } }
+    );
+
+    await GeneralConfigurations.update(
+      { value: sareeCollectRemainder ? '1' : '0' },
+      { where: { configuration: 'sareeCollectRemainder' } }
     );
 
     res.json({ message: 'General configurations updated successfully' });
@@ -2956,6 +2962,116 @@ const fetchImages = async () => {
     console.error('Error fetching images from Google Drive:', error);
   }
 };
+
+const sendSareeCollectionReminders = async () => {
+  try {
+    // Check if saree collection reminders are enabled
+    const config = await GeneralConfigurations.findOne({
+      where: { configuration: 'sareeCollectRemainder' },
+    });
+
+    if (!config || config.value !== '1') {
+      console.log('Saree collection reminders are disabled.');
+      return;
+    }
+
+    // Fetch email credentials
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      console.error('Email credentials not found');
+      return;
+    }
+
+    // Configure the email transporter
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword,
+      },
+    });
+
+    // Calculate the target date (1 week before today)
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    const formattedDate = oneWeekAgo.toISOString().split('T')[0];
+
+    // Fetch eligible activities
+    const activities = await Activity.findAll({
+      where: {
+        ServiceId: 277,
+        ServiceDate: formattedDate,
+      },
+      include: [
+        {
+          model: Devotee,
+          attributes: ['FirstName', 'Email'],
+        },
+      ],
+    });
+
+    if (activities.length === 0) {
+      console.log('No eligible activities found for saree collection reminders.');
+      return;
+    }
+
+    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS'; // Updated file ID
+
+    // Send email reminders
+    for (const activity of activities) {
+      const { Devotee, ServiceDate } = activity;
+      if (Devotee && Devotee.Email) {
+        const email = Devotee.Email;
+        const firstName = Devotee.FirstName;
+
+        // Define mail options
+        const mailOptions = {
+          from: emailCredential.email,
+          to: email,
+          subject: 'Update: Vastra Sponsor Collection',
+          html: `
+            <div style="text-align: center;">
+              <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
+                <img src="${bannerImageUrl}" alt="Sharada SEVA Banner" style="width: 100%; max-width: 580px;" />
+                <div style="margin-bottom: 20px;"></div>
+                <h2 style="color: grey; text-align: center; font-size: 24px;">Vastra Sponsor Collection Reminder</h2>
+                <div style="margin-bottom: 20px;"></div>
+                <p>Dear ${firstName},</p>
+                <p>We are writing to inform you that the Vastra you graciously offered as part of the Vastra Sponsor service is now ready for collection.</p>
+                <p>You are welcome to visit the temple at your convenience between <b>6:00 PM and 8:00 PM</b> on any day.</p>
+                <p>If you have already collected it, kindly ignore this email.</p>
+                <p>Thank you for your kind contribution and devotion. May Sharada Devi bless you and your family with happiness and prosperity.</p>
+                <div style="margin-bottom: 20px;"></div>
+                <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
+                <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962)</a> if you have any questions.</p>
+                <p style="color: black;">Thank you.<br>SEVA Management</p>
+              </div>
+            </div>
+          `,
+        };
+
+        // Send the email
+        transporter.sendMail(mailOptions, (err, info) => {
+          if (err) {
+            console.error('Error sending reminder email:', err);
+          } else {
+            console.log(`Reminder email sent to: ${email}`);
+          }
+        });
+      } else {
+        console.log(`Missing email for devotee with activity ID: ${activity.ActivityId}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendSareeCollectionReminders:', error.message);
+  }
+};
+
+sendSareeCollectionReminders();
+
+// Schedule the function to run daily at 5 PM
+cron.schedule('0 17 * * *', sendSareeCollectionReminders);
 
 
 // Schedule the fetchImages function to run every 10 minutes
