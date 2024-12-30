@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData } = require('./models');
+const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData, EmailLog} = require('./models');
 const moment = require('moment');
 const { Op, Sequelize } = require('sequelize'); // Make sure this is only declared once
 
@@ -269,19 +269,47 @@ app.post('/forgot-password', async (req, res) => {
       text: `You requested a password reset. Your OTP is: ${otp}. This OTP is valid for 3 minutes.`
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).send('Error sending email');
-      }
-      res.send('Email sent: ' + info.response);
+    // Step 5: Send email
+    try {
+      const info = await transporter.sendMail(mailOptions);
+
+      // Log email activity
+      await EmailLog.create({
+        status: 'Sent',
+        name: user.username || 'Unknown',
+        email,
+        message: 'Password reset OTP',
+        module: 'Login',
+      });
+
+      return res.status(200).json({ message: `OTP sent to ${email}` });
+    } catch (emailError) {
+      console.error('Error sending OTP email:', emailError);
+
+      // Log email failure
+      await EmailLog.create({
+        status: 'Error',
+        name: user.username || 'Unknown',
+        email,
+        message: 'Password reset OTP',
+        module: 'Login',
+      });
+
+      return res.status(500).json({ message: 'Error sending OTP email', error: emailError.message });
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err);
+
+    // Log the unexpected error
+    await EmailLog.create({
+      status: 'Error',
+      name: null,
+      email,
+      message: `Unexpected error: ${err.message}`,
+      module: 'Login',
     });
 
-    res.status(200).json({ message: `OTP sent to ${email}` });
-  } catch (err) {
-    await reportError(err);
-    console.error('Error sending OTP email:', err);
-    res.status(500).json({ message: 'Error sending OTP email', error: err.message });
+    return res.status(500).json({ message: 'An unexpected error occurred', error: err.message });
   }
 });
 
@@ -1502,25 +1530,26 @@ app.post('/send-receipt-email', upload.single('pdf'), async (req, res) => {
   const pdfName = req.file.originalname;
   const { Name, ActivityDate, receiptid } = req.body;
 
-  // Fetch email credentials from the database
-  const emailCredential = await EmailCredential.findOne();
-  if (!emailCredential) {
-    return res.status(500).send('Email credentials not configured');
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: emailCredential.email,
-      pass: emailCredential.appPassword
+  try {
+    // Step 1: Fetch email credentials
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(500).send('Email credentials not configured');
     }
-  });
 
-  const mailOptions = {
-    from: emailCredential.email,
-    to: email,
-    subject: `Your Receipt for Donation at Sharada SEVA, Date ${ActivityDate}`,
-    text: `Dear ${Name},
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword,
+      },
+    });
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject: `Your Receipt for Donation at Sharada SEVA, Date ${ActivityDate}`,
+      text: `Dear ${Name},
 
 Thank you very much for your generous donation to the Sringeri Education and Vedic Academy.
 
@@ -1528,29 +1557,63 @@ If you wish, you can match this donation through Benevity under the name "Sringe
 
 Sincerely,
 Sringeri Education and Vedic Academy.`,
-    attachments: [
-      {
-        filename: pdfName,
-        content: pdfBuffer
-      }
-    ]
-  };
+      attachments: [
+        {
+          filename: pdfName,
+          content: pdfBuffer,
+        },
+      ],
+    };
 
-  transporter.sendMail(mailOptions, async (error, info) => {
-    if (error) {
-      console.log(error);
-      return res.status(500).send('Error sending email');
-    }
+    // Step 3: Send email
+    try {
+      const info = await transporter.sendMail(mailOptions);
+
+      // Log successful email in EmailLog
+      await EmailLog.create({
+        status: 'Sent',
+        name: Name || 'Unknown',
+        email,
+        message: `Receipt Id: ${receiptid}`,
+        module: 'Receipt',
+      });
 
     // Update emailsentcount in the database
-    const receipt = await Receipt.findOne({ where: { receiptid } });
-    if (receipt) {
-      receipt.emailsentcount += 1;
-      await receipt.save();
-    }
+      const receipt = await Receipt.findOne({ where: { receiptid } });
+      if (receipt) {
+        receipt.emailsentcount += 1;
+        await receipt.save();
+      }
 
-    res.send('Email sent: ' + info.response);
-  });
+      return res.status(200).send(`Email sent: ${info.response}`);
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+
+      // Log email error in EmailLog
+      await EmailLog.create({
+        status: 'Error',
+        name: Name || 'Unknown',
+        email,
+        message: `Receipt Id: ${receiptid}. Error: ${emailError.message}`,
+        module: 'Receipt',
+      });
+
+      return res.status(500).send('Error sending email');
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err);
+
+    // Log unexpected errors in EmailLog
+    await EmailLog.create({
+      status: 'Error',
+      name: Name || 'Unknown',
+      email,
+      message: `Receipt Email: ${err.message}`,
+      module: 'Receipt',
+    });
+
+    return res.status(500).json({ message: 'An unexpected error occurred', error: err.message });
+  }
 });
 
 
@@ -1740,8 +1803,8 @@ app.post('/send-report-email', upload.single('pdf'), async (req, res) => {
       service: 'Gmail',
       auth: {
         user: emailCredential.email,
-        pass: emailCredential.appPassword
-      }
+        pass: emailCredential.appPassword,
+      },
     });
 
     const mailOptions = {
@@ -1757,22 +1820,52 @@ Sringeri Education and Vedic Academy.`,
       attachments: [
         {
           filename: pdfName,
-          content: pdfBuffer
-        }
-      ]
+          content: pdfBuffer,
+        },
+      ],
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).send('Error sending email');
-      }
-      res.send('Email sent: ' + info.response);
-    });
+    try {
+      // Send the email
+      const info = await transporter.sendMail(mailOptions);
+
+      // Log successful email in EmailLog
+      await EmailLog.create({
+        status: 'Sent',
+        name: Name || 'Unknown',
+        email,
+        message: `Seva report for the period ${startDate} to ${endDate}`,
+        module: 'Report',
+      });
+
+      return res.status(200).send(`Email sent: ${info.response}`);
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+
+      // Log email error in EmailLog
+      await EmailLog.create({
+        status: 'Error',
+        name: Name || 'Unknown',
+        email,
+        message: `Seva report for the period ${startDate} to ${endDate}. Error: ${emailError.message}`,
+        module: 'Report',
+      });
+
+      return res.status(500).send('Error sending email');
+    }
   } catch (error) {
-    await reportError(error);
-    console.error('Error sending email:', error);
-    res.status(500).json({ message: 'Error sending email', error: error.message });
+    console.error('Unexpected error:', error);
+
+    // Log unexpected error in EmailLog
+    await EmailLog.create({
+      status: 'Error',
+      name: Name || 'Unknown',
+      email,
+      message: `Unexpected error occurred while sending Seva report. Error: ${error.message}`,
+      module: 'Report',
+    });
+
+    return res.status(500).json({ message: 'An unexpected error occurred', error: error.message });
   }
 });
 
@@ -1838,6 +1931,19 @@ app.get('/access-control', async (req, res) => {
     await reportError(error);
     console.error('Error fetching access control data:', error);
     res.status(500).json({ message: 'Error fetching access control data', error: error.message });
+  }
+});
+
+// Fetch email logs
+app.get('/email-logs', async (req, res) => {
+  try {
+    const logs = await EmailLog.findAll({
+      order: [['log_datetime', 'DESC']], // Sort by date descending
+    });
+    res.json(logs);
+  } catch (error) {
+    console.error('Error fetching email logs:', error);
+    res.status(500).send('Failed to fetch email logs');
   }
 });
 
@@ -2437,8 +2543,8 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       service: 'Gmail',
       auth: {
         user: emailCredential.email,
-        pass: emailCredential.appPassword
-      }
+        pass: emailCredential.appPassword,
+      },
     });
 
     // Determine service time
@@ -2446,110 +2552,102 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     const convertTo24HourFormat = (time) => {
       const [hourMinute, period] = time.match(/(\d+:\d+)([ap]m)/i).slice(1);
       let [hours, minutes] = hourMinute.split(':').map(Number);
-    
+
       if (period.toLowerCase() === 'pm' && hours !== 12) {
         hours += 12;
       } else if (period.toLowerCase() === 'am' && hours === 12) {
         hours = 0;
       }
-    
+
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     };
-    
-    const serviceTime = batchTime ? convertTo24HourFormat(batchTime) : (service.time ? service.time : '18:00');
-    
-    console.log('Service time:', serviceTime);
 
-    // Combine service date and time
+    const serviceTime = batchTime
+      ? convertTo24HourFormat(batchTime)
+      : service.time || '18:00';
+
     const serviceDateTimeString = `${serviceDate} ${serviceTime}`;
     const serviceDateTime = new Date(serviceDateTimeString);
     if (isNaN(serviceDateTime.getTime())) {
       console.error('Invalid service date and time:', serviceDateTimeString);
       return;
     }
-    console.log('Service date and time:', serviceDateTime);
 
     // Generate iCal content
-    console.log('Generating iCal content');
     const icalContent = await createICalEvent({
       service: service.Service,
-      date: serviceDateTime
+      date: serviceDateTime,
     });
 
-    // Format date and time for email
     const dayOfWeek = serviceDateTime.toLocaleString('en-US', { weekday: 'long' });
     const formattedDate = serviceDateTime.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const startTime = serviceDateTime.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const endTime = new Date(serviceDateTime.getTime() + 3600000).toISOString().replace(/-|:|\.\d\d\d/g, ""); // Add 1 hour
 
-    // Google Calendar URL
-    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(service.Service)}+Seva&dates=${startTime}/${endTime}&details=${encodeURIComponent('You have a scheduled seva at Sri Sharadamba Temple')}&location=${encodeURIComponent('Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035')}&sf=true&output=xml`;
+    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS';
 
-    const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS'; // Updated file ID
-
-    // Mail options
     const mailOptions = {
       from: emailCredential.email,
       to: email,
       subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
       html: `
-        <p>Seva: ${service.Service}</p>
-        <p>When: ${dayOfWeek}, ${formattedDate}</p>
-        <p>Where: Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</p>
-    
-        <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
-    
-        <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
-    
-        <p>For event updates, please join our temple <a href="https://chat.whatsapp.com/Gu7jSLiov9nHaWrf4LHNYe">community link</a>.</p>
+        <div style="text-align: center;">
+          <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
+            <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
+            <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
+            <p><b>Seva:</b> ${service.Service}</p>
+            <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
+            <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
+            <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
+            <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
+          </div>
+        </div>
       `,
       attachments: [
         {
           filename: 'invite.ics',
           content: icalContent,
-          contentType: 'text/calendar'
-        }
+          contentType: 'text/calendar',
+        },
       ],
-      html: `
-        <div style="text-align: center;">
-          <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
-            <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
-            <div style="margin-bottom: 20px;"></div>
-            <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
-            <div style="margin-bottom: 20px;"></div>
-            <p><b>Seva:</b> ${service.Service}</p>
-            <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
-            <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
-            <div style="margin-bottom: 20px;"></div>
-            <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
-            <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
-            <p>For event updates, please join our temple <a href="https://chat.whatsapp.com/Gu7jSLiov9nHaWrf4LHNYe">WhatsApp Group Link</a>.</p>
-            <div style="margin-bottom: 20px;"></div>
-            <a href="${googleCalendarUrl}" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">Add to Calendar</a>
-            <a href="https://www.google.com/maps/search/?api=1&query=Sri+Sharadamba+Temple+(SEVA)" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: orange; color: white; text-decoration: none; border-radius: 5px;">Navigate</a>
-            <div style="margin-bottom: 20px;"></div>
-            <p style="color: grey;">Please visit <a href="https://sharadaseva.org" target="_blank">www.sharadaseva.org</a> for latest updates and upcoming events</p>
-            <p style="color: grey;">Contact <a href="tel:+15105651411">(510) 565-1411</a> / <a href="tel:+19256635962">(925) 663-5962)</a> if you have any questions.</p>
-            <p style="color: grey;">Our organization is enrolled with Benevity. If possible, please consider using the company match program to amplify your support.</p>
-            <p style="color: black;">Thank you. <br>Pandit Nagaraja Bhat <br>SEVA Management.</p>
-          </div>
-        </div>
-      `
     };
 
-    // Send email
-    console.log('Sending email to:', email);
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-      } else {
-        console.log('Email sent:', info.response);
-      }
-    });
+    try {
+      // Send email
+      console.log('Sending email to:', email);
+      const info = await transporter.sendMail(mailOptions);
+
+      // Log successful email in EmailLog
+      await EmailLog.create({
+        status: 'Sent',
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        message: `Seva email sent for service "${service.Service}" on ${formattedDate}.`,
+        module: 'New Seva',
+      });
+
+      console.log('Email sent successfully:', info.response);
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+
+      // Log email error in EmailLog
+      await EmailLog.create({
+        status: 'Error',
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        message: `Failed to send seva email for service "${service.Service}". Error: ${emailError.message}`,
+        module: 'New Seva',
+      });
+    }
   } catch (error) {
-    await reportError(error);
-    console.error('Error in sendSevaEmail:', error.message);
-    console.error(error.stack);
+    console.error('Error in sendSevaEmail:', error);
+
+    // Log unexpected error in EmailLog
+    await EmailLog.create({
+      status: 'Error',
+      name: `${firstName} ${lastName}`.trim(),
+      email,
+      message: `Unexpected error occurred while sending seva email. Error: ${error.message}`,
+      module: 'New Seva',
+    });
   }
 }
 
@@ -3051,14 +3149,32 @@ const sendSareeCollectionReminders = async () => {
           `,
         };
 
-        // Send the email
-        transporter.sendMail(mailOptions, (err, info) => {
-          if (err) {
-            console.error('Error sending reminder email:', err);
-          } else {
-            console.log(`Reminder email sent to: ${email}`);
-          }
-        });
+        try {
+          // Send the email
+          await transporter.sendMail(mailOptions);
+
+          // Log success to the EmailLog table
+          await EmailLog.create({
+            status: 'Sent',
+            name: firstName,
+            email: email,
+            message: 'Vastra Collection Reminder',
+            module: 'Vastra Reminder',
+          });
+
+          console.log(`Reminder email sent and logged for: ${email}`);
+        } catch (error) {
+          console.error('Error sending reminder email:', error);
+
+          // Log error to the EmailLog table
+          await EmailLog.create({
+            status: 'Error',
+            name: firstName,
+            email: email,
+            message: `Error: ${error.message}`,
+            module: 'Vastra Reminder',
+          });
+        }
       } else {
         console.log(`Missing email for devotee with activity ID: ${activity.ActivityId}`);
       }
@@ -3067,8 +3183,6 @@ const sendSareeCollectionReminders = async () => {
     console.error('Error in sendSareeCollectionReminders:', error.message);
   }
 };
-
-sendSareeCollectionReminders();
 
 // Schedule the function to run daily at 5 PM
 cron.schedule('0 17 * * *', sendSareeCollectionReminders);

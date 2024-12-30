@@ -598,6 +598,44 @@ const ExcelSevaData = sequelize.define('ExcelSevaData', {
   timestamps: true,
 });
 
+// Define EmailLog model
+const EmailLog = sequelize.define('EmailLog', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  status: {
+    type: DataTypes.STRING, // "Sent" or "Error"
+    allowNull: false,
+  },
+  name: {
+    type: DataTypes.STRING, // Optional: Name if present
+    allowNull: true,
+  },
+  email: {
+    type: DataTypes.STRING, // Recipient email address
+    allowNull: false,
+  },
+  message: {
+    type: DataTypes.STRING, // "Email Log"
+    allowNull: false,
+    defaultValue: "Email Log",
+  },
+  log_datetime: {
+    type: DataTypes.DATE, // Combined current date and time
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+  },
+  module: {
+    type: DataTypes.STRING, // "Sent" or "Error"
+    allowNull: false,
+  },
+}, {
+  timestamps: false,
+  freezeTableName: true,
+});
+
 // Define associations between models
 Devotee.hasMany(Family, { foreignKey: 'DevoteeId' });
 Family.belongsTo(Devotee, { foreignKey: 'DevoteeId' });
@@ -646,5 +684,6 @@ module.exports = {
   EmailCredential,
   GeneralConfigurations,
   EditedReceipts,
-  ExcelSevaData
+  ExcelSevaData,
+  EmailLog
 };
