@@ -1,28 +1,55 @@
-.custom-date-picker {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    font-size: 14px;
+.statistics-container {
+  padding: 24px;
+  background: linear-gradient(120deg, #f6f8fb, #ffffff);
+  min-height: 100vh;
+}
+
+.statistics-title {
+  text-align: center;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.filters-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.date-picker {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.price-slider {
+  .ant-slider-track {
+    background-color: #1890ff;
   }
-  
-  .ant-card {
-    background: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+  .ant-slider-handle {
+    border: 2px solid #1890ff;
   }
-  
-  .ant-table {
-    border-radius: 10px;
-  }
-  
-  .ant-table-thead > tr > th {
-    text-align: center;
-    background-color: #fafafa;
-    font-weight: bold;
-  }
-  
-  .ant-table-tbody > tr > td {
-    text-align: center;
-  }
-  
+}
+
+.data-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modern-table .ant-table-thead > tr > th {
+  background-color: #f0f2f5;
+  font-weight: 600;
+}
+
+.modern-table .ant-table-tbody > tr:hover > td {
+  background-color: #e6f7ff;
+}
+
+.modern-table .ant-pagination-item-active {
+  border-color: #1890ff;
+}

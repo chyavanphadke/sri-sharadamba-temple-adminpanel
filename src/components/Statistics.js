@@ -1,10 +1,11 @@
+// Statistics.js
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Slider, Row, Col, Typography, Card } from 'antd';
+import { Button, Table, Slider, Row, Col, Typography, Card, Space } from 'antd';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { startOfYear, endOfYear, subMonths } from 'date-fns';
-import './Statistics.css'; // Assuming you create this CSS file for custom styles
+import './Statistics.css';
 
 const { Title } = Typography;
 
@@ -16,25 +17,23 @@ const Statistics = () => {
   const [endDate, setEndDate] = useState(new Date());
   const [priceRange, setPriceRange] = useState([1, 10000]);
   const [maxAmount, setMaxAmount] = useState(10000);
+  const [selectedButton, setSelectedButton] = useState('thisYear');
 
   const columns = [
     {
       title: 'Devotee ID',
       dataIndex: 'DevoteeId',
       key: 'DevoteeId',
-      align: 'center',
     },
     {
       title: 'Devotee Name',
       dataIndex: 'DevoteeName',
       key: 'DevoteeName',
-      align: 'center',
     },
     {
       title: 'Total Contribution',
       dataIndex: 'TotalAmount',
       key: 'TotalAmount',
-      align: 'center',
     },
   ];
 
@@ -43,13 +42,11 @@ const Statistics = () => {
       title: 'Service',
       dataIndex: 'Service',
       key: 'Service',
-      align: 'center',
     },
     {
       title: 'Count',
       dataIndex: 'Count',
       key: 'Count',
-      align: 'center',
       sorter: (a, b) => a.Count - b.Count,
     },
   ];
@@ -114,7 +111,7 @@ const Statistics = () => {
 
   const handlePriceRangeChange = (value) => {
     setPriceRange(value);
-    fetchData(); // Fetch data based on the new price range
+    fetchData();
   };
 
   const setDateRange = (months) => {
@@ -122,6 +119,7 @@ const Statistics = () => {
     const end = new Date();
     setStartDate(start);
     setEndDate(end);
+    setSelectedButton(months === 1 ? 'lastMonth' : 'lastSixMonths');
   };
 
   const setThisYearDateRange = () => {
@@ -129,70 +127,80 @@ const Statistics = () => {
     const end = endOfYear(new Date());
     setStartDate(start);
     setEndDate(end);
+    setSelectedButton('thisYear');
   };
 
   return (
-    <div style={{ padding: 24, minHeight: 280, background: '#f0f2f5' }}>
-      <Title level={2} style={{ textAlign: 'center', marginBottom: 20 }}>Statistics</Title>
-      <Row gutter={16} justify="center" style={{ marginBottom: 20 }}>
-        <Col>
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            className="custom-date-picker"
-          />
-        </Col>
-        <Col>
-          <span>to</span>
-        </Col>
-        <Col>
-          <DatePicker
-            selected={endDate}
-            onChange={(date) => setEndDate(date)}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            className="custom-date-picker"
-          />
-        </Col>
-      </Row>
-      <Row gutter={16} justify="center" style={{ marginBottom: 20 }}>
-        <Col>
-          <Button type="primary" onClick={() => setDateRange(1)}>Last Month</Button>
-        </Col>
-        <Col>
-          <Button type="primary" onClick={() => setDateRange(6)}>Last 6 Months</Button>
-        </Col>
-        <Col>
-          <Button type="primary" onClick={setThisYearDateRange}>This Year</Button>
-        </Col>
-      </Row>
-      <Row gutter={16} justify="center" style={{ marginBottom: 20 }}>
-        <Col span={12}>
-          <Slider
-            range
-            min={1}
-            max={maxAmount}
-            step={10}
-            value={priceRange}
-            onChange={handlePriceRangeChange}
-            style={{ width: '100%' }}
-            tooltip={{ open: true, formatter: (value) => `$${value}` }}
-          />
-        </Col>
-      </Row>
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card title="Top 10 Contributions" bordered={false}>
-            <Table columns={columns} dataSource={data} loading={loading} rowKey="DevoteeId" pagination={false} />
+    <div className="statistics-container">
+      <Title level={2} className="statistics-title">Statistics Dashboard</Title>
+      <Card className="filters-card">
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} lg={6}>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              className="date-picker"
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              className="date-picker"
+            />
+          </Col>
+          <Col xs={24} lg={12}>
+            <Space>
+              <Button type={selectedButton === 'lastMonth' ? 'primary' : 'default'} onClick={() => setDateRange(1)}>Last Month</Button>
+              <Button type={selectedButton === 'lastSixMonths' ? 'primary' : 'default'} onClick={() => setDateRange(6)}>Last 6 Months</Button>
+              <Button type={selectedButton === 'thisYear' ? 'primary' : 'default'} onClick={setThisYearDateRange}>This Year</Button>
+            </Space>
+          </Col>
+        </Row>
+        <Row gutter={[16, 16]} style={{ marginTop: 20 }}>
+          <Col span={12}>
+            <Slider
+              range
+              min={1}
+              max={maxAmount}
+              step={10}
+              value={priceRange}
+              onChange={handlePriceRangeChange}
+              className="price-slider"
+              tooltip={{ open: true, formatter: (value) => `$${value}` }}
+            />
+          </Col>
+        </Row>
+      </Card>
+      <Row gutter={[24, 24]} style={{ marginTop: 20 }}>
+        <Col xs={24} md={12}>
+          <Card title="Top 10 Contributions" className="data-card">
+            <Table
+              columns={columns}
+              dataSource={data}
+              loading={loading}
+              rowKey="DevoteeId"
+              pagination={{ pageSize: 10 }}
+              className="modern-table"
+            />
           </Card>
         </Col>
-        <Col span={12}>
-          <Card title="Most Done Services" bordered={false}>
-            <Table columns={serviceColumns} dataSource={serviceData} loading={loading} rowKey="Service" pagination={false} />
+        <Col xs={24} md={12}>
+          <Card title="Most Done Services" className="data-card">
+            <Table
+              columns={serviceColumns}
+              dataSource={serviceData}
+              loading={loading}
+              rowKey="Service"
+              pagination={{ pageSize: 10 }}
+              className="modern-table"
+            />
           </Card>
         </Col>
       </Row>

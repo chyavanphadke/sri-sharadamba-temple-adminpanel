@@ -34,6 +34,7 @@ const Reports = () => {
   const [emailAll, setEmailAll] = useState('');
   const [emailAllDevoteeName, setEmailAllDevoteeName] = useState('');
   const [pageSize, setPageSize] = useState(12);
+  const [isTotalAmountModalVisible, setIsTotalAmountModalVisible] = useState(false);
 
   const token = localStorage.getItem('token');
   const axiosInstance = axios.create({
@@ -104,6 +105,14 @@ const Reports = () => {
 
   const handlePaymentMethodChange = (value) => {
     setSelectedPaymentMethod(value);
+  };
+
+  const showTotalAmountModal = () => {
+    setIsTotalAmountModalVisible(true);
+  };
+  
+  const hideTotalAmountModal = () => {
+    setIsTotalAmountModalVisible(false);
   };
 
   const handleSearchChange = async (value) => {
@@ -596,7 +605,14 @@ const Reports = () => {
               <Statistic title="Total Devotee Count" value={totalDevoteeCount} />
             </Col>
             <Col span={12}>
-              <Statistic title="Total Amount" value={totalAmount} precision={2} />
+            <Statistic 
+              title="Total Amount" 
+              valueRender={() => (
+                <Button type="primary" onClick={showTotalAmountModal}>
+                  View
+                </Button>
+              )}
+            />
             </Col>
           </Row>
           <Table
@@ -611,6 +627,14 @@ const Reports = () => {
               onChange: handlePageSizeChange,
             }}
           />
+          <Modal
+            title="Total Amount"
+            visible={isTotalAmountModalVisible}
+            onOk={hideTotalAmountModal}
+            onCancel={hideTotalAmountModal}
+          >
+            <p style={{ textAlign: 'center', fontSize: '22px', fontWeight: 'bold' }}> {`$${totalAmount.toFixed(2)}`} </p>
+          </Modal>
         </div>
         <Modal
           title={`Do you want to send email to ${name}?`}
