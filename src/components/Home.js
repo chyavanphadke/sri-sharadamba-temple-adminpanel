@@ -107,27 +107,38 @@ const Home = () => {
     try {
       const response = await axiosInstance.get(`/services-by-category?categoryId=${categoryId}`);
       setActiveServices(response.data);
+  
+      // Automatically select the default service (ServiceId === 2)
+      const defaultService = response.data.find(service => service.ServiceId === 2);
+      if (defaultService) {
+        sevaForm.setFieldsValue({
+          Service: defaultService.Service,
+          Expected_Donation: defaultService.Rate,
+          AmountPaid: defaultService.Rate,
+        });
+        setSelectedService(defaultService.Service);
+      }
     } catch (error) {
       message.error('Failed to load services for the selected category');
     }
-  }, [axiosInstance]);
+  }, [axiosInstance]);  
 
   const fetchServiceCategories = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/active-servicecategories');
       setCategories(response.data);
   
-      // Automatically select the default category
-      const defaultCategory = response.data.find(category => category.category_id === 1 && category.active) 
-        || response.data[0]; // Fallback to the first available category
+      // Automatically select the default category (category_id === 1)
+      const defaultCategory = response.data.find(category => category.category_id === 1 && category.Active);
       if (defaultCategory) {
         sevaForm.setFieldsValue({ ServiceCategory: defaultCategory.category_id });
-        fetchServicesByCategory(defaultCategory.category_id);
+        fetchServicesByCategory(defaultCategory.category_id); // Fetch services for the default category
       }
     } catch (error) {
       message.error('Failed to load service categories');
     }
   }, [axiosInstance, fetchServicesByCategory]);
+  
   
   const handleCategoryChange = (value) => {
     sevaForm.setFieldsValue({ Service: null }); // Reset Service dropdown
@@ -237,6 +248,25 @@ const Home = () => {
   const handleSeva = (devotee) => {
     setCurrentDevotee(devotee);
     sevaForm.resetFields();
+  
+    // Set the default category
+    const defaultCategory = categories.find(category => category.category_id === 1 && category.Active);
+    if (defaultCategory) {
+      sevaForm.setFieldsValue({ ServiceCategory: defaultCategory.category_id });
+      fetchServicesByCategory(defaultCategory.category_id);
+    }
+  
+    // Set the default service
+    const defaultService = activeServices.find(service => service.ServiceId === 2);
+    if (defaultService) {
+      sevaForm.setFieldsValue({
+        Service: defaultService.Service,
+        Expected_Donation: defaultService.Rate,
+        AmountPaid: defaultService.Rate,
+      });
+      setSelectedService(defaultService.Service);
+    }
+  
     sevaForm.setFieldsValue({
       Name: `${devotee.FirstName} ${devotee.LastName}`,
     });
