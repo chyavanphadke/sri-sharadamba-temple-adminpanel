@@ -1,55 +1,47 @@
-.statistics-container {
-  padding: 24px;
-  background: linear-gradient(120deg, #f6f8fb, #ffffff);
-  min-height: 100vh;
-}
-
-.statistics-title {
-  text-align: center;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
 .filters-card {
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.date-picker {
+.filters-card .ant-typography {
+  margin: 0;
+}
+
+.date-picker.compact-date-picker {
   width: 100%;
-  padding: 8px 12px;
+  max-width: 180px; /* Reduced width */
+  padding: 6px 10px;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px; /* Smaller font */
 }
 
-.price-slider {
-  .ant-slider-track {
-    background-color: #1890ff;
-  }
-  .ant-slider-handle {
-    border: 2px solid #1890ff;
-  }
+.price-slider .ant-slider-track {
+  background-color: #1890ff;
 }
 
-.data-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+.price-slider .ant-slider-handle {
+  border: 2px solid #1890ff;
 }
 
-.modern-table .ant-table-thead > tr > th {
-  background-color: #f0f2f5;
-  font-weight: 600;
-}
-
-.modern-table .ant-table-tbody > tr:hover > td {
-  background-color: #e6f7ff;
-}
-
-.modern-table .ant-pagination-item-active {
+.filters-card .ant-btn-primary {
+  background-color: #1890ff;
   border-color: #1890ff;
+  color: white;
+  font-weight: bold;
+  height: 32px; /* Compact button height */
+}
+
+.filters-card .ant-btn-default {
+  background-color: #f6f8fb;
+  border: 1px solid #d9d9d9;
+  color: #333;
+  height: 32px; /* Compact button height */
+}
+
+.filters-card .ant-btn {
+  border-radius: 6px;
+  font-size: 13px;
 }

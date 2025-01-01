@@ -746,6 +746,43 @@ app.get('/active-servicecategories', async (req, res) => {
   }
 });
 
+app.get('/servicecategoriesStat', async (req, res) => {
+  try {
+    const categories = await ServiceCategory.findAll({ where: { active: 1 } });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch service categories' });
+  }
+});
+
+app.get('/servicesStat', async (req, res) => {
+  const { categoryId } = req.query;
+  try {
+    const services = await Service.findAll({ where: { category_id: categoryId, Active: 1 } });
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
+});
+
+app.get('/activitiesStat', async (req, res) => {
+  const { serviceId, from, to } = req.query;
+  try {
+    const activities = await Activity.findAll({
+      where: { ServiceId: serviceId, ServiceDate: { [Op.between]: [from, to] } },
+      include: [{ model: Devotee, attributes: ['FirstName', 'LastName'] }],
+    });
+    res.json(
+      activities.map((act) => ({
+        DevoteeName: `${act.Devotee.FirstName} ${act.Devotee.LastName}`,
+        ServiceDate: act.ServiceDate,
+      }))
+    );
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch activities' });
+  }
+});
+
 app.get('/services-by-category', async (req, res) => {
   try {
     const { categoryId } = req.query;
