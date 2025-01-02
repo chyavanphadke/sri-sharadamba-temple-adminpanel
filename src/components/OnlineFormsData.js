@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Table, Button, message, Modal, Input, Form, Checkbox, Row, Col } from 'antd';
+import { Layout, Table, Button, message, Modal, Input, Form, Checkbox, Row, Col, Select } from 'antd';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './OnlineFormsData.css'; // Ensure this path is correct
@@ -17,11 +17,14 @@ const OnlineFormsData = () => {
   const [showAll, setShowAll] = useState(false); // State to toggle showing all records or only unpaid records
   const [searchQuery, setSearchQuery] = useState(''); // State to store the search query
   const [sheetServiceMap, setSheetServiceMap] = useState({}); // State to store the service map
-
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(3); // Default to PaymentMethodId = 3
+  
   // Fetch service map and Excel Seva data on component mount
   useEffect(() => {
     fetchServiceMap();
     fetchExcelSevaData();
+    fetchPaymentMethods();
   }, []);
 
   // Fetch the service map data from the server
@@ -116,6 +119,15 @@ const OnlineFormsData = () => {
     setAmountModalVisible(true);
   };
 
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/payment-methods');
+      setPaymentMethods(response.data);
+    } catch (error) {
+      message.error('Failed to load payment methods');
+    }
+  };  
+
   // Handle the deletion of a service entry
   const handleDeleteService = (record) => {
     Modal.confirm({
@@ -141,16 +153,22 @@ const OnlineFormsData = () => {
   const handleUpdatePaymentStatus = async () => {
     try {
       const values = await form.validateFields();
-
+  
       const token = localStorage.getItem('token');
       const decodedToken = jwtDecode(token);
       const userId = decodedToken.userid;
-
+  
+      // Find the selected payment method name
+      const selectedMethod = paymentMethods.find(method => method.PaymentMethodId === selectedPaymentMethod);
+      const paymentMethodName = selectedMethod ? selectedMethod.MethodName : 'Unknown';
+  
       await axios.put(`http://localhost:5001/update-payment-status/${currentRecord.id}`, {
         amount: values.amount,
         paymentStatus: 'Paid at temple',
-        userId: userId
+        userId: userId,
+        paymentStatusReal: paymentMethodName // Use the name of the selected payment method
       });
+  
       message.success('Payment status updated successfully');
       setAmountModalVisible(false);
       fetchExcelSevaData();
@@ -158,7 +176,7 @@ const OnlineFormsData = () => {
     } catch (error) {
       message.error('Failed to update payment status');
     }
-  };
+  };  
 
   // Define the columns for the data table
   const columns = [
@@ -234,8 +252,23 @@ const OnlineFormsData = () => {
             onCancel={() => setAmountModalVisible(false)}
           >
             <Form form={form}>
-              <Form.Item name="amount" label="Amount" rules={[{ required: true, message: 'Please enter the amount' }]}>
+              <Form.Item 
+                name="amount" 
+                label="Amount" 
+                rules={[{ required: true, message: 'Please enter the amount' }]}
+              >
                 <Input type="number" />
+              </Form.Item>
+              <Form.Item 
+                name="paymentMethod" 
+                label="Mode of Payment" 
+                initialValue={3} // Default PaymentMethodId = 3
+                rules={[{ required: true, message: 'Please select a payment method' }]}
+              >
+                <Select 
+                  onChange={(value) => setSelectedPaymentMethod(value)} 
+                  options={paymentMethods.map(method => ({ value: method.PaymentMethodId, label: method.MethodName }))}
+                />
               </Form.Item>
             </Form>
           </Modal>

@@ -2820,7 +2820,7 @@ app.get('/excel-seva-data', async (req, res) => {
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
-    const { amount, paymentStatus, userId } = req.body;
+    const { amount, paymentStatus, paymentStatusReal, userId } = req.body;
     const entry = await ExcelSevaData.findByPk(req.params.id);
 
     if (!entry) {
@@ -2850,7 +2850,7 @@ app.put('/update-payment-status/:id', async (req, res) => {
       const activityId = await createActivity({
         devoteeId: entry.devotee_id,
         serviceId,  // Pass the determined serviceId
-        paymentStatus: 'Paid at temple',
+        paymentStatus: paymentStatusReal,
         amount,
         serviceDate: entry.date,
         comments: entry.message,
