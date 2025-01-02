@@ -438,10 +438,18 @@ const Receipts = () => {
 
     if (record && record.PaymentMethod === 'Check') {
       doc.text(`Check Number: ${record.CheckNumber ? record.CheckNumber : 'NA'}`, 0.5, 9.5);
-      doc.text(`Payment Date: ${record ? new Date(record.PaymentDate).toLocaleDateString() : ''}`, 0.5, 9.8);
+      doc.text(
+        `Payment Date: ${record ? new Date(record.ActivityDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`,
+        0.5,
+        9.8
+      );
     } else {
-      doc.text(`Payment Date: ${record ? new Date(record.PaymentDate).toLocaleDateString() : ''}`, 0.5, 9.5);
-    }
+      doc.text(
+        `Payment Date: ${record ? new Date(record.ActivityDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`,
+        0.5,
+        9.5
+      );
+    }    
 
     return doc;
   };
