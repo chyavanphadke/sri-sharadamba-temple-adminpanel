@@ -410,3 +410,11 @@
   max-height: 240px; /* Set a fixed max height */
   padding-right: 10px;
 }
+
+.video {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  background-color: #ffffff;
+}

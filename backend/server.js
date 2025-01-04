@@ -3047,10 +3047,10 @@ const axios = require('axios');
 const DOWNLOAD_DIR = path.join(__dirname, './tvSlideshow');
 const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroung.jpg');
 
-const fetchImages = async () => {
+const fetchImagesAndVideos = async () => {
   try {
     const response = await drive.files.list({
-      q: `'${DRIVE_FOLDER_ID}' in parents and (mimeType contains 'image/png' or mimeType contains 'image/jpeg')`,
+      q: `'${DRIVE_FOLDER_ID}' in parents and (mimeType contains 'image/png' or mimeType contains 'image/jpeg' or mimeType contains 'video/mp4')`,
       fields: 'files(id, name)',
     });
 
@@ -3060,7 +3060,7 @@ const fetchImages = async () => {
       today.setHours(0, 0, 0, 0);
 
       files.forEach(async (file) => {
-        const fileNameWithoutExtension = file.name.replace('.png', '').replace('.jpg', '');
+        const fileNameWithoutExtension = file.name.replace('.png', '').replace('.jpg', '').replace('.mp4', '');
         const [month, day, year] = fileNameWithoutExtension.split('-');
         const fileDate = new Date(year, month - 1, day);
 
@@ -3081,20 +3081,20 @@ const fetchImages = async () => {
           response.data.pipe(writer);
 
           writer.on('finish', () => {
-            console.log(`Image downloaded: ${file.name}`);
+            console.log(`File downloaded: ${file.name}`);
           });
 
           writer.on('error', (error) => {
-            console.error(`Error downloading image ${file.name}:`, error);
+            console.error(`Error downloading file ${file.name}:`, error);
           });
         } else {
-          console.log(`Skipping past image: ${file.name}`);
+          console.log(`Skipping past file: ${file.name}`);
         }
       });
     }
   } catch (error) {
     await reportError(error);
-    console.error('Error fetching images from Google Drive:', error);
+    console.error('Error fetching files from Google Drive:', error);
   }
 };
 
@@ -3225,11 +3225,11 @@ const sendSareeCollectionReminders = async () => {
 cron.schedule('0 17 * * *', sendSareeCollectionReminders);
 
 
-// Schedule the fetchImages function to run every 10 minutes
-cron.schedule('0 * * * *', fetchImages);
+// Schedule the fetchImagesAndVideos function to run every 10 minutes
+cron.schedule('0 * * * *', fetchImagesAndVideos);
 
 // Fetch images immediately on server start
-fetchImages();
+fetchImagesAndVideos();
 
 // Fetch events, panchanga, and images immediately on server start
 fetchEvents();
@@ -3249,7 +3249,7 @@ app.get('/api/panchanga', (req, res) => {
 
 // Function to check if the date is today or in the future
 const isFutureOrToday = (filename) => {
-  const fileNameWithoutExtension = filename.replace('.png', '').replace('.jpg', '');
+  const fileNameWithoutExtension = filename.replace('.png', '').replace('.jpg', '').replace('.mp4', '');
   const [month, day, year] = fileNameWithoutExtension.split('-');
   const fileDate = new Date(year, month - 1, day);
 
@@ -3266,14 +3266,23 @@ app.get('/api/images', (req, res) => {
   fs.readdir(DOWNLOAD_DIR, (err, files) => {
     if (err) {
       console.error('Error reading downloaded images directory:', err);
-      return res.status(500).send('Error reading images directory');
+      return res.status(500).send('Error reading files directory');
     }
 
-    const validFiles = files.filter(file => isFutureOrToday(file));
+    console.log('All files:', files); // Log all files in the directory
+
+    const validFiles = files.filter(file => {
+      const isValid = 
+        (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.mp4')) && 
+        isFutureOrToday(file);
+      console.log(`File: ${file}, IsValid: ${isValid}`); // Debugging log
+      return isValid;
+    });
+
     let fileUrls = validFiles.map(file => `/api/image/${file}`);
 
     if (fileUrls.length === 0) {
-      // If no valid images, use the default image
+      // If no valid media, use the default image
       fileUrls = [`/api/image/sharadamba_backroung.jpg`];
     }
 
@@ -3342,7 +3351,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 app.post('/run-gear-functions', async (req, res) => {
   try {
     deleteTvImages();
-    await fetchImages();
+    await fetchImagesAndVideos();
     await delay(2000);
     await fetchEvents();
     await delay(2000);

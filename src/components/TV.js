@@ -246,32 +246,47 @@ const TV = () => {
       <div className={styles.rightSection}>
         {currentMode === 'slideshow' || activities.length === 0 ? (
           <div className={styles.slideshow}>
-            {images.length > 0 && (
-              <>
-                <div
-                  className={styles.slideshowBackground}
-                  style={{
-                    backgroundImage: `url(${images[currentImageIndex]})`
+          {images.length > 0 && (
+            <>
+              <div
+                className={styles.slideshowBackground}
+                style={{
+                  backgroundImage: images[currentImageIndex].endsWith('.mp4') ? 'none' : `url(${images[currentImageIndex]})`,
+                }}
+              ></div>
+              <div className={styles.slideshowOverlay}></div>
+              {images[currentImageIndex].endsWith('.mp4') ? (
+                <video
+                  src={images[currentImageIndex]}
+                  autoPlay
+                  muted
+                  loop
+                  className={styles.video}
+                  onError={(e) => {
+                    console.error('Video load error:', e);
+                    console.log('Failed URL:', images[currentImageIndex]);
                   }}
-                ></div>
-                <div className={styles.slideshowOverlay}></div>
-                <img 
-                  src={images[currentImageIndex]} 
-                  alt="Slideshow" 
+                />
+              ) : (
+                <img
+                  src={images[currentImageIndex]}
+                  alt="Slideshow"
+                  className={styles.image}
                   onError={(e) => {
                     console.error('Image load error:', e);
                     console.log('Failed URL:', images[currentImageIndex]);
-                  }} 
+                  }}
                 />
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progress}
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </>
-            )}
-          </div>
+              )}
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progress}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </>
+          )}
+        </div>        
         ) : (
           <div className={`${styles.sectionActivity} ${styles.activitiesSection}`} style={{ height: '90%' }}>
             <h2 style={{ fontWeight: 'bold', fontSize: '30px' }}>Today's Sevas</h2>
