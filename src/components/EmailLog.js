@@ -107,7 +107,7 @@ const EmailLog = () => {
           dataSource={emailLogs}
           columns={columns}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 50 }}
         />
       )}
     </div>
