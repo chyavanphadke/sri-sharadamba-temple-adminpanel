@@ -2230,6 +2230,9 @@ async function initializeSheetServiceMap() {
 }
 
 async function fetchDataFromSheets() {
+
+  processNewSheet();
+  
   try {
     await initializeSheetServiceMap(); // Initialize the map before fetching data
 
@@ -2948,6 +2951,169 @@ app.get('/email-credentials', async (req, res) => {
 cron.schedule('*/5 * * * *', fetchDataFromSheets);
 
 
+async function processNewSheet() {
+  const sheetId = '17IObqp3iINFD5_PbzzxbeSgequ-T_8199yXgLiBw0Qc';
+  const range = 'Sheet1!A:Z'; // Adjust the range based on the sheet content
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range,
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length < 2) {
+      console.error('No data found or insufficient rows in the new sheet.');
+      return;
+    }
+
+    const headers = rows[0]; // Extract headers from the first row
+    const dataRows = rows.slice(1); // Exclude headers
+
+    for (let index = 0; index < dataRows.length; index++) {
+      const row = dataRows[index];
+      const rowData = headers.reduce((acc, header, i) => {
+        acc[header] = row[i];
+        return acc;
+      }, {});
+
+      // Only process rows where Status|text-6 is empty
+      if (!rowData['Status|text-6']) {
+        const result = await processNewSheetRow(rowData);
+
+        // Update the sheet with the status and Devotee ID
+        await updateSheetRowStatus(sheetId, index + 2, result);
+      }
+    }
+
+    console.log(`Processed ${dataRows.length} rows from the new sheet.`);
+  } catch (error) {
+    console.error('Error processing the new sheet:', error);
+    throw error;
+  }
+}
+
+async function processNewSheetRow(rowData) {
+  const {
+    'First Name|name-1-first-name': firstName,
+    'Last Name|name-1-last-name': lastName,
+    'Email Address|email-1': email,
+    'Phone|phone-1': phone,
+    'Address (optional)|textarea-1': address,
+    'Register Gotra|text-3': gotra,
+    'Nakshatra|text-4': star,
+  } = rowData;
+
+  if (!email) {
+    console.error('Email is required for the devotee.');
+    return { status: 'Error: Missing Email', devoteeId: null };
+  }
+
+  try {
+    // Process devotee entry
+    let devotee = await Devotee.findOne({ where: { Email: email } });
+    let status;
+
+    if (devotee) {
+      await devotee.update({
+        FirstName: firstName || devotee.FirstName,
+        LastName: lastName || devotee.LastName,
+        Phone: phone || devotee.Phone,
+        Address: address || devotee.Address,
+        Gotra: gotra || devotee.Gotra,
+        Star: star || devotee.Star,
+        LastModified: new Date(),
+        ModifiedBy: 'Devotee Form',
+      });
+      console.log(`Updated existing devotee (DevoteeId: ${devotee.DevoteeId}).`);
+      status = 'Devotee Updated';
+    } else {
+      devotee = await Devotee.create({
+        FirstName: firstName,
+        LastName: lastName,
+        Email: email,
+        Phone: phone,
+        Address: address,
+        Gotra: gotra,
+        Star: star,
+        LastModified: new Date(),
+        ModifiedBy: 'Devotee Form',
+      });
+      console.log(`Created new devotee (DevoteeId: ${devotee.DevoteeId}).`);
+      status = 'New Devotee';
+    }
+
+    // Process family entries
+    const familyEntries = [
+      {
+        firstName: rowData['First Name|name-2-first-name'],
+        lastName: rowData['Last Name|name-2-last-name'],
+        gotra: rowData['Gotra|text-1'],
+        star: rowData['Nakshatra|text-2'],
+      },
+      {
+        firstName: rowData['First Name|name-2-first-name-2'],
+        lastName: rowData['Last Name|name-2-last-name-2'],
+        gotra: rowData['Gotra|text-1-2'],
+        star: rowData['Nakshatra|text-2-2'],
+      },
+      {
+        firstName: rowData['First Name|name-2-first-name-3'],
+        lastName: rowData['Last Name|name-2-last-name-3'],
+        gotra: rowData['Gotra|text-1-3'],
+        star: rowData['Nakshatra|text-2-3'],
+      },
+      {
+        firstName: rowData['First Name|name-2-first-name-4'],
+        lastName: rowData['Last Name|name-2-last-name-4'],
+        gotra: rowData['Gotra|text-1-4'],
+        star: rowData['Nakshatra|text-2-4'],
+      },
+    ];
+
+    for (const familyEntry of familyEntries) {
+      if (familyEntry.firstName || familyEntry.lastName) {
+        await Family.create({
+          DevoteeId: devotee.DevoteeId,
+          FirstName: familyEntry.firstName,
+          LastName: familyEntry.lastName,
+          Gotra: familyEntry.gotra,
+          Star: familyEntry.star,
+          LastModified: new Date(),
+          ModifiedBy: 'Devotee Form',
+        });
+        console.log(`Added family member: ${familyEntry.firstName} ${familyEntry.lastName}`);
+      }
+    }
+
+    return { status, devoteeId: devotee.DevoteeId };
+  } catch (error) {
+    console.error('Error processing row:', error);
+    return { status: 'Error: Processing Failed', devoteeId: null };
+  }
+}
+
+async function updateSheetRowStatus(sheetId, rowIndex, { status, devoteeId }) {
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `Sheet1!A${rowIndex}:B${rowIndex}`, // Update Status|text-6 and Devotee ID|text-5
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[status, devoteeId || '']],
+      },
+    });
+    console.log(`Updated row ${rowIndex} with status: "${status}" and devotee ID: "${devoteeId}".`);
+  } catch (error) {
+    console.error(`Error updating row ${rowIndex}:`, error);
+    throw error;
+  }
+}
+
+processNewSheet();
+
+cron.schedule('0 * * * *', processNewSheet);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp End
 
 
@@ -3294,11 +3460,29 @@ app.get('/api/image/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(DOWNLOAD_DIR, filename);
 
+  // Check if the file exists before attempting to send it
+  if (!fs.existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    return res.status(404).send('File not found');
+  }
+
+  // Send the file to the client
   res.sendFile(filePath, (err) => {
     if (err) {
-      console.error('Error sending image file:', err);
-      res.status(500).send('Error sending image');
+      if (err.code === 'ECONNABORTED') {
+        console.warn('Client aborted request:', req.url);
+      } else {
+        console.error('Error sending image file:', err);
+        if (!res.headersSent) {
+          res.status(500).send('Error sending image');
+        }
+      }
     }
+  });
+
+  // Handle client abort events
+  req.on('aborted', () => {
+    console.warn('Client aborted request:', req.url);
   });
 });
 
