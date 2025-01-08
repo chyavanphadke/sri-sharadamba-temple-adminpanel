@@ -2746,6 +2746,36 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
   }
 }
 
+async function createActivity_maintainDate({ devoteeId, serviceId, paymentStatus, ActivityDate, amount, serviceDate, comments, UserId}) {
+  try {
+    // Retrieve the payment method ID from ModeOfPayment table based on paymentStatus
+    const modeOfPayment = await ModeOfPayment.findOne({ where: { MethodName: paymentStatus } });
+
+    if (!modeOfPayment) {
+      throw new Error(`Mode of Payment not found for payment status: ${paymentStatus}`);
+    }
+
+    // Set UserId based on payment status
+    const assignedUserId = (paymentStatus === 'Paid' || paymentStatus === 'Benevity') ? 'Website' : UserId;
+
+    const activity = await Activity.create({
+      DevoteeId: devoteeId,
+      ServiceId: serviceId,
+      PaymentMethod: modeOfPayment.PaymentMethodId,
+      Amount: amount,
+      UserId: assignedUserId,
+      ServiceDate: serviceDate,
+      ActivityDate: ActivityDate,
+      Comments: comments
+    });
+
+    return activity.ActivityId;
+  } catch (error) {
+    await reportError(error);
+    console.error('Error creating activity:', error);
+    throw error;
+  }
+}
 
 async function updateExcelSevaData(data) {
   try {
@@ -2821,7 +2851,7 @@ app.get('/excel-seva-data', async (req, res) => {
 // Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
-    const { amount, paymentStatus, paymentStatusReal, userId } = req.body;
+    const { amount, paymentStatus, paymentStatusReal, createdAt, userId } = req.body;
     const entry = await ExcelSevaData.findByPk(req.params.id);
 
     if (!entry) {
@@ -2848,10 +2878,11 @@ app.put('/update-payment-status/:id', async (req, res) => {
     }
 
     if (paymentStatus === 'Paid at temple') {
-      const activityId = await createActivity({
+      const activityId = await createActivity_maintainDate({
         devoteeId: entry.devotee_id,
         serviceId,  // Pass the determined serviceId
         paymentStatus: paymentStatusReal,
+        ActivityDate: createdAt,
         amount,
         serviceDate: entry.date,
         comments: entry.message,

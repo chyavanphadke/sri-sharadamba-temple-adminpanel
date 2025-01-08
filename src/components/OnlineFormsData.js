@@ -166,6 +166,7 @@ const OnlineFormsData = () => {
         amount: values.amount,
         paymentStatus: 'Paid at temple',
         userId: userId,
+        createdAt: currentRecord.createdAt,
         paymentStatusReal: paymentMethodName // Use the name of the selected payment method
       });
   
