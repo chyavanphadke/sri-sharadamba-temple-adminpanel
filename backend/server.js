@@ -2119,15 +2119,13 @@ const fetchPanchangaForDate = async (date) => {
       if (panchanga) {
         return {
           Date: panchanga[0],
-          Sunrise: panchanga[1],
-          Sunset: panchanga[2],
-          Moonrise: panchanga[3],
-          Moonset: panchanga[4],
-          Weekday: panchanga[5],
-          Yoga: panchanga[6],
-          Tithi: panchanga[7],
-          Nakshatra: panchanga[8],
-          Karana: panchanga[9]
+          Samvatsara: panchanga[1],
+          Ayana: panchanga[2],
+          Ritu: panchanga[3],
+          Paksha: panchanga[4],
+          Tithi: panchanga[5],
+          Vaasara: panchanga[6],
+          Nakshatra: panchanga[7]
         };
       }
     }
@@ -3121,8 +3119,8 @@ cron.schedule('0 * * * *', processNewSheet);
 // TV Display
 const SPREADSHEET_ID_EVENTS = '1lmFLx8asxPv9-iIp7I7sRINcgxvXEYT886P5VnIO6GM';
 const RANGE_EVENTS = 'Sheet1!A:C'; // Update range to include the Time column
-const SPREADSHEET_ID_PANCHANGA = '1x-PSkfZROadknm2N4V56fT_vl-a_byNKoRDWQqkFuQE';
-const RANGE_PANCHANGA = 'Sheet1!A:K';
+const SPREADSHEET_ID_PANCHANGA = '1Jd1-udELaOZYH7ZO4TeBDJSHWC0BSTiXutJq_Fotpo4';
+const RANGE_PANCHANGA = 'Sheet1!A:H';
 const DRIVE_FOLDER_ID = '1NBYfOXyQ7ULNKVD87xd5vdBEXZ2URxPP';
 
 let cachedEvents = [];
@@ -3181,22 +3179,20 @@ const fetchPanchanga = async () => {
     if (rows.length) {
       const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
       today.setHours(0, 0, 0, 0);
-      const todayStr = today.toLocaleDateString('en-US'); // MM/DD/YYYY
+      const todayStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
       const panchanga = rows.find((row) => row[0] === todayStr);
 
       if (panchanga) {
         cachedPanchanga = {
           Date: panchanga[0],
-          Sunrise: panchanga[1],
-          Sunset: panchanga[2],
-          Moonrise: panchanga[3],
-          Moonset: panchanga[4],
-          Weekday: panchanga[5],
-          Yoga: panchanga[6],
-          Tithi: panchanga[7],
-          Nakshatra: panchanga[8],
-          Karana: panchanga[9],
+          Samvatsara: panchanga[1],
+          DakshinayanaUttarayana: panchanga[2],
+          Ritu: panchanga[3],
+          Paksha: panchanga[4],
+          Tithi: panchanga[5],
+          Vaasara: panchanga[6],
+          Nakshatra: panchanga[7],
         };
         console.log('Panchanga fetched and cached:', cachedPanchanga);
       } else {
@@ -3399,11 +3395,11 @@ fetchImagesAndVideos();
 
 // Fetch events, panchanga, and images immediately on server start
 fetchEvents();
-fetchPanchanga();
+//fetchPanchanga();
 
 // Set up cron jobs to fetch events and panchanga every 5 minutes
 cron.schedule('0 * * * *', fetchEvents);
-cron.schedule('0 * * * *', fetchPanchanga);
+//cron.schedule('0 * * * *', fetchPanchanga);
 
 app.get('/api/events', (req, res) => {
   res.status(200).json(cachedEvents);
@@ -3539,7 +3535,7 @@ app.post('/run-gear-functions', async (req, res) => {
     await delay(2000);
     await fetchEvents();
     await delay(2000);
-    await fetchPanchanga();
+    //await fetchPanchanga();
     await delay(2000);
     res.status(200).json({ message: 'Gear functions executed successfully' });
   } catch (error) {

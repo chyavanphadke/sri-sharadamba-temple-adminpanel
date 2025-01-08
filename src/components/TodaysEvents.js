@@ -84,15 +84,17 @@ const TodaysEvents = () => {
     <Card title="Panchanga" className="panchanga-card">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12}>
+          <Text><strong>Samvatsara:</strong> {panchanga.Samvatsara}</Text><br />
+          <Text><strong>Ayana:</strong> {panchanga.Ayana}</Text><br />
+          <Text><strong>Ritu:</strong> {panchanga.Ritu}</Text><br />
+          <Text><strong>Paksha:</strong> {panchanga.Paksha}</Text><br />
           <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
-          <Text><strong>Weekday:</strong> {panchanga.Weekday}</Text><br />
+          <Text><strong>Vaasara:</strong> {panchanga.Vaasara}</Text><br />
           <Text><strong>Nakshatra:</strong> {panchanga.Nakshatra}</Text><br />
-          <Text><strong>Yoga:</strong> {panchanga.Yoga}</Text><br />
-          <Text><strong>Karana:</strong> {panchanga.Karana}</Text><br />
         </Col>
       </Row>
     </Card>
-  );
+  );  
 
   return (
     <Layout className="todays-events-container">
