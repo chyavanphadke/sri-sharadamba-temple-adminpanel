@@ -251,11 +251,11 @@ const TV = () => {
               <div
                 className={styles.slideshowBackground}
                 style={{
-                  backgroundImage: images[currentImageIndex].endsWith('.mp4') ? 'none' : `url(${images[currentImageIndex]})`,
+                  backgroundImage: images[currentImageIndex].match(/\.(mp4|avi|mov|mkv)$/i) ? 'none' : `url(${images[currentImageIndex]})`,
                 }}
               ></div>
               <div className={styles.slideshowOverlay}></div>
-              {images[currentImageIndex].endsWith('.mp4') ? (
+              {images[currentImageIndex].match(/\.(mp4|avi|mov|mkv)$/i) ? (
                 <video
                   src={images[currentImageIndex]}
                   autoPlay
@@ -285,7 +285,7 @@ const TV = () => {
               </div>
             </>
           )}
-        </div>        
+        </div>               
         ) : (
           <div className={`${styles.sectionActivity} ${styles.activitiesSection}`} style={{ height: '90%' }}>
             <h2 style={{ fontWeight: 'bold', fontSize: '30px' }}>Today's Sevas</h2>

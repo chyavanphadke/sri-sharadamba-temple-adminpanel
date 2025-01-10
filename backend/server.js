@@ -3243,7 +3243,7 @@ const DEFAULT_IMAGE = path.join(DOWNLOAD_DIR, './tvSlideshow/sharadamba_backroun
 const fetchImagesAndVideos = async () => {
   try {
     const response = await drive.files.list({
-      q: `'${DRIVE_FOLDER_ID}' in parents and (mimeType contains 'image/png' or mimeType contains 'image/jpeg' or mimeType contains 'video/mp4')`,
+      q: `'${DRIVE_FOLDER_ID}' in parents and (mimeType contains 'image/' or mimeType contains 'video/')`,
       fields: 'files(id, name)',
     });
 
@@ -3253,35 +3253,42 @@ const fetchImagesAndVideos = async () => {
       today.setHours(0, 0, 0, 0);
 
       files.forEach(async (file) => {
-        const fileNameWithoutExtension = file.name.replace('.png', '').replace('.jpg', '').replace('.mp4', '');
-        const [month, day, year] = fileNameWithoutExtension.split('-');
-        const fileDate = new Date(year, month - 1, day);
+        const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
+        const extension = file.name.split('.').pop().toLowerCase();
+        const validExtensions = ['jpeg', 'jpg', 'png', 'webp', 'mp4', 'avi', 'mov', 'mkv'];
 
-        // Convert fileDate to PST
-        const fileDatePST = new Date(fileDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+        if (validExtensions.includes(extension)) {
+          const [month, day, year] = fileNameWithoutExtension.split('-');
+          const fileDate = new Date(year, month - 1, day);
 
-        if (fileDatePST >= today) {
-          const url = `https://drive.google.com/uc?export=view&id=${file.id}`;
-          const filePath = path.join(DOWNLOAD_DIR, file.name);
+          // Convert fileDate to PST
+          const fileDatePST = new Date(fileDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
 
-          const writer = fs.createWriteStream(filePath);
-          const response = await axios({
-            url,
-            method: 'GET',
-            responseType: 'stream',
-          });
+          if (fileDatePST >= today) {
+            const url = `https://drive.google.com/uc?export=view&id=${file.id}`;
+            const filePath = path.join(DOWNLOAD_DIR, file.name);
 
-          response.data.pipe(writer);
+            const writer = fs.createWriteStream(filePath);
+            const response = await axios({
+              url,
+              method: 'GET',
+              responseType: 'stream',
+            });
 
-          writer.on('finish', () => {
-            console.log(`File downloaded: ${file.name}`);
-          });
+            response.data.pipe(writer);
 
-          writer.on('error', (error) => {
-            console.error(`Error downloading file ${file.name}:`, error);
-          });
+            writer.on('finish', () => {
+              console.log(`File downloaded: ${file.name}`);
+            });
+
+            writer.on('error', (error) => {
+              console.error(`Error downloading file ${file.name}:`, error);
+            });
+          } else {
+            console.log(`Skipping past file: ${file.name}`);
+          }
         } else {
-          console.log(`Skipping past file: ${file.name}`);
+          console.log(`Unsupported file format: ${file.name}`);
         }
       });
     }
@@ -3442,7 +3449,12 @@ app.get('/api/panchanga', (req, res) => {
 
 // Function to check if the date is today or in the future
 const isFutureOrToday = (filename) => {
-  const fileNameWithoutExtension = filename.replace('.png', '').replace('.jpg', '').replace('.mp4', '');
+  const fileNameWithoutExtension = filename.split('.').slice(0, -1).join('.');
+  const extension = filename.split('.').pop().toLowerCase();
+
+  const validExtensions = ['jpeg', 'jpg', 'png', 'webp', 'mp4', 'avi', 'mov', 'mkv'];
+  if (!validExtensions.includes(extension)) return false;
+
   const [month, day, year] = fileNameWithoutExtension.split('-');
   const fileDate = new Date(year, month - 1, day);
 
@@ -3462,14 +3474,10 @@ app.get('/api/images', (req, res) => {
       return res.status(500).send('Error reading files directory');
     }
 
-    console.log('All files:', files); // Log all files in the directory
-
+    const validExtensions = ['jpeg', 'jpg', 'png', 'webp', 'mp4', 'avi', 'mov', 'mkv'];
     const validFiles = files.filter(file => {
-      const isValid = 
-        (file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.webp') || file.endsWith('.mp4')) && 
-        isFutureOrToday(file);
-      console.log(`File: ${file}, IsValid: ${isValid}`); // Debugging log
-      return isValid;
+      const extension = file.split('.').pop().toLowerCase();
+      return validExtensions.includes(extension) && isFutureOrToday(file);
     });
 
     let fileUrls = validFiles.map(file => `/api/image/${file}`);
