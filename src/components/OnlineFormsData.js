@@ -167,13 +167,13 @@ const OnlineFormsData = () => {
         paymentStatus: 'Paid at temple',
         userId: userId,
         createdAt: currentRecord.createdAt,
-        paymentStatusReal: paymentMethodName // Use the name of the selected payment method
+        paymentStatusReal: paymentMethodName,
+        checkNumber: selectedPaymentMethod === 2 ? values.checkNumber : null, // Pass CheckNumber if applicable
       });
   
       message.success('Payment status updated successfully');
       setAmountModalVisible(false);
       fetchExcelSevaData();
-      console.log('Updated payment status and refreshed data');
     } catch (error) {
       message.error('Failed to update payment status');
     }
@@ -271,6 +271,15 @@ const OnlineFormsData = () => {
                   options={paymentMethods.map(method => ({ value: method.PaymentMethodId, label: method.MethodName }))}
                 />
               </Form.Item>
+              {selectedPaymentMethod === 2 && ( // Show Check Number field only if PaymentMethodId is 2
+                <Form.Item
+                  name="checkNumber"
+                  label="Check Number"
+                  rules={[{ required: true, message: 'Please enter the check number' }]}
+                >
+                  <Input placeholder="Enter Check Number" />
+                </Form.Item>
+              )}
             </Form>
           </Modal>
         </div>

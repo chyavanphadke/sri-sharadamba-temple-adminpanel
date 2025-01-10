@@ -2746,16 +2746,14 @@ async function createActivity({ devoteeId, serviceId, paymentStatus, amount, ser
   }
 }
 
-async function createActivity_maintainDate({ devoteeId, serviceId, paymentStatus, ActivityDate, amount, serviceDate, comments, UserId}) {
+async function createActivity_maintainDate({ devoteeId, serviceId, paymentStatus, ActivityDate, amount, serviceDate, comments, UserId, checkNumber }) {
   try {
-    // Retrieve the payment method ID from ModeOfPayment table based on paymentStatus
     const modeOfPayment = await ModeOfPayment.findOne({ where: { MethodName: paymentStatus } });
 
     if (!modeOfPayment) {
       throw new Error(`Mode of Payment not found for payment status: ${paymentStatus}`);
     }
 
-    // Set UserId based on payment status
     const assignedUserId = (paymentStatus === 'Paid' || paymentStatus === 'Benevity') ? 'Website' : UserId;
 
     const activity = await Activity.create({
@@ -2766,7 +2764,8 @@ async function createActivity_maintainDate({ devoteeId, serviceId, paymentStatus
       UserId: assignedUserId,
       ServiceDate: serviceDate,
       ActivityDate: ActivityDate,
-      Comments: comments
+      Comments: comments,
+      CheckNumber: checkNumber || null, // Include CheckNumber
     });
 
     return activity.ActivityId;
@@ -2848,7 +2847,6 @@ app.get('/excel-seva-data', async (req, res) => {
 });
 
 // Example API route for updating payment status
-// Example API route for updating payment status
 app.put('/update-payment-status/:id', async (req, res) => {
   try {
     const { amount, paymentStatus, paymentStatusReal, createdAt, userId } = req.body;
@@ -2886,7 +2884,8 @@ app.put('/update-payment-status/:id', async (req, res) => {
         amount,
         serviceDate: entry.date,
         comments: entry.message,
-        UserId: userId
+        UserId: userId,
+        checkNumber: req.body.checkNumber
       });
 
       entry.seva_id = activityId;
