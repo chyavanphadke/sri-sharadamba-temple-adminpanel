@@ -2238,7 +2238,7 @@ async function fetchDataFromSheets() {
     for (const [sheetId, mapping] of Object.entries(sheetServiceMap)) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A:S', // Adjust range as needed
+        range: 'Sheet1!A:AZ', // Adjust range as needed
       });
 
       const rows = response.data.values;

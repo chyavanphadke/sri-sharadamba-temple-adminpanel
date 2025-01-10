@@ -259,7 +259,6 @@ const TV = () => {
                 <video
                   src={images[currentImageIndex]}
                   autoPlay
-                  muted
                   loop
                   className={styles.video}
                   onError={(e) => {
