@@ -25,7 +25,7 @@ const TodaysEvents = () => {
     try {
       const response = await axios.get(`http://localhost:5001/todays-events?date=${date.format('YYYY-MM-DD')}`);
       setEvents(response.data);
-      console.log('Events fetched:', response.data);
+      //console.log('Events fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch events', error);
     }
@@ -36,7 +36,7 @@ const TodaysEvents = () => {
     try {
       const response = await axios.get(`http://localhost:5001/api/panchanga?date=${date.format('M/D/YYYY')}`);
       setPanchanga(response.data);
-      console.log('Panchanga fetched:', response.data);
+      //console.log('Panchanga fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch Panchanga', error);
     }

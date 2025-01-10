@@ -148,7 +148,7 @@ const Home = () => {
   const fetchPaymentMethods = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/payment-methods');
-      console.log('Fetched payment methods:', response.data);
+      //console.log('Fetched payment methods:', response.data);
       setPaymentMethods(response.data);
     } catch (error) {
       message.error('Failed to load payment methods');

@@ -737,7 +737,7 @@ app.get('/active-servicecategories', async (req, res) => {
   try {
     console.log('Fetching active service categories...');
     const categories = await ServiceCategory.findAll({ where: { active: 1 } });
-    console.log('Active categories fetched:', categories);
+    //console.log('Active categories fetched:', categories);
     res.status(200).json(categories);
   } catch (err) {
     await reportError(err);
@@ -790,9 +790,9 @@ app.get('/services-by-category', async (req, res) => {
       return res.status(400).json({ message: 'Category ID is required' });
     }
 
-    console.log(`Fetching services for category ID: ${categoryId}...`);
+    //console.log(`Fetching services for category ID: ${categoryId}...`);
     const services = await Service.findAll({ where: { category_id: categoryId, Active: 1 } });
-    console.log('Services fetched:', services);
+    //console.log('Services fetched:', services);
     res.status(200).json(services);
   } catch (err) {
     await reportError(err);
@@ -860,7 +860,7 @@ app.get('/categories', async (req, res) => {
   try {
     console.log('Fetching categories from database...');
     const categories = await ServiceCategory.findAll();
-    console.log('Categories fetched:', categories);
+    //console.log('Categories fetched:', categories);
     res.status(200).json(categories);
   } catch (err) {
     await reportError(err);
@@ -2549,13 +2549,13 @@ const fs = require('fs');
 async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentStatus, firstName, lastName, batchTime }) {
   try {
     // Fetch service details
-    console.log('Fetching service details for ServiceId:', serviceId);
+    //console.log('Fetching service details for ServiceId:', serviceId);
     const service = await Service.findByPk(serviceId);
     if (!service) {
       console.error('Service not found:', serviceId);
       return;
     }
-    console.log('Service details:', service);
+    //console.log('Service details:', service);
 
     // Fetch email credentials
     console.log('Fetching email credentials');
@@ -2564,7 +2564,7 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       console.error('Email credentials not found');
       return;
     }
-    console.log('Email credentials:', emailCredential);
+    //console.log('Email credentials:', emailCredential);
 
     // Fetch email configuration
     console.log('Fetching email configuration for excelSevaEmailConformation');

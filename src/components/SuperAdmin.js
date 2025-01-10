@@ -58,7 +58,7 @@ const SuperAdmin = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('User map response:', response.data);
+      //console.log('User map response:', response.data);
       const userMap = response.data.reduce((acc, user) => {
         acc[user.userid] = user.username;
         return acc;

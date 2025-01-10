@@ -40,7 +40,7 @@ const TV = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/events');
         setEvents(response.data);
-        console.log('Fetched events:', response.data);
+        //console.log('Fetched events:', response.data);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -50,7 +50,7 @@ const TV = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/panchanga');
         setPanchanga(response.data);
-        console.log('Fetched Panchanga:', response.data);
+        //console.log('Fetched Panchanga:', response.data);
       } catch (error) {
         console.error('Error fetching Panchanga:', error);
       }
@@ -61,7 +61,7 @@ const TV = () => {
         const response = await axios.get('http://localhost:5001/api/images');
         const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
         setImages(imageUrls);
-        console.log('Fetched images:', response.data);
+        //console.log('Fetched images:', response.data);
       } catch (error) {
         console.error('Error fetching images:', error);
       }
@@ -73,7 +73,7 @@ const TV = () => {
         const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
         setActivities(filteredActivities);
         setShowActivities(filteredActivities.length > 0);
-        console.log('Fetched activities:', response.data);
+        //console.log('Fetched activities:', response.data);
       } catch (error) {
         console.error('Error fetching today\'s activities:', error);
       }

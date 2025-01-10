@@ -68,7 +68,7 @@ const Calendar = () => {
       });
       const filteredActivities = response.data.filter(activity => activity.EventName !== 'DONATION');
       setActivities(filteredActivities);
-      console.log('Fetched activities from server');
+      //console.log('Fetched activities from server');
     } catch (error) {
       console.error('Error fetching activities:', error);
     }
