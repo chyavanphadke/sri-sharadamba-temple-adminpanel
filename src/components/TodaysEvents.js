@@ -84,13 +84,13 @@ const TodaysEvents = () => {
     <Card title="Panchanga" className="panchanga-card">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12}>
-          <Text><strong>Samvatsara:</strong> {panchanga.Samvatsara}</Text><br />
-          <Text><strong>Ayana:</strong> {panchanga.Ayana}</Text><br />
-          <Text><strong>Ritu:</strong> {panchanga.Ritu}</Text><br />
-          <Text><strong>Paksha:</strong> {panchanga.Paksha}</Text><br />
-          <Text><strong>Tithi:</strong> {panchanga.Tithi}</Text><br />
-          <Text><strong>Vaasara:</strong> {panchanga.Vaasara}</Text><br />
-          <Text><strong>Nakshatra:</strong> {panchanga.Nakshatra}</Text><br />
+        <div className="panchang-item"><b>{panchanga.Samvatsara}</b> Samvatsare</div>
+        <div className="panchang-item"><b>{panchanga.Ayana}</b></div>
+        <div className="panchang-item"><b>{panchanga.Ritu}</b> Ruthow</div>
+        <div className="panchang-item"><b>{panchanga.Paksha}</b></div>
+        <div className="panchang-item"><b>{panchanga.Tithi}</b> Thithou</div>
+        <div className="panchang-item"><b>{panchanga.Vaasara}</b> Vaasara</div>
+        <div className="panchang-item"><b>{panchanga.Nakshatra}</b> Nakshatre</div>
         </Col>
       </Row>
     </Card>

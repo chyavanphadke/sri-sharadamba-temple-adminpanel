@@ -6,6 +6,10 @@
   margin-bottom: 16px;
 }
 
+.panchang-item {
+  font-size: 15px;
+}
+
 .todays-events-container .event-detail {
   margin-bottom: 16px;
   font-size: 15px; /* Increase the font size for event details */

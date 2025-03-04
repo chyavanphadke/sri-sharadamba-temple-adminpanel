@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, ModeOfPayment, Receipt, AccessControl, EmailCredential, GeneralConfigurations, EditedReceipts, ExcelSevaData, EmailLog} = require('./models');
 const moment = require('moment');
 const { Op, Sequelize } = require('sequelize'); // Make sure this is only declared once
-
+const { JSDOM } = require("jsdom");
 
 const app = express();
 const port = 5001;
@@ -2137,13 +2137,61 @@ const fetchPanchangaForDate = async (date) => {
   }
 };
 
-app.get('/api/panchanga', async (req, res) => {
-  const date = req.query.date || new Date().toLocaleDateString('en-US');
-  console.log("Date came to backend", date);
-  const panchangaData = await fetchPanchangaForDate(date);
-  res.status(200).json(panchangaData);
-});
+app.get("/api/panchanga", async (req, res) => {
+  try {
+    // Fetch Panchanga data from the external website
+    const response = await axios.get(
+      "https://www.mypanchang.com/newsite/compactfeed.php?pt=10pt&displaymode=full"
+    );
+    
+    // Parse HTML response
+    const dom = new JSDOM(response.data);
+    const document = dom.window.document;
+    
+    // Extract Panchanga details
+    const basicDataDiv = document.querySelector("#basicdata").innerHTML.split("<br>");
 
+    const samvatsara = basicDataDiv[2]?.split(":")[1]?.trim().split(" ")[0] || "Unknown";
+    const paksha = basicDataDiv[8] || "Unknown";
+    const tithiRaw = basicDataDiv[9]?.split("till")[0]?.trim() || "Unknown";
+    const nakshatra = basicDataDiv[10]?.split("till")[0]?.trim() || "Unknown";
+
+    // Determine Ayana
+    const currentMonth = new Date().getMonth() + 1;
+    const ayanam = currentMonth < 8 ? "Uttarayane" : "Dakshinayane";
+
+    // Map month to season (Ruthow)
+    const seasonMap = {
+      5: "Vasantha", 4: "Vasantha",
+      7: "Greeshma", 6: "Greeshma",
+      9: "Varsha", 8: "Varsha",
+      11: "Sharath", 10: "Sharath",
+      12: "Hemanth", 1: "Shishira",
+      3: "Shishira", 2: "Shishira"
+    };
+    const season = seasonMap[currentMonth] || "Unknown";
+
+    // Determine Vaasara (Day of the week)
+    const dayOfWeekMap = ["Baanu", "Indu", "Bhowma", "Soumya", "Guru", "Brighu", "Sthira"];
+    const currentDay = new Date().getDay();
+    const vaasara = dayOfWeekMap[currentDay];
+
+    // Send extracted data as JSON
+    res.json({
+      Samvatsara: samvatsara,
+      Ayana: ayanam,
+      Ritu: season,
+      Paksha: paksha,
+      Tithi: tithiRaw,
+      Vaasara: vaasara,
+      Nakshatra: nakshatra
+    });
+
+  } catch (error) {
+    console.error("Error fetching Panchanga:", error);
+    res.status(500).json({ error: "Failed to fetch Panchanga data" });
+  }
+});
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Cp start
 
