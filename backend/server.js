@@ -2660,9 +2660,24 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     }
 
     // Generate iCal content
+    const locationDisplay = service.Service === "Lalitha Sahasranama Laksharchana"
+      ? 'Newark Pavilion (6430 Thornton Ave, Newark, CA 94560)'
+      : 'Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)';
+
+    const locationMapLink = service.Service === "Lalitha Sahasranama Laksharchana"
+      ? 'https://maps.app.goo.gl/sZPjM5vvGRqaM3Hq8'
+      : 'https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035';
+
+    const finalParagraph = service.Service === "Lalitha Sahasranama Laksharchana"
+    ? `<p>All Sumangalis registered for Laksharchana are requested to check in by 6:00 PM so that we can start the pooja on time. Please accommodate the entire evening for the pooja.</p>
+      <p><b>Registered Sumangalis should come dressed in sarees.</b></p>`
+    : `<p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
+      <p>If you wish, feel free to bring flowers and fruits as offerings.</p>`;
+
     const icalContent = await createICalEvent({
       service: service.Service,
       date: serviceDateTime,
+      location: locationDisplay
     });
 
     const dayOfWeek = serviceDateTime.toLocaleString('en-US', { weekday: 'long' });
@@ -2681,9 +2696,8 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
             <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
             <p><b>Seva:</b> ${service.Service}</p>
             <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
-            <p><b>Where:</b> <a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
-            <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
-            <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
+            <p><b>Where:</b> <a href="${locationMapLink}" target="_blank">${locationDisplay}</a></p>
+            ${finalParagraph}
           </div>
         </div>
       `,
