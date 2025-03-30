@@ -2669,7 +2669,8 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       : 'https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035';
 
     const finalParagraph = service.Service === "Lalitha Sahasranama Laksharchana"
-    ? `<p>All Sumangalis registered for Laksharchana are requested to check in by 6:00 PM so that we can start the pooja on time. Please accommodate the entire evening for the pooja.</p>
+    ? `<p><b>All Sumangalis registered for Laksharchana are requested to check in by 6:00 PM so that we can start the pooja on time.</b></p>
+      <p><b>Please accommodate the entire evening for the pooja.</b></p>
       <p><b>Registered Sumangalis should come dressed in sarees.</b></p>`
     : `<p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
       <p>If you wish, feel free to bring flowers and fruits as offerings.</p>`;
