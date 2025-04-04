@@ -4,11 +4,30 @@ function createICalEvent({ service, date, location }) {
   const startTime = new Date(date);
   const endTime = new Date(startTime);
 
+  const additionalServices = [
+    "Annadanam",
+    "Gana Yajamana",
+    "Girija Kalyana",
+    "Kalasa Sponsor",
+    "Maha Poshaka",
+    "Mangalyam Sponsor",
+    "One day sponsor",
+    "Pradhana Yajamana",
+    "Pushpam (Flower) Sponsor",
+    "Rudra Homam",
+    "Rudra Kramarchana",
+    "Rudrabhishekam",
+    "Sri Sri Mahasannidhanam Pada Pooja",
+    "Vastra Samarpana"
+  ];
+  
   if (service === "Lalitha Sahasranama Laksharchana") {
     endTime.setHours(startTime.getHours() + 3);
+  } else if (additionalServices.includes(service)) {
+    endTime.setHours(startTime.getHours() + 2);
   } else {
     endTime.setHours(startTime.getHours() + 1);
-  }
+  }  
 
   const event = {
     start: [startTime.getFullYear(), startTime.getMonth() + 1, startTime.getDate(), startTime.getHours(), startTime.getMinutes()],

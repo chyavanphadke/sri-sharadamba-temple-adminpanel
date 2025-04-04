@@ -2660,20 +2660,50 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     }
 
     // Generate iCal content
-    const locationDisplay = service.Service === "Lalitha Sahasranama Laksharchana"
-      ? 'Newark Pavilion (6430 Thornton Ave, Newark, CA 94560)'
-      : 'Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)';
-
-    const locationMapLink = service.Service === "Lalitha Sahasranama Laksharchana"
-      ? 'https://maps.app.goo.gl/sZPjM5vvGRqaM3Hq8'
-      : 'https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035';
-
-    const finalParagraph = service.Service === "Lalitha Sahasranama Laksharchana"
-    ? `<p><b>All Sumangalis registered for Laksharchana are requested to check in by 6:00 PM so that we can start the pooja on time.</b></p>
-      <p><b>Please accommodate the entire evening for the pooja.</b></p>
-      <p><b>Registered Sumangalis should come dressed in sarees.</b></p>`
-    : `<p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
-      <p>If you wish, feel free to bring flowers and fruits as offerings.</p>`;
+    const additionalServices = [
+      "Annadanam",
+      "Gana Yajamana",
+      "Girija Kalyana",
+      "Kalasa Sponsor",
+      "Maha Poshaka",
+      "Mangalyam Sponsor",
+      "One day sponsor",
+      "Pradhana Yajamana",
+      "Pushpam (Flower) Sponsor",
+      "Rudra Homam",
+      "Rudra Kramarchana",
+      "Rudrabhishekam",
+      "Sri Sri Mahasannidhanam Pada Pooja",
+      "Vastra Samarpana"
+    ];
+    
+    let locationDisplay;
+    let locationMapLink;
+    let finalParagraph;
+    
+    if (service.Service === "Lalitha Sahasranama Laksharchana") {
+      locationDisplay = 'Newark Pavilion (6430 Thornton Ave, Newark, CA 94560)';
+      locationMapLink = 'https://maps.app.goo.gl/sZPjM5vvGRqaM3Hq8';
+      finalParagraph = `
+        <p><b>All Sumangalis registered for Laksharchana are requested to check in by 6:00 PM so that we can start the pooja on time.</b></p>
+        <p><b>Please accommodate the entire evening for the pooja.</b></p>
+        <p><b>Registered Sumangalis should come dressed in sarees.</b></p>
+      `;
+    } else if (additionalServices.includes(service.Service)) {
+      locationDisplay = 'Newark Pavilion (6430 Thornton Ave, Newark, CA 94560)';
+      locationMapLink = 'https://maps.app.goo.gl/sZPjM5vvGRqaM3Hq8';
+      finalParagraph = `
+        <p>Thank you for your continued support. We invite you and your family for Maharudra - 2025.</p> 
+      `;
+    } else {
+      locationDisplay = 'Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)';
+      locationMapLink = 'https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035';
+      finalParagraph = `
+        <p>Thank you for your continued support. We invite you and your family to visit the temple to receive blessings.</p>
+        <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
+      `;
+    }
+    
 
     const icalContent = await createICalEvent({
       service: service.Service,
