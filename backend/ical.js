@@ -1,9 +1,6 @@
 const { createEvent } = require('ics');
 
 function createICalEvent({ service, date, location }) {
-  const startTime = new Date(date);
-  const endTime = new Date(startTime);
-
   const additionalServices = [
     "Annadanam",
     "Gana Yajamana",
@@ -20,14 +17,24 @@ function createICalEvent({ service, date, location }) {
     "Sri Sri Mahasannidhanam Pada Pooja",
     "Vastra Samarpana"
   ];
-  
-  if (service === "Lalitha Sahasranama Laksharchana") {
-    endTime.setHours(startTime.getHours() + 3);
-  } else if (additionalServices.includes(service)) {
-    endTime.setHours(startTime.getHours() + 2);
+
+  let startTime, endTime;
+
+  if (additionalServices.includes(service)) {
+    // Fixed time for additional services
+    startTime = new Date(2025, 3, 18, 18, 0); // April is month 3 (0-indexed)
+    endTime = new Date(2025, 3, 20, 14, 0);   // April 20, 2:00 PM
   } else {
-    endTime.setHours(startTime.getHours() + 1);
-  }  
+    // Dynamic time based on provided date
+    startTime = new Date(date);
+    endTime = new Date(startTime);
+
+    if (service === "Lalitha Sahasranama Laksharchana") {
+      endTime.setHours(startTime.getHours() + 3);
+    } else {
+      endTime.setHours(startTime.getHours() + 1);
+    }
+  }
 
   const event = {
     start: [startTime.getFullYear(), startTime.getMonth() + 1, startTime.getDate(), startTime.getHours(), startTime.getMinutes()],
@@ -36,7 +43,6 @@ function createICalEvent({ service, date, location }) {
     description: `You have a scheduled seva: ${service}`,
     location: location || 'Sri Sharadamba Temple, 1635 S Main St, Milpitas, CA 95035',
     url: 'https://sharadaseva.org',
-
     organizer: {
       name: 'Sri Sharadamba Temple (SEVA)',
       email: 'noreply@sharadaseva.org'

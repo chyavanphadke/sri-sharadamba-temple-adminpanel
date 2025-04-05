@@ -2693,7 +2693,16 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       locationDisplay = 'Newark Pavilion (6430 Thornton Ave, Newark, CA 94560)';
       locationMapLink = 'https://maps.app.goo.gl/sZPjM5vvGRqaM3Hq8';
       finalParagraph = `
-        <p>Thank you for your continued support. We invite you and your family for Maharudra - 2025.</p> 
+        <p>Thank you for your continued support. We invite you and your family for Maharudram - 2025.</p><br />
+        <p><b>Please refer the flyer below for specific event timings</b></p> 
+        <div style="margin-top: 20px;">
+        <img src="https://i0.wp.com/sharadaseva.org/wp-content/uploads/2024/03/PHOTO-2025-02-27-11-14-02.jpg?resize=1536%2C1086&ssl=1" 
+            alt="Maharudra 2025 Image 1" 
+            style="width: 100%; max-width: 560px; margin-bottom: 10px;" />
+        <img src="https://i0.wp.com/sharadaseva.org/wp-content/uploads/2025/01/PHOTO-2025-02-27-11-14-02-2.jpg?resize=1536%2C1086&ssl=1" 
+            alt="Maharudra 2025 Image 2" 
+            style="width: 100%; max-width: 560px;" />
+      </div>
       `;
     } else {
       locationDisplay = 'Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)';
@@ -2715,18 +2724,30 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
     const formattedDate = serviceDateTime.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS';
+    
+    const isAdditionalService = additionalServices.includes(service.Service);
+
+    const whenLine = isAdditionalService
+      ? `<p><b>When:</b> Fri Apr 18 6pm – Sun Apr 20, 2025 2pm</p>`
+      : `<p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>`;
+
+    const isAdditionalServiceSubject = additionalServices.includes(service.Service);
+
+      const subjectLine = isAdditionalServiceSubject
+    ? `${service.Service} Seva scheduled for Maharudram 2025`
+    : `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`;
 
     const mailOptions = {
       from: emailCredential.email,
       to: email,
-      subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
+      subject: subjectLine,
       html: `
         <div style="text-align: center;">
           <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
             <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
             <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service} Seva Scheduled</h2>
             <p><b>Seva:</b> ${service.Service}</p>
-            <p><b>When:</b> ${dayOfWeek}, ${formattedDate}</p>
+            ${whenLine}
             <p><b>Where:</b> <a href="${locationMapLink}" target="_blank">${locationDisplay}</a></p>
             ${finalParagraph}
           </div>
