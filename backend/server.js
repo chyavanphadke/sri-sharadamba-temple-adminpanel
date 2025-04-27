@@ -2342,11 +2342,14 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
     'Card Details': cardDetails,
     'Donation Amount': amountStr,
     'Select Event': selectEventStr,
+    'Additional Donation': additionalDonationFlag,
   } = rowData;
 
   const message = messageToPriest || '';
-  
-  // Parse selected events
+  const donationAmount = parseFloat(amountStr || 0);
+  const finalLastName = lastName || ' ';
+  const finalPhone = phone || 0;
+
   let selectedEvents = [];
   try {
     selectedEvents = JSON.parse(selectEventStr);
@@ -2364,25 +2367,28 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
     selectedEvents,
   });
 
-  if (!firstName || !lastName || !email || !phone) {
+  if (!firstName || !email) {
     console.error('Required fields are missing:', {
       firstName,
-      lastName,
       email,
-      phone,
     });
     return;
   }
 
-  const devotee = await findOrCreateDevotee({
-    firstName,
-    lastName,
-    email,
-    phone,
-  });
+  // const devotee = await findOrCreateDevotee({
+  //   firstName,
+  //   lastName,
+  //   email,
+  //   phone,
+  // });
+
+  const devotee = await findOrCreateDevotee({ firstName, lastName: finalLastName, email, phone: finalPhone });
+
+
+  let totalServiceRate = 0;
+  let serviceActivities = [];
 
   for (const eventName of selectedEvents) {
-    // Find service under the same category
     let service = await Service.findOne({
       where: {
         Service: eventName,
@@ -2393,48 +2399,65 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
     let rate = 0;
 
     if (service) {
-      // Use service's specific rate
       rate = service.Rate;
     } else {
-      // If not found, use General -> Donation
-      service = await Service.findOne({
-        where: {
-          Service: 'Donation',
-        },
-      });
-      if (service) {
-        rate = service.Rate; // Use Donation rate if the service is not found
-      } else {
+      service = await Service.findOne({ where: { Service: 'Donation' } });
+      if (!service) {
         console.error('General Donation service not found');
         continue;
       }
+      rate = service.Rate;
     }
 
-    // Create activity for each service with its rate
+    totalServiceRate += rate;
+
     let activityId = null;
-    if (paymentStatus === 'Paid') {
+    if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
       activityId = await createActivity({
         devoteeId: devotee.DevoteeId,
         serviceId: service.ServiceId,
-        paymentStatus: 'Paid Online',
-        amount: rate, // Use the rate from the service
-        serviceDate: date,
-        comments: message,
-        UserId: 'Website',
-      });
-    } else if (paymentStatus === 'Benevity') {
-      activityId = await createActivity({
-        devoteeId: devotee.DevoteeId,
-        serviceId: service.ServiceId,
-        paymentStatus,
-        amount: rate, // Use the rate from the service
+        paymentStatus: paymentStatus === 'Paid' ? 'Paid Online' : paymentStatus,
+        amount: rate,
         serviceDate: date,
         comments: message,
         UserId: 'Website',
       });
     }
 
-    // Update ExcelSevaData
+    serviceActivities.push({ service, rate, activityId });
+  }
+
+  // Handle Additional Donation logic
+  if (additionalDonationFlag === 'one' && donationAmount > totalServiceRate) {
+    const donationRate = donationAmount - totalServiceRate;
+    const donationService = await Service.findOne({ where: { Service: 'Donation' } });
+
+    if (donationService) {
+      let donationActivityId = null;
+      if (paymentStatus === 'Paid' || paymentStatus === 'Benevity') {
+        donationActivityId = await createActivity({
+          devoteeId: devotee.DevoteeId,
+          serviceId: donationService.ServiceId,
+          paymentStatus: paymentStatus === 'Paid' ? 'Paid Online' : paymentStatus,
+          amount: donationRate,
+          serviceDate: date,
+          comments: message,
+          UserId: 'Website',
+        });
+      }
+
+      serviceActivities.push({
+        service: donationService,
+        rate: donationRate,
+        activityId: donationActivityId,
+      });
+    } else {
+      console.error('General Donation service not found for additional donation');
+    }
+  }
+
+  // Update Excel and send emails
+  for (const { service, rate, activityId } of serviceActivities) {
     await updateExcelSevaData({
       seva_id: sevaId || activityId || 'Unknown',
       first_name: firstName,
@@ -2447,18 +2470,17 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
       card_details: cardDetails || '',
       sheet_name: sheetId,
       devotee_id: devotee.DevoteeId,
-      amount: rate, // Use the service rate
+      amount: rate,
       status: devotee.isNew ? 'New Devotee' : 'Existing Devotee',
       row_index: rowIndex,
       ServiceId: service.ServiceId,
     });
 
-    // Send email confirmation
     await sendSevaEmail({
       email,
       serviceId: service.ServiceId,
       serviceDate: date,
-      amount: rate, // Use the service rate
+      amount: rate,
       paymentStatus,
       firstName,
       lastName,
@@ -2904,23 +2926,29 @@ app.put('/update-payment-status/:id', async (req, res) => {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
-    // Check if the entry's sheet_name exists in sheetServiceMap and determine type (service or category)
-    const sheetInfo = sheetServiceMap[entry.sheet_name];
-    if (!sheetInfo) {
-      return res.status(400).json({ message: 'Sheet not mapped to any service or category' });
-    }
+    // // Check if the entry's sheet_name exists in sheetServiceMap and determine type (service or category)
+    // const sheetInfo = sheetServiceMap[entry.sheet_name];
+    // if (!sheetInfo) {
+    //   return res.status(400).json({ message: 'Sheet not mapped to any service or category' });
+    // }
 
-    let serviceId;
-    if (sheetInfo.type === 'service') {
-      serviceId = sheetInfo.id;  // Use the mapped service ID
-    } else if (sheetInfo.type === 'category') {
-      // Handle case for category (you might want to find a default service or create a category-specific activity)
-      // Assuming you might want to link to a general service for categories, or choose one based on logic
-      const service = await Service.findOne({ where: { category_id: sheetInfo.id } });
-      if (!service) {
-        return res.status(400).json({ message: 'No service found for the category' });
-      }
-      serviceId = service.ServiceId;  // Use service found for the category
+    // let serviceId;
+    // if (sheetInfo.type === 'service') {
+    //   serviceId = sheetInfo.id;  // Use the mapped service ID
+    // } else if (sheetInfo.type === 'category') {
+    //   // Handle case for category (you might want to find a default service or create a category-specific activity)
+    //   // Assuming you might want to link to a general service for categories, or choose one based on logic
+    //   const service = await Service.findOne({ where: { category_id: sheetInfo.id } });
+    //   if (!service) {
+    //     return res.status(400).json({ message: 'No service found for the category' });
+    //   }
+    //   serviceId = service.ServiceId;  // Use service found for the category
+    // }
+
+    const serviceId = entry.ServiceId;
+
+    if (!serviceId) {
+      return res.status(400).json({ message: 'No ServiceId found in the entry. Cannot proceed with activity creation.' });
     }
 
     if (paymentStatus === 'Paid at temple') {
