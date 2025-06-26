@@ -79,22 +79,55 @@ const TodaysEvents = () => {
     );
   };
 
-  // Render Panchanga details
-  const renderPanchanga = () => (
-    <Card title="Panchanga" className="panchanga-card">
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12}>
-        <div className="panchang-item"><b>{panchanga.Samvatsara}</b> Samvatsare</div>
-        <div className="panchang-item"><b>{panchanga.Ayana}</b></div>
-        <div className="panchang-item"><b>{panchanga.Ritu}</b> Ruthow</div>
-        <div className="panchang-item"><b>{panchanga.Paksha}</b></div>
-        <div className="panchang-item"><b>{panchanga.Tithi}</b> Thithou</div>
-        <div className="panchang-item"><b>{panchanga.Vaasara}</b> Vaasara</div>
-        <div className="panchang-item"><b>{panchanga.Nakshatra}</b> Nakshatre</div>
-        </Col>
-      </Row>
-    </Card>
-  );  
+  // Place this inside your TodaysEvents component, but outside renderPanchanga
+  const formatEventWithTime = (raw) => {
+    if (!raw) return { name: "Unknown", till: "" };
+
+    const [name, tillRaw] = raw.split("till");
+    const cleanName = name.trim();
+    if (!tillRaw) return { name: cleanName, till: "" };
+
+    const tillMoment = moment(tillRaw.trim(), ["MMM/DD HH:mm:ss", "HH:mm:ss"]);
+    const formattedTime = tillMoment.isValid()
+      ? tillMoment.format(tillRaw.includes("/") ? "MMM DD hh:mm:ss A" : "hh:mm:ss A")
+      : tillRaw.trim();
+
+    return {
+      name: cleanName,
+      till: formattedTime
+    };
+  };
+
+  // Updated renderPanchanga function
+  const renderPanchanga = () => {
+    const tithi = formatEventWithTime(panchanga.Tithi);
+    const nakshatra = formatEventWithTime(panchanga.Nakshatra);
+
+    return (
+      <Card title="Panchanga" className="panchanga-card">
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12}>
+            <div className="panchang-item"><b>{panchanga.Samvatsara}</b> Samvatsare</div>
+            <div className="panchang-item"><b>{panchanga.Ayana}</b></div>
+            <div className="panchang-item"><b>{panchanga.Ritu}</b> Ruthow</div>
+            <div className="panchang-item"><b>{panchanga.Paksha}</b></div>
+
+            <div className="panchang-item">
+              {tithi.name} <b>Thithou</b>
+              {tithi.till && ` till ${tithi.till}`}
+            </div>
+
+            <div className="panchang-item"><b>{panchanga.Vaasara}</b> Vaasara</div>
+
+            <div className="panchang-item">
+              {nakshatra.name} <b>Nakshatre</b>
+              {nakshatra.till && ` till ${nakshatra.till}`}
+            </div>
+          </Col>
+        </Row>
+      </Card>
+    );
+  };
 
   return (
     <Layout className="todays-events-container">

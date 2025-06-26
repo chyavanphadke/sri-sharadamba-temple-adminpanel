@@ -2149,12 +2149,13 @@ app.get("/api/panchanga", async (req, res) => {
     const document = dom.window.document;
     
     // Extract Panchanga details
-    const basicDataDiv = document.querySelector("#basicdata").innerHTML.split("<br>");
+    const rawHtml = document.querySelector("#basicdata").innerHTML.split("<br>");
+    const basicDataDiv = rawHtml.map(line => line.replace(/<[^>]*>/g, '').trim());
 
     const samvatsara = basicDataDiv[2]?.split(":")[1]?.trim().split(" ")[0] || "Unknown";
     const paksha = basicDataDiv[8] || "Unknown";
-    const tithiRaw = basicDataDiv[9]?.split("till")[0]?.trim() || "Unknown";
-    const nakshatra = basicDataDiv[10]?.split("till")[0]?.trim() || "Unknown";
+    const tithiRaw = basicDataDiv[9]?.trim() || "Unknown"; // Includes till time
+    const nakshatra = basicDataDiv[10]?.trim() || "Unknown";
 
     // Determine Ayana
     const currentMonth = new Date().getMonth() + 1;
