@@ -2300,7 +2300,10 @@ async function fetchDataFromSheets() {
         const headers = rows[0].map((header) => header.split('|')[0]); // Extract headers
         for (let index = 1; index < rows.length; index++) {
           const row = rows[index];
-          if (!row[0]) {
+          const statusIndex = headers.findIndex(h => h === 'Status');
+          const statusValue = row[statusIndex];
+            if (!statusValue) {
+
             console.log(`Processing row ${index} from sheet ${sheetId}:`, row);
             const rowData = headers.reduce((acc, header, i) => {
               acc[header] = row[i];
@@ -2329,21 +2332,36 @@ async function fetchDataFromSheets() {
 }
 
 async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
-  const {
-    Status,
-    'Seva ID': sevaId,
-    'First Name': firstName,
-    'Last Name': lastName,
-    'Email Address': email,
-    Phone: phone,
-    Date: date,
-    'Message to Priest': messageToPriest,
-    'Payment Option': paymentStatus,
-    'Card Details': cardDetails,
-    'Donation Amount': amountStr,
-    'Select Event': selectEventStr,
-    'Additional Donation': additionalDonationFlag,
-  } = rowData;
+  // const {
+  //   Status,
+  //   'Seva ID': sevaId,
+  //   'First Name': firstName,
+  //   'Last Name': lastName,
+  //   'Email Address': email,
+  //   Phone: phone,
+  //   Date: date,
+  //   'Message to Priest': messageToPriest,
+  //   'Payment Option': paymentStatus,
+  //   'Card Details': cardDetails,
+  //   'Donation Amount': amountStr,
+  //   'Select Event': selectEventStr,
+  //   'Additional Donation': additionalDonationFlag,
+  // } = rowData;
+
+  const status = rowData['Status'];
+  const sevaId = rowData['Seva ID'];
+  const firstName = rowData['First Name'];
+  const lastName = rowData['Last Name'];
+  const email = rowData['Email Address'];
+  const phone = rowData['Phone'];
+  const date = rowData['Date'];
+  const messageToPriest = rowData['Message to Priest'];
+  const paymentStatus = rowData['Payment Option'];
+  const cardDetails = rowData['Card Details'];
+  const amountStr = rowData['Donation Amount'] || rowData['Suggested Donation']; // fallback option
+  const selectEventStr = rowData['Select Event'] || rowData['Select'];
+  const additionalDonationFlag = rowData['Additional Donation'];
+
 
   const message = messageToPriest || '';
   const donationAmount = parseFloat(amountStr || 0);
@@ -2503,29 +2521,49 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
 }
 
 async function processServiceRow(rowData, sheetId, rowIndex, serviceId) {
-  const {
-    Status,
-    'Seva ID': sevaId,
-    'First Name': firstName1,
-    'First Name': firstName2,
-    'Last Name': lastName1,
-    'Last Name': lastName2,
-    'Email Address': email,
-    Phone: phone,
-    Date: date1,
-    'Puja Date (eg. Birthdays, Anniversary)': date2,
-    'Message to Priest': messageToPriest,
-    'Gotra & Nakshatra details (Details for Priest)': gotraDetails,
-    'Payment Option': paymentStatus1,
-    'Payment Method': paymentStatus2,
-    'Card Details': cardDetails1,
-    'Credit / Debit Card': cardDetails2,
-    'Suggested Donation': amount1,
-    'Yearly (USD)': yearlyAmount,
-    'Monthly Pledge (USD)': monthlyAmount,
-    'Select': selectOption,
-    'Batch': batchInfo,
-  } = rowData;
+  // const {
+  //   Status,
+  //   'Seva ID': sevaId,
+  //   'First Name': firstName1,
+  //   'First Name': firstName2,
+  //   'Last Name': lastName1,
+  //   'Last Name': lastName2,
+  //   'Email Address': email,
+  //   Phone: phone,
+  //   Date: date1,
+  //   'Puja Date (eg. Birthdays, Anniversary)': date2,
+  //   'Message to Priest': messageToPriest,
+  //   'Gotra & Nakshatra details (Details for Priest)': gotraDetails,
+  //   'Payment Option': paymentStatus1,
+  //   'Payment Method': paymentStatus2,
+  //   'Card Details': cardDetails1,
+  //   'Credit / Debit Card': cardDetails2,
+  //   'Suggested Donation': amount1,
+  //   'Yearly (USD)': yearlyAmount,
+  //   'Monthly Pledge (USD)': monthlyAmount,
+  //   'Select': selectOption,
+  //   'Batch': batchInfo,
+  // } = rowData;
+
+    const status = rowData['Status'];
+  const sevaId = rowData['Seva ID'];
+  const firstName1 = rowData['First Name']; // If there are duplicate keys, clarify which is preferred
+  const lastName1 = rowData['Last Name'];
+  const email = rowData['Email Address'];
+  const phone = rowData['Phone'];
+  const date1 = rowData['Date'];
+  const date2 = rowData['Puja Date (eg. Birthdays, Anniversary)'];
+  const messageToPriest = rowData['Message to Priest'];
+  const gotraDetails = rowData['Gotra & Nakshatra details (Details for Priest)'];
+  const paymentStatus1 = rowData['Payment Option'];
+  const paymentStatus2 = rowData['Payment Method'];
+  const cardDetails1 = rowData['Card Details'];
+  const cardDetails2 = rowData['Credit / Debit Card'];
+  const amount1 = rowData['Suggested Donation'];
+  const yearlyAmount = rowData['Yearly (USD)'];
+  const monthlyAmount = rowData['Monthly Pledge (USD)'];
+  const selectOption = rowData['Select'];
+  const batchInfo = rowData['Batch'];
 
   const firstName = firstName1 || firstName2;
   const lastName = lastName1 || lastName2;
@@ -2857,13 +2895,42 @@ async function updateExcelSevaData(data) {
   }
 }
 
+function getColumnLetter(index) {
+  let letter = '';
+  while (index >= 0) {
+    letter = String.fromCharCode((index % 26) + 65) + letter;
+    index = Math.floor(index / 26) - 1;
+  }
+  return letter;
+}
+
 async function updateSheetStatus(sheetId, rowIndex, status) {
   try {
+    // Step 1: Fetch header row
+    const headerRes = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: 'Sheet1!A1:AZ1', // Adjust range if needed
+    });
+
+    const headers = headerRes.data.values?.[0] || [];
+    const headerNames = headers.map(header => header.split('|')[0]);
+    const statusColIndex = headerNames.findIndex(h => h.trim() === 'Status');
+
+    if (statusColIndex === -1) {
+      console.error('Status column not found in sheet headers');
+      return;
+    }
+
+    // Step 2: Convert column index to letter
+    const columnLetter = getColumnLetter(statusColIndex);
+
+    // Step 3: Update that column at the given row
+    const range = `Sheet1!${columnLetter}${rowIndex}:${columnLetter}${rowIndex}`;
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
-      range: `Sheet1!A${rowIndex}:A${rowIndex}`,
+      range,
       valueInputOption: 'RAW',
-      resource: { values: [[status]] }
+      resource: { values: [[status]] },
     });
   } catch (error) {
     await reportError(error);
