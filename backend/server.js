@@ -2337,7 +2337,7 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
     'Last Name': lastName,
     'Email Address': email,
     Phone: phone,
-    Date: date,
+    Date: rawDate,
     'Message to Priest': messageToPriest,
     'Payment Option': paymentStatus,
     'Card Details': cardDetails,
@@ -2345,6 +2345,8 @@ async function processCategoryRow(rowData, sheetId, rowIndex, categoryId) {
     'Select Event': selectEventStr,
     'Additional Donation': additionalDonationFlag,
   } = rowData;
+
+  const date = rawDate || new Date().toISOString().split('T')[0];
 
   const message = messageToPriest || '';
   const donationAmount = parseFloat(amountStr || 0);
@@ -2530,7 +2532,8 @@ async function processServiceRow(rowData, sheetId, rowIndex, serviceId) {
 
   const firstName = firstName1 || firstName2;
   const lastName = lastName1 || lastName2;
-  const date = date1 || date2;
+  const rawDate = date1 || date2;
+  const date = rawDate || new Date().toISOString().split('T')[0];
   const message = messageToPriest || gotraDetails || '';
   const paymentStatus = paymentStatus1 || paymentStatus2;
   const cardDetails = cardDetails1 || cardDetails2;
@@ -2681,23 +2684,38 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
       console.error('Invalid service date and time:', serviceDateTimeString);
       return;
     }
-
-    // Generate iCal content
-    const icalContent = await createICalEvent({
-      service: service.Service,
-      date: serviceDateTime,
-    });
-
     const dayOfWeek = serviceDateTime.toLocaleString('en-US', { weekday: 'long' });
     const formattedDate = serviceDateTime.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const bannerImageUrl = 'https://drive.google.com/uc?export=view&id=1YbZwheefs9K-uebzYPsmGYL9IFHteqvS';
 
-    const mailOptions = {
-      from: emailCredential.email,
-      to: email,
-      subject: `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`,
-      html: `
+    let subject, html, attachments = [];
+
+    if (service.ServiceId === 2) {
+      subject = `${service.Service} received at SEVA`;
+      html = `
+        <div style="text-align: center;">
+          <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
+            <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
+            <h2 style="color: grey; text-align: center; font-size: 24px;">${service.Service}</h2>
+            <p><b>Seva:</b> ${service.Service} of $${amount} received.</p>
+            <p>Thank you for your continued support in upholding our temple's spiritual efforts.</p>
+            <p>We warmly invite you and your family to visit the temple for darshan and blessings.</p>
+            <p>You're welcome to bring flowers and fruits as offerings if you wish.</p>
+
+            <p><a href="https://www.google.com/maps/search/?api=1&query=1635+S+Main+St,+Milpitas,+CA+95035" target="_blank">Sri Sharadamba Temple (1635 S Main St, Milpitas, CA 95035)</a></p>
+            
+          </div>
+        </div>
+      `;
+    } else {
+      const icalContent = await createICalEvent({
+        service: service.Service,
+        date: serviceDateTime,
+      });
+
+      subject = `${service.Service} Seva on ${dayOfWeek}, ${formattedDate}`;
+      html = `
         <div style="text-align: center;">
           <div style="display: inline-block; border: 3px solid orange; padding: 20px; text-align: left; max-width: 600px;">
             <img src="${bannerImageUrl}" alt="Email Banner" style="width: 100%; max-width: 580px;" />
@@ -2709,14 +2727,20 @@ async function sendSevaEmail({ email, serviceId, serviceDate, amount, paymentSta
             <p>If you wish, feel free to bring flowers and fruits as offerings.</p>
           </div>
         </div>
-      `,
-      attachments: [
-        {
-          filename: 'invite.ics',
-          content: icalContent,
-          contentType: 'text/calendar',
-        },
-      ],
+      `;
+      attachments.push({
+        filename: 'invite.ics',
+        content: icalContent,
+        contentType: 'text/calendar',
+      });
+    }
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject,
+      html,
+      attachments,
     };
 
     try {
