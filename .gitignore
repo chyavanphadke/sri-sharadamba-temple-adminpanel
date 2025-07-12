@@ -45,4 +45,12 @@ Thumbs.db
 # Miscellaneous
 .cache
 
-service-account.json
+backend/service-account.json
+backend/tvSlideshow/*
+
+# Ignore specific AutomationTest files
+AutomationTest/auth.json
+AutomationTest/future-seva.json
+AutomationTest/latest-devotee.json
+AutomationTest/todays-seva.json
+AutomationTest/tests/service-account.json
