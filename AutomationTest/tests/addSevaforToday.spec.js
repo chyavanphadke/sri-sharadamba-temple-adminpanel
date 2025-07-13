@@ -114,6 +114,7 @@ console.log('📄 Saved today\'s seva:', sevaRecord);
 // Navigate to "Receipts" tab
 await page.getByRole('link', { name: 'Receipts' }).click();
 await expect(page.locator('table')).toBeVisible();
+await page.waitForTimeout(2000); // Waits for 2 seconds
 
 // // Format "2025-07-12" → "Jul 12, 2025"
 // const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -141,6 +142,7 @@ for (let i = 0; i < count; i++) {
   const serviceOK = service.toLowerCase().includes(sevaRecord.service.toLowerCase());
   const paymentOK = payment.toLowerCase() === sevaRecord.paymentMethod.toLowerCase();
   const amountOK = amount === sevaRecord.amount;
+
 
   if (serviceOK && paymentOK && amountOK) {
     console.log(`✅ Found matching row: ${service}, ${payment}, ${amount}`);
