@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select, AutoComplete } from 'antd';
+import { Layout, Input, Button, Table, Modal, Form, message, Row, Col, DatePicker, Select, AutoComplete, Tag, Typography} from 'antd';
 import axios from 'axios';
 import _ from 'lodash';
 import moment from 'moment';
 import { jwtDecode } from 'jwt-decode';
 import './Home.css';
+import DevoteeImage from '../assets/Home_image.webp'; // Adjust the path as needed
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -36,6 +37,7 @@ const Home = () => {
   const [familyMembers, setFamilyMembers] = useState([{ FirstName: '', LastName: '', RelationShip: '', Gotra: '', Star: '', DOB: null }]);
   const [accessControl, setAccessControl] = useState({});
   const [formKey, setFormKey] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     FirstName: '',
     LastName: '',
@@ -421,7 +423,14 @@ const Home = () => {
   }, 300), [axiosInstance, fetchDevotees]);
 
   const handleSearchChange = (e) => {
-    debounceSearch(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    if (value.trim().length >= 3) {
+      debounceSearch(value);
+    } else {
+      setDevotees([]); // clear table if input < 3
+    }
   };
 
   const handleEmailChange = (value) => {
@@ -443,11 +452,16 @@ const Home = () => {
     return false;
   };
 
+  // To use maskEmailAddress and maskPhoneNumberuse the following
+  // { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text), align: 'center' },
+  // { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text), align: 'center' },
+  const { Text } = Typography;
+
   const columns = [
     { title: 'First Name', dataIndex: 'FirstName', key: 'FirstName', align: 'center' },
     { title: 'Last Name', dataIndex: 'LastName', key: 'LastName', align: 'center' },
-    { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => maskPhoneNumber(text), align: 'center' },
-    { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => maskEmailAddress(text), align: 'center' },
+    { title: 'Phone', dataIndex: 'Phone', key: 'Phone', render: (text) => (text), align: 'center' },
+    { title: 'Email', dataIndex: 'Email', key: 'Email', render: (text) => (text), align: 'center' },
     {
       title: 'Actions', key: 'actions', render: (text, record) => (
         <>
@@ -463,32 +477,77 @@ const Home = () => {
     <Layout>
       <Content>
         <div className="site-layout-content">
-          <h2>Home Page</h2>
-          <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-            <Input
-              placeholder="Search Devotees by Name, Phone, Email or Family Member"
-              onChange={handleSearchChange}
-              style={{ width: 400, marginRight: 16, height: 40 }}
-            />
-            {accessControl.Home?.can_add === 1 && <Button type="primary" onClick={handleAddDevotee} style={{ height: 40 }}>Add Devotee</Button>}
+          <h2>Devotee Database</h2>
+          <span>Search to find a Devotee:</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 16,
+              flexWrap: 'wrap',
+              gap: 16,
+            }}
+          >
+            {/* Left: Search + Add Devotee */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <Input
+                placeholder="Search Devotees by Name, Phone, Email or Family Member"
+                onChange={handleSearchChange}
+                style={{ width: 400, height: 40 }}
+              />
+              {accessControl.Home?.can_add === 1 && (
+                <Button type="primary" onClick={handleAddDevotee} style={{ height: 40, marginTop: 15 }}>
+                  Add New Devotee
+                </Button>
+              )}
+            </div>
+
+            {/* Right: Total Count */}
+            <div style={{ display: 'flex', alignItems: 'center', fontSize: 16 }}>
+              <Text style={{ marginRight: 8 }}><b>Total Devotees in the Database:</b></Text>
+              <Tag
+                color="orange"
+                style={{
+                  border: '2px solid orange',
+                  backgroundColor: 'transparent',
+                  fontSize: 16,
+                  padding: '0 12px',
+                  height: 30,
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                {totalDevotees}
+              </Tag>
+            </div>
           </div>
-          <div style={{ marginTop: 16 }}>
-            <p>Total Devotees in the Database: {totalDevotees}</p>
-          </div>
-          <div className="custom-table">
-            <Table
-              columns={columns}
-              dataSource={devotees}
-              loading={loading}
-              rowKey="DevoteeId"
-              pagination={{ pageSize: 10 }}
-              scroll={{ x: 'max-content' }}
-            />
-          </div>
+          {searchTerm.trim().length >= 3 ? (
+            <div className="custom-table">
+              <Table
+                columns={columns}
+                dataSource={devotees}
+                loading={loading}
+                rowKey="DevoteeId"
+                pagination={{ pageSize: 10 }}
+                scroll={{ x: 'max-content' }}
+              />
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', marginTop: 120, fontSize: 18 }}>
+              
+              <img
+                src={DevoteeImage}
+                alt="Search illustration"
+                style={{ marginTop: 24, width: 300, opacity: 0.8 }}
+              />
+            </div>
+          )}
         </div>
       </Content>
       <Modal
-        title={currentDevotee ? "Edit Devotee" : "Add Devotee"}
+        title={currentDevotee ? "Edit Devotee" : "Add New Devotee"}
         visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}

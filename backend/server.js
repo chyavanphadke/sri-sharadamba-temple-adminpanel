@@ -2977,11 +2977,17 @@ app.put('/update-payment-status/:id', async (req, res) => {
     }
 
     if (paymentStatus === 'Paid at temple') {
+
+      const pstTimestamp =
+        typeof createdAt === 'string'
+          ? createdAt.replace(/Z$/, '') // --> "2025-07-12T17:25:39.000"
+          : new Date(createdAt).toISOString().replace(/Z$/, '');
+          
       const activityId = await createActivity_maintainDate({
         devoteeId: entry.devotee_id,
         serviceId,  // Pass the determined serviceId
         paymentStatus: paymentStatusReal,
-        ActivityDate: createdAt,
+        ActivityDate: pstTimestamp,
         amount,
         serviceDate: entry.date,
         comments: entry.message,
