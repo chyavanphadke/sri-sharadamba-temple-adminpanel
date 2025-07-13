@@ -53,4 +53,6 @@ AutomationTest/auth.json
 AutomationTest/future-seva.json
 AutomationTest/latest-devotee.json
 AutomationTest/todays-seva.json
+AutomationTest/excel-seva.json
 AutomationTest/tests/service-account.json
+AutomationTest/test-results/*
