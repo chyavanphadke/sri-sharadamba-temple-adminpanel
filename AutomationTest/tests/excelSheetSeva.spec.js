@@ -8,11 +8,19 @@ const RANGE = 'Sheet1!A1';
 const OUTPUT_FILE = path.join(__dirname, '..', 'excel-seva.json');
 
 function getRandomDate() {
-  const today = new Date();
+  const today    = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
+
   const picked = Math.random() < 0.5 ? today : tomorrow;
-  return picked.toLocaleDateString('en-CA');
+
+  // ➜ "06/10/2025" with a leading apostrophe
+  const mmddyyyy = picked.toLocaleDateString(
+    'en-US',
+    { month: '2-digit', day: '2-digit', year: 'numeric' }
+  );
+
+  return `${mmddyyyy}`;               // note the leading apostrophe
 }
 
 function getRandomPaymentOption() {
@@ -137,7 +145,6 @@ for (let i = 0; i < confirmLimit; i++) {
 }
 
 console.log(`💸 Marked ${confirmLimit} payment(s) as Paid via UI`);
-await page.waitForTimeout(15000);
 // Go to the Receipts tab
 await page.getByRole('link', { name: 'Receipts' }).click();
 

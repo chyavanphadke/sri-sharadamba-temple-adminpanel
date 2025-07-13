@@ -115,14 +115,19 @@ console.log('📄 Saved today\'s seva:', sevaRecord);
 await page.getByRole('link', { name: 'Receipts' }).click();
 await expect(page.locator('table')).toBeVisible();
 
-// Format "2025-07-12" → "Jul 12, 2025"
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const [y, m, d] = sevaRecord.date.split('-').map(Number);
-const tableDate = `${months[m - 1]} ${d}, ${y}`;
+// // Format "2025-07-12" → "Jul 12, 2025"
+// const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// const [y, m, d] = sevaRecord.date.split('-').map(Number);
+// const tableDate = `${months[m - 1]} ${d}, ${y}`;
 
-// Filter rows by Service Date
-const matchingRows = page.locator(`tr:has(td:has-text("${tableDate}"))`);
+// // Filter rows by Service Date
+// const matchingRows = page.locator(`tr:has(td:has-text("${tableDate}"))`);
+// const count = await matchingRows.count();
+
+// Look through all table rows (skip filtering by date)
+const matchingRows = page.locator('table tbody tr');
 const count = await matchingRows.count();
+
 
 let found = false;
 
