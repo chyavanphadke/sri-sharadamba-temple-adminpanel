@@ -15,11 +15,11 @@ test.use({
 test('Add new devotee with random email and phone', async ({ page }) => {
   await page.goto('http://localhost:3000/dashboard/home');
 
-  // Open the "Add Devotee" modal
-  await page.getByRole('button', { name: 'Add Devotee' }).click();
+  // Open the "Add New Devotee" modal
+  await page.getByRole('button', { name: 'Add New Devotee' }).click();
 
   // Wait for modal title to appear
-  await expect(page.locator('.ant-modal-title')).toContainText('Add Devotee');
+  await expect(page.locator('.ant-modal-title')).toContainText('Add New Devotee');
 
   // Generate random data
   const randomNumber = Math.floor(10000 + Math.random() * 90000);

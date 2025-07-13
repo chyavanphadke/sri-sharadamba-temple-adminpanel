@@ -113,7 +113,7 @@ test('Add Seva for Automation devotee (future) and approve it', async ({ page })
     category: categoryText.trim(),
     service: serviceText,
     amount,
-    paymentMethod: paymentText
+    paymentMethod: paymentText === "Check" ? `${paymentText} (${checkNo})` : paymentText
   };
   fs.writeFileSync('future-seva.json', JSON.stringify(sevaRecord, null, 2));
   console.log('📄 Saved future seva:', sevaRecord);
@@ -122,6 +122,7 @@ test('Add Seva for Automation devotee (future) and approve it', async ({ page })
 
   await page.getByRole('link', { name: 'Receipts' }).click();
   await expect(page.locator('table')).toBeVisible();
+  await page.waitForTimeout(2000); // Waits for 2 seconds
 
   // Format "YYYY-MM-DD" → "Mon DD, YYYY"
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

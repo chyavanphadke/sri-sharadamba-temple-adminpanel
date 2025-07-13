@@ -77,8 +77,10 @@ test('Add Seva for Automation devotee and save details', async ({ page }) => {
   const payText = (await payOpts.nth(payIdx).textContent()).trim();
   await payOpts.nth(payIdx).click();
 
+  const randomCheckNum = Math.floor(Math.random() * 9000 + 1000);
+
   if (payText.toLowerCase().includes('check')) {
-    await page.locator('#CheckNumber').fill(String(Math.floor(Math.random() * 9000 + 1000)));
+    await page.locator('#CheckNumber').fill(String(randomCheckNum));
   }
 
   /* ---------- Service Date: today ---------- */
@@ -103,7 +105,7 @@ const sevaRecord = {
   category: serviceCategory.trim(),
   service: serviceName,
   amount: amount,
-  paymentMethod: payText
+  paymentMethod: payText === "Check" ? `${payText} (${randomCheckNum})` : payText
 };
 fs.writeFileSync('todays-seva.json', JSON.stringify(sevaRecord, null, 2));
 console.log('📄 Saved today\'s seva:', sevaRecord);
