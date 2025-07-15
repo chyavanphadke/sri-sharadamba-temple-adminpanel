@@ -93,7 +93,7 @@ const saveCategories = async () => {
   const deleteCategory = async (cat) => {
     const linked = services.some((svc) => svc.category_id === cat.category_id);
     if (linked) {
-      message.error('Cannot delete: services still linked to this category');
+      message.error('Cannot delete: there are services still linked to this category');
       return;
     }
     try {
@@ -171,7 +171,7 @@ const updated = services.map((svc) =>
     {
       title: 'Category',
       dataIndex: 'Category_name',
-      width: 150,
+      width: 200,
       render: (text, record) =>
         editingCats ? (
           <Form.Item
@@ -245,23 +245,24 @@ const updated = services.map((svc) =>
   /* ====================== SERVICE COLUMNS ========================== */
   const svcColumns = [
     {
-      title: 'Service',
-      dataIndex: 'Service',
-      width: 150,
-      render: (text, record) =>
-        editingSvcs ? (
-          <Form.Item
-            name={[record.ServiceId, 'Service']}
-            initialValue={text}
-            rules={[{ required: true, message: 'Required' }]}
-            style={{ margin: 0 }}
-          >
-            <Input />
-          </Form.Item>
-        ) : (
-          ellipsis(text)
-        ),
-    },
+  title: 'Service',
+  dataIndex: 'Service',
+  width: 200,
+  ellipsis: !editingSvcs,
+  render: (text, record) =>
+    editingSvcs ? (
+      <Form.Item
+        name={[record.ServiceId, 'Service']}
+        initialValue={text}
+        rules={[{ required: true, message: 'Required' }]}
+        style={{ margin: 0, width: '100%' }}
+      >
+        <Input style={{ width: '100%' }} />
+      </Form.Item>
+    ) : (
+      text
+    )
+},
     {
       title: 'Rate',
       dataIndex: 'Rate',
@@ -327,11 +328,6 @@ const updated = services.map((svc) =>
         ) : (
           ellipsis(text, 200)
         ),
-    },
-    {
-      title: 'Cat ID',
-      dataIndex: 'category_id',
-      width: 80,
     },
     {
       title: editingSvcs ? 'Delete' : '',
