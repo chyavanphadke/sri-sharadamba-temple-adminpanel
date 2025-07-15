@@ -1,0 +1,11 @@
+/* src/components/Services.css */
+.services-container {
+  text-align: center;
+  padding-top: 40px;
+}
+
+.ant-table-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

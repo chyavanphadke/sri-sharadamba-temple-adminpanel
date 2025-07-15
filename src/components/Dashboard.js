@@ -11,6 +11,7 @@ import Settings from './Settings';
 import OnlineFormsData from './OnlineFormsData'; // New import for OnlineFormsData
 import Statistics from './Statistics'; // New import for Statistics
 import EmailLog from './EmailLog'; // New import for Statistics
+import Services from './Services';
 import { GoogleSpreadsheet } from 'google-spreadsheet'; // Import GoogleSpreadsheet for Sheets API
 import { jwtDecode } from 'jwt-decode';
 import './Dashboard.css';
@@ -23,6 +24,7 @@ import SettingIcon from '../assets/icons/cogwheel.png';
 import email_log from '../assets/icons/email_log.png';
 import onlineDataIcon from '../assets/icons/online-data.png';
 import StatisticsIcon from '../assets/icons/trend.png'; // New icon for Statistics
+import ServicesIcon from '../assets/icons/cogwheel.png';
 //import ListOfSevasIcon from '../assets/icons/cogwheel.png';
 
 const { Header, Content, Sider } = Layout;
@@ -133,6 +135,7 @@ const Dashboard = () => {
     { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
     { key: '/dashboard/statistics', icon: <img src={StatisticsIcon} alt="Statistics" className="custom-icon" />, label: <Link to="/dashboard/statistics">Statistics</Link>, access: accessControl.Reports?.can_view }, // New menu item for Statistics
     { key: '/dashboard/email-log', icon: <img src={email_log} alt="Email Log" className="custom-icon" />, label: <Link to="/dashboard/email-log">Email Log</Link>, access: accessControl['email-log']?.can_view,},
+    { key: '/dashboard/services', icon: <img src={ServicesIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/services">Services</Link>, access: accessControl.Settings?.can_view },
     { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view }
   ].filter(item => item.access);
 
@@ -145,6 +148,7 @@ const Dashboard = () => {
       '/dashboard/receipts': 'Receipts',
       '/dashboard/reports': 'Reports',
       '/dashboard/login-access': 'Login Access',
+      '/dashboard/services': 'Services',
       '/dashboard/settings': 'Settings',
       '/dashboard/online-forms-data': 'Online Forms Data',
       '/dashboard/statistics': 'Statistics',
@@ -212,6 +216,7 @@ const Dashboard = () => {
               <Route path="receipts" element={<Receipts />} />
               <Route path="reports" element={<Reports />} />
               <Route path="login-access" element={<SuperAdmin />} />
+              <Route path="services" element={<Services  />} />
               <Route path="settings" element={<Settings />} />
               <Route path="online-forms-data" element={<OnlineFormsData />} />
               <Route path="statistics" element={<Statistics />} /> {/* New route for Statistics */}
