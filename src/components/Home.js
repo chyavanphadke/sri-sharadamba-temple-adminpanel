@@ -446,7 +446,7 @@ const Home = () => {
 
   const disabledDate = (current) => {
     const selectedServiceObject = activeServices.find(service => service.Service === selectedService);
-    if (selectedServiceObject && (selectedServiceObject.ServiceId === 269 || selectedServiceObject.ServiceId === 270)) {
+    if (selectedServiceObject && (selectedServiceObject.ServiceId === 269 || selectedServiceObject.ServiceId === 270 || selectedServiceObject.ServiceId === 277)) {
       return current && current.day() !== 6;
     }
     return false;
