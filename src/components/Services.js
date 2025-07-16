@@ -168,26 +168,26 @@ const updated = services.map((svc) =>
 
   /* ====================== CATEGORY COLUMNS ========================= */
   const catColumns = [
+{
+  title: 'Category Name',
+  dataIndex: 'Category_name',
+  width: 300,
+  render: (text, record) =>
+    editingCats ? (
+      <Form.Item
+        name={[record.category_id, 'Category_name']}
+        initialValue={text}
+        rules={[{ required: true, message: 'Required' }]}
+        style={{ margin: 0, width: '100%' }}
+      >
+        <Input style={{ width: '100%' }} />
+      </Form.Item>
+    ) : (
+      <div className="view-mode">{text}</div> // ensures ellipsis styles apply correctly
+    ),
+},
     {
-      title: 'Category',
-      dataIndex: 'Category_name',
-      width: 200,
-      render: (text, record) =>
-        editingCats ? (
-          <Form.Item
-            name={[record.category_id, 'Category_name']}
-            initialValue={text}
-            rules={[{ required: true, message: 'Required' }]}
-            style={{ margin: 0 }}
-          >
-            <Input />
-          </Form.Item>
-        ) : (
-          ellipsis(text)
-        ),
-    },
-    {
-      title: 'Active',
+      title: 'Status',
       dataIndex: 'Active',
       width: 80,
       render: (val, record) =>
@@ -201,12 +201,12 @@ const updated = services.map((svc) =>
           >
             <Switch size="small" />
           </Form.Item>
-        ) : val ? 'Yes' : 'No',
+        ) : val ? 'Active' : 'Inactive',
     },
     {
-      title: 'Excel Link',
+      title: 'Excel Sheet Link',
       dataIndex: 'excelSheetLink',
-      width: 200,
+      width: 100,
       render: (text, record) =>
         editingCats ? (
           <Form.Item name={[record.category_id, 'excelSheetLink']} initialValue={text} style={{ margin: 0 }}>
@@ -217,7 +217,7 @@ const updated = services.map((svc) =>
         ),
     },
     {
-      title: 'Poster',
+      title: 'Poster Link',
       dataIndex: 'poster',
       width: 200,
       render: (text, record) =>
@@ -245,7 +245,7 @@ const updated = services.map((svc) =>
   /* ====================== SERVICE COLUMNS ========================== */
   const svcColumns = [
     {
-  title: 'Service',
+  title: 'Service Name',
   dataIndex: 'Service',
   width: 200,
   ellipsis: !editingSvcs,
@@ -264,7 +264,7 @@ const updated = services.map((svc) =>
     )
 },
     {
-      title: 'Rate',
+      title: 'Amount',
       dataIndex: 'Rate',
       width: 100,
       render: (val, record) =>
@@ -282,7 +282,7 @@ const updated = services.map((svc) =>
         ),
     },
     {
-      title: 'Active',
+      title: 'Status',
       dataIndex: 'Active',
       width: 80,
       render: (val, record) =>
@@ -296,7 +296,7 @@ const updated = services.map((svc) =>
           >
             <Switch size="small" />
           </Form.Item>
-        ) : val ? 'Yes' : 'No',
+        ) : val ? 'Active' : 'Inactive',
     },
     {
   title: 'Time',
@@ -317,7 +317,7 @@ const updated = services.map((svc) =>
     ),
 },
     {
-      title: 'Excel Link',
+      title: 'Excel Sheet Link',
       dataIndex: 'excelSheetLink',
       width: 200,
       render: (text, record) =>
