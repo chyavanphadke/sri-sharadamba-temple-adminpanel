@@ -391,7 +391,7 @@ const updated = services.map((svc) =>
           <Table
             rowKey="category_id"
             columns={catColumns}
-            dataSource={categories}
+            dataSource={[...categories].sort((a, b) => Number(b.Active) - Number(a.Active))}
             size="small"
             bordered
             pagination={false}
@@ -468,7 +468,9 @@ const updated = services.map((svc) =>
             <Table
               rowKey="ServiceId"
               columns={svcColumns}
-              dataSource={services.filter((s) => s.category_id === selectedCatId)}
+              dataSource={[...services.filter((s) => s.category_id === selectedCatId)].sort(
+  (a, b) => Number(b.Active) - Number(a.Active)
+)}
               size="small"
               bordered
               pagination={false}
