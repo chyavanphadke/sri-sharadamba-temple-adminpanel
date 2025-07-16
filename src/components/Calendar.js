@@ -8,6 +8,7 @@ import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './Calendar.css';
 import { jwtDecode } from 'jwt-decode';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -25,7 +26,7 @@ const Calendar = () => {
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: `${BACKEND_BASE_URL}`,
     headers: {
       Authorization: `Bearer ${token}`,
     },

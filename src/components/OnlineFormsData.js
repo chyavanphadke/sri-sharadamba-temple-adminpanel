@@ -3,6 +3,7 @@ import { Layout, Table, Button, message, Modal, Input, Form, Checkbox, Row, Col,
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './OnlineFormsData.css'; // Ensure this path is correct
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 
@@ -30,7 +31,7 @@ const OnlineFormsData = () => {
   // Fetch the service map data from the server
   const fetchServiceMap = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/services');
+      const response = await axios.get(`${BACKEND_BASE_URL}/services`);
       const serviceMap = response.data.reduce((map, service) => {
         if (service.excelSheetLink) {
           map[service.excelSheetLink] = service.ServiceId;
@@ -47,7 +48,7 @@ const OnlineFormsData = () => {
   const fetchExcelSevaData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/excel-seva-data');
+      const response = await axios.get(`${BACKEND_BASE_URL}/excel-seva-data`);
       const dataWithServiceName = response.data.map(entry => ({
         ...entry,
         serviceName: entry.Service ? entry.Service.Service : 'Unknown Service'
@@ -87,7 +88,7 @@ const OnlineFormsData = () => {
   const fetchSheetsData = async () => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5001/fetch-sheets-data');
+      const response = await axios.post(`${BACKEND_BASE_URL}/fetch-sheets-data`);
       message.success(response.data.message);
       fetchExcelSevaData();
       console.log('Fetched data from Google Sheets');
@@ -121,7 +122,7 @@ const OnlineFormsData = () => {
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/payment-methods');
+      const response = await axios.get(`${BACKEND_BASE_URL}/payment-methods`);
       setPaymentMethods(response.data);
     } catch (error) {
       message.error('Failed to load payment methods');
@@ -138,7 +139,7 @@ const OnlineFormsData = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          await axios.delete(`http://localhost:5001/delete-entry/${record.id}`);
+          await axios.delete(`${BACKEND_BASE_URL}/delete-entry/${record.id}`);
           message.success('Service deleted successfully');
           fetchExcelSevaData();
           console.log('Deleted service and refreshed data');
@@ -162,7 +163,7 @@ const OnlineFormsData = () => {
       const selectedMethod = paymentMethods.find(method => method.PaymentMethodId === selectedPaymentMethod);
       const paymentMethodName = selectedMethod ? selectedMethod.MethodName : 'Unknown';
   
-      await axios.put(`http://localhost:5001/update-payment-status/${currentRecord.id}`, {
+      await axios.put(`${BACKEND_BASE_URL}/update-payment-status/${currentRecord.id}`, {
         amount: values.amount,
         paymentStatus: 'Paid at temple',
         userId: userId,

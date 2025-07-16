@@ -12,6 +12,8 @@ import OnlineFormsData from './OnlineFormsData'; // New import for OnlineFormsDa
 import Statistics from './Statistics'; // New import for Statistics
 import EmailLog from './EmailLog'; // New import for Statistics
 import Services from './Services';
+import WebHost from './WebHost';
+
 import { GoogleSpreadsheet } from 'google-spreadsheet'; // Import GoogleSpreadsheet for Sheets API
 import { jwtDecode } from 'jwt-decode';
 import './Dashboard.css';
@@ -25,7 +27,9 @@ import email_log from '../assets/icons/email_log.png';
 import onlineDataIcon from '../assets/icons/online-data.png';
 import StatisticsIcon from '../assets/icons/trend.png'; // New icon for Statistics
 import ServicesIcon from '../assets/icons/cogwheel.png';
+import webHostIcon from '../assets/icons/beta.png';
 //import ListOfSevasIcon from '../assets/icons/cogwheel.png';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Header, Content, Sider } = Layout;
 
@@ -94,7 +98,7 @@ const Dashboard = () => {
   const fetchAccessControl = async (userType) => {
     try {
       console.log(`Fetching access control data for user type: ${userType}`);
-      const response = await fetch(`http://localhost:5001/access-control/${encodeURIComponent(userType)}`);
+      const response = await fetch(`${BACKEND_BASE_URL}/access-control/${encodeURIComponent(userType)}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -135,7 +139,8 @@ const Dashboard = () => {
     { key: '/dashboard/login-access', icon: <img src={LoginAccessIcon} alt="Login Access" className="custom-icon" />, label: <Link to="/dashboard/login-access">Login Access</Link>, access: accessControl['Login Access']?.can_view },
     { key: '/dashboard/statistics', icon: <img src={StatisticsIcon} alt="Statistics" className="custom-icon" />, label: <Link to="/dashboard/statistics">Statistics</Link>, access: accessControl.Reports?.can_view }, // New menu item for Statistics
     { key: '/dashboard/email-log', icon: <img src={email_log} alt="Email Log" className="custom-icon" />, label: <Link to="/dashboard/email-log">Email Log</Link>, access: accessControl['email-log']?.can_view,},
-    { key: '/dashboard/services', icon: <img src={ServicesIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/services">Services</Link>, access: accessControl.Settings?.can_view },
+    { key: '/dashboard/services', icon: <img src={ServicesIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/services">Services</Link>, access: accessControl.Calendar?.can_view },
+    { key: '/dashboard/web-host', icon: <img src={webHostIcon} alt="Web Host" className="custom-icon" />, label: <Link to="/dashboard/web-host">Web Host</Link>, access: accessControl.Calendar?.can_view },
     { key: '/dashboard/settings', icon: <img src={SettingIcon} alt="Settings" className="custom-icon" />, label: <Link to="/dashboard/settings">Settings</Link>, access: accessControl.Settings?.can_view }
   ].filter(item => item.access);
 
@@ -149,6 +154,7 @@ const Dashboard = () => {
       '/dashboard/reports': 'Reports',
       '/dashboard/login-access': 'Login Access',
       '/dashboard/services': 'Services',
+      '/dashboard/WebHost': 'Web Host',
       '/dashboard/settings': 'Settings',
       '/dashboard/online-forms-data': 'Online Forms Data',
       '/dashboard/statistics': 'Statistics',
@@ -217,6 +223,7 @@ const Dashboard = () => {
               <Route path="reports" element={<Reports />} />
               <Route path="login-access" element={<SuperAdmin />} />
               <Route path="services" element={<Services  />} />
+              <Route path="web-host" element={<WebHost />} />
               <Route path="settings" element={<Settings />} />
               <Route path="online-forms-data" element={<OnlineFormsData />} />
               <Route path="statistics" element={<Statistics />} /> {/* New route for Statistics */}

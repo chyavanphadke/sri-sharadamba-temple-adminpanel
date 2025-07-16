@@ -7,6 +7,7 @@ const { sequelize, User, Devotee, Family, Service, ServiceCategory, Activity, Mo
 const moment = require('moment');
 const { Op, Sequelize } = require('sequelize'); // Make sure this is only declared once
 const { JSDOM } = require("jsdom");
+const ngrok = require('ngrok');
 
 const app = express();
 const port = 5001;
@@ -3756,7 +3757,192 @@ sequelize.sync().then(async () => {
     ];
     res.status(200).json({ message: 'Email text reset to default' });
   });
-  
+
+
+
+  let ngrokUrl = null;
+
+  setInterval(async () => {
+  try {
+    const statusConfig = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerStatus' } });
+    if (statusConfig?.value !== '1') return;
+
+    const startTimeConfig = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerStartTime' } });
+    const stopInConfig = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerStopIn' } });
+
+    const startTime = moment(startTimeConfig?.value);
+    const stopInHours = parseInt(stopInConfig?.value || '5', 10);
+
+    if (moment().isAfter(startTime.clone().add(stopInHours, 'hours'))) {
+      console.log('Stopping ngrok — auto timeout triggered');
+      await ngrok.disconnect();
+      await ngrok.kill();
+      ngrokUrl = null;
+
+      await GeneralConfigurations.update({ value: '0' }, { where: { configuration: 'hostServerStatus' } });
+      await GeneralConfigurations.update({ value: '' }, { where: { configuration: 'hostServerUrl' } });
+      await GeneralConfigurations.update({ value: '0' }, { where: { configuration: 'hostServerStartTime' } });
+      await GeneralConfigurations.update({ value: '4' }, { where: { configuration: 'hostServerStopIn' } });
+
+    }
+  } catch (err) {
+    console.error('Auto-stop check failed:', err);
+  }
+}, 30 * 60 * 1000); // every 30 minutes
+
+app.put('/update-stop-in', async (req, res) => {
+  const { hours } = req.body;
+
+  if (isNaN(hours) || hours < 1 || hours > 10) {
+    return res.status(400).json({ error: 'Invalid stop time (1–10 hours)' });
+  }
+
+  try {
+    await GeneralConfigurations.update(
+      { value: hours.toString() },
+      { where: { configuration: 'hostServerStopIn' } }
+    );
+    res.json({ message: 'Updated stop time successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update stop time' });
+  }
+});
+
+
+app.post('/start-ngrok', async (req, res) => {
+  try {
+    const url = await ngrok.connect({
+      addr: 5001,
+      authtoken: '2zwrVRsT3Bpyep7vQ62TI0dglj4_3w5zKgV3F2HE2mMgDjztK', // 👈 Just pass it here
+      region: 'us'
+    });
+
+    console.log('Ngrok tunnel started at:', url);
+
+    // Save config in DB
+    await GeneralConfigurations.update({ value: '1' }, { where: { configuration: 'hostServerStatus' } });
+    await GeneralConfigurations.update({ value: url }, { where: { configuration: 'hostServerUrl' } });
+    await GeneralConfigurations.update({ value: Date.now().toString() }, { where: { configuration: 'hostServerStartTime' } });
+
+    res.json({ message: 'Ngrok started', url });
+  } catch (err) {
+    console.error('Error starting ngrok:', err);
+    res.status(500).json({ error: 'Failed to start ngrok' });
+  }
+});
+
+
+app.post('/stop-ngrok', async (req, res) => {
+  try {
+    await ngrok.disconnect();
+    await ngrok.kill();
+    ngrokUrl = null;
+
+    // Reset configuration values
+    await GeneralConfigurations.update({ value: '0' }, { where: { configuration: 'hostServerStatus' } });
+    await GeneralConfigurations.update({ value: '' }, { where: { configuration: 'hostServerUrl' } });
+    await GeneralConfigurations.update({ value: '0' }, { where: { configuration: 'hostServerStartTime' } });
+    await GeneralConfigurations.update({ value: '4' }, { where: { configuration: 'hostServerStopIn' } });
+
+    res.json({ message: 'Ngrok server stopped and configuration reset' });
+  } catch (err) {
+    console.error('Error stopping ngrok:', err);
+    res.status(500).json({ error: 'Failed to stop ngrok' });
+  }
+});
+
+
+app.get('/ngrok-status', async (req, res) => {
+  try {
+    const statusConfig = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerStatus' } });
+    res.json({ status: statusConfig?.value === '1' });
+  } catch (error) {
+    console.error('Failed to get status:', error);
+    res.status(500).json({ error: 'Could not get status' });
+  }
+});
+
+app.post('/send-ngrok-url', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const emailCredential = await EmailCredential.findOne();
+    if (!emailCredential) {
+      return res.status(500).send('Email credentials not configured');
+    }
+
+    const ngrokUrlConfig = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerUrl' } });
+    const ngrokUrl = ngrokUrlConfig?.value || '';
+
+    if (!ngrokUrl) {
+      return res.status(400).send('Ngrok URL not found');
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: emailCredential.email,
+        pass: emailCredential.appPassword,
+      },
+    });
+
+    const mailOptions = {
+      from: emailCredential.email,
+      to: email,
+      subject: 'Temporary Server Access Link',
+      text: `You can access the temporary server using this link:\n\n${ngrokUrl}\n\nThis link may expire soon.`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    await EmailLog.create({
+      status: 'Sent',
+      name: 'Ngrok Server',
+      email,
+      message: `Sent ngrok URL`,
+      module: 'Ngrok Server',
+    });
+
+    res.status(200).send(`Ngrok URL sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending ngrok URL:', error);
+
+    await EmailLog.create({
+      status: 'Error',
+      name: 'Ngrok Server',
+      email,
+      message: `Error sending URL: ${error.message}`,
+      module: 'Ngrok Server',
+    });
+
+    res.status(500).send('Failed to send ngrok URL');
+  }
+});
+
+app.get('/general-configurations/hostServerUrl', async (req, res) => {
+  try {
+    const config = await GeneralConfigurations.findOne({ where: { configuration: 'hostServerUrl' } });
+    res.json({ value: config?.value || '' });
+  } catch (error) {
+    res.status(500).json({ error: 'Could not fetch hostServerUrl' });
+  }
+});
+
+app.get('/general-configurations/:key', async (req, res) => {
+  try {
+    const key = req.params.key;
+    const config = await GeneralConfigurations.findOne({ where: { configuration: key } });
+
+    if (!config) {
+      return res.status(404).json({ message: `Configuration '${key}' not found` });
+    }
+
+    res.json({ value: config.value });
+  } catch (error) {
+    console.error('Error fetching configuration:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

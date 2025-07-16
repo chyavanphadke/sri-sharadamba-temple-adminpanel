@@ -4,6 +4,7 @@ import axios from 'axios';
 import _ from 'lodash';
 import { jwtDecode } from 'jwt-decode';
 import './SuperAdmin.css'; // Ensure this is the correct path to your CSS file
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -33,7 +34,7 @@ const SuperAdmin = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/user', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/user`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -53,7 +54,7 @@ const SuperAdmin = () => {
   const fetchUserMap = async () => {
     try {
       console.log('Fetching user map...');
-      const response = await axios.get('http://localhost:5001/users', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -80,28 +81,28 @@ const SuperAdmin = () => {
       }
 
       if (action === 'approve') {
-        await axios.put(`http://localhost:5001/user/${userid}/approve`, {}, {
+        await axios.put(`${BACKEND_BASE_URL}user/${userid}/approve`, {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         message.success('User approved');
       } else if (action === 'disapprove') {
-        await axios.put(`http://localhost:5001/user/${userid}/disapprove`, {}, {
+        await axios.put(`${BACKEND_BASE_URL}user/${userid}/disapprove`, {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         message.success('User disapproved');
       } else if (action === 'delete') {
-        await axios.delete(`http://localhost:5001/user/${userid}`, {
+        await axios.delete(`${BACKEND_BASE_URL}user/${userid}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
         message.success('User deleted');
       } else {
-        await axios.put(`http://localhost:5001/user/${userid}/usertype`, { usertype: action }, {
+        await axios.put(`${BACKEND_BASE_URL}user/${userid}/usertype`, { usertype: action }, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -133,7 +134,7 @@ const SuperAdmin = () => {
     if (value.length >= 3) {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/user?search=${value}`, {
+        const response = await axios.get(`${BACKEND_BASE_URL}user?search=${value}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

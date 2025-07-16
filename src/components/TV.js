@@ -12,6 +12,7 @@ import sarvaSevaImage from '../assets/tv_sevas/sarva_seva.webp';
 import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
 import generalImage from '../assets/tv_sevas/general.webp';
 import qrCodeImage from '../assets/qr-code.png';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const TV = () => {
   // State management
@@ -38,7 +39,7 @@ const TV = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/events');
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/events`);
         setEvents(response.data);
         //console.log('Fetched events:', response.data);
       } catch (error) {
@@ -48,7 +49,7 @@ const TV = () => {
 
     const fetchPanchanga = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/panchanga');
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/panchanga`);
         setPanchanga(response.data);
         //console.log('Fetched Panchanga:', response.data);
       } catch (error) {
@@ -58,8 +59,8 @@ const TV = () => {
 
     const fetchImages = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/images');
-        const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/images`);
+        const imageUrls = response.data.map(url => `${BACKEND_BASE_URL}:5001${url}`);
         setImages(imageUrls);
         //console.log('Fetched images:', response.data);
       } catch (error) {
@@ -69,7 +70,7 @@ const TV = () => {
 
     const fetchActivities = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/today-activities');
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/today-activities`);
         const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
         setActivities(filteredActivities);
         setShowActivities(filteredActivities.length > 0);

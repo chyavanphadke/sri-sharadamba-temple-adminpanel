@@ -3,6 +3,7 @@ import { Form, Input, Button, Layout, message, Modal, Table, Checkbox, Select, D
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import './Settings.css';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -64,7 +65,7 @@ const Settings = () => {
   // Fetch services
   const fetchServices = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/services');
+      const response = await axios.get(`${BACKEND_BASE_URL}/services`);
       const sortedServices = response.data.sort((a, b) => b.Active - a.Active);
       setServices(sortedServices);
       setOriginalServices(sortedServices);
@@ -78,7 +79,7 @@ const Settings = () => {
   // Fetch categories
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/categories');
+      const response = await axios.get(`${BACKEND_BASE_URL}/categories`);
       setCategories(response.data);
     } catch (error) {
       message.error('Failed to load categories');
@@ -88,7 +89,7 @@ const Settings = () => {
   // Fetch email text
   const fetchEmailText = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/email-text');
+      const response = await axios.get(`${BACKEND_BASE_URL}/email-text`);
       form.setFieldsValue({ emailText: response.data.join('\n') });
     } catch (error) {
       message.error('Failed to load email text');
@@ -98,7 +99,7 @@ const Settings = () => {
   // Fetch general configurations
   const fetchGeneralConfigurations = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/general-configurations');
+      const response = await axios.get(`${BACKEND_BASE_URL}/general-configurations`);
       setAutoApprove(response.data.autoApprove);
       setExcelSevaEmailConformation(response.data.excelSevaEmailConformation);
       setSareeCollectRemainder(response.data.sareeCollectRemainder);
@@ -110,7 +111,7 @@ const Settings = () => {
   // Save general configurations
   const saveGeneralConfigurations = async (newConfigurations) => {
     try {
-      await axios.put('http://localhost:5001/general-configurations', newConfigurations);
+      await axios.put(`${BACKEND_BASE_URL}/general-configurations`, newConfigurations);
       message.success('General configurations updated successfully');
     } catch (error) {
       message.error('Failed to update general configurations');
@@ -150,7 +151,7 @@ const Settings = () => {
   // Change password
   const onFinishPasswordChange = async (values) => {
     try {
-      await axios.post('http://localhost:5001/change-password', values, {
+      await axios.post(`${BACKEND_BASE_URL}/change-password`, values, {
         headers: { Authorization: `Bearer ${token}` },
       });
       message.success('Password changed successfully');
@@ -211,11 +212,11 @@ const Settings = () => {
     setFilteredServices(updatedFilteredServices);
 
     try {
-      await axios.put(`http://localhost:5001/categories/${categoryId}`, {
+      await axios.put(`${BACKEND_BASE_URL}categories/${categoryId}`, {
         Category_name: updatedCategories.find(cat => cat.category_id === categoryId).Category_name,
         Active: isActive,
       });
-      await axios.put('http://localhost:5001/services', updatedServices);
+      await axios.put(`${BACKEND_BASE_URL}/services`, updatedServices);
       message.success('Category and associated services updated successfully');
     } catch (error) {
       message.error('Failed to update category and services');
@@ -227,11 +228,11 @@ const handleServiceSave = async () => {
   try {
     // Update categories
     for (const category of categories) {
-      await axios.put(`http://localhost:5001/categories/${category.category_id}`, category);
+      await axios.put(`${BACKEND_BASE_URL}categories/${category.category_id}`, category);
     }
 
     // Update services
-    await axios.put('http://localhost:5001/services', services);
+    await axios.put(`${BACKEND_BASE_URL}/services`, services);
     
     message.success('Services and categories updated successfully');
     setServiceModalVisible(false);
@@ -271,7 +272,7 @@ const handleServiceSave = async () => {
         time: values.time,
       };
 
-      await axios.post('http://localhost:5001/services', newService);
+      await axios.post(`${BACKEND_BASE_URL}/services`, newService);
       message.success('Service added successfully');
       setNewServiceModalVisible(false);
       fetchServices();
@@ -294,7 +295,7 @@ const handleServiceSave = async () => {
         Active: true,
       };
 
-      await axios.post('http://localhost:5001/categories', newCategory);
+      await axios.post(`${BACKEND_BASE_URL}/categories`, newCategory);
       message.success('Category added successfully');
       setNewCategoryModalVisible(false);
       fetchCategories();
@@ -365,7 +366,7 @@ const handleServiceSave = async () => {
   // Access Control Functionality
   const handleAccessRightsSave = async () => {
     try {
-      await axios.put('http://localhost:5001/access-control', accessRights);
+      await axios.put(`${BACKEND_BASE_URL}/access-control`, accessRights);
       message.success('Access rights updated successfully');
       setAccessRightsModalVisible(false);
     } catch (error) {
@@ -440,7 +441,7 @@ const handleServiceSave = async () => {
   const fetchAccessControlData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/access-control');
+      const response = await axios.get(`${BACKEND_BASE_URL}/access-control`);
       const accessRightsData = response.data;
       setAccessRights([...accessRightsData]); // Shallow copy for current state
       setOriginalAccessRights(JSON.parse(JSON.stringify(accessRightsData))); // Deep copy for reset state
@@ -460,7 +461,7 @@ const handleServiceSave = async () => {
   // Fetch email credentials
   const fetchEmailCredentials = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/email-credentials');
+      const response = await axios.get(`${BACKEND_BASE_URL}/email-credentials`);
       setEmailCredentials(response.data);
     } catch (error) {
       message.error('Failed to load email credentials');
@@ -476,7 +477,7 @@ const handleServiceSave = async () => {
   // Save email credentials
   const handleEmailCredentialsSave = async () => {
     try {
-      await axios.put('http://localhost:5001/email-credentials', emailCredentials);
+      await axios.put(`${BACKEND_BASE_URL}/email-credentials`, emailCredentials);
       message.success('Email credentials updated successfully');
       setEmailCredentialsModalVisible(false);
     } catch (error) {
@@ -493,7 +494,7 @@ const handleServiceSave = async () => {
   const handleSaveEmailText = async () => {
     try {
       const updatedText = form.getFieldValue('emailText').split('\n');
-      await axios.put('http://localhost:5001/email-text', updatedText);
+      await axios.put(`${BACKEND_BASE_URL}/email-text`, updatedText);
       message.success('Email text updated successfully');
       setEmailModalVisible(false);
       fetchEmailText();
@@ -505,7 +506,7 @@ const handleServiceSave = async () => {
   // Reset email text
   const handleResetEmailText = async () => {
     try {
-      await axios.put('http://localhost:5001/email-text/reset');
+      await axios.put(`${BACKEND_BASE_URL}/email-text/reset`);
       message.success('Email text reset to default');
       fetchEmailText();
     } catch (error) {
@@ -569,7 +570,7 @@ const handleServiceSave = async () => {
   // Run gear functions
   const handleEditEmailText = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/run-gear-functions');
+      const response = await axios.post(`${BACKEND_BASE_URL}/run-gear-functions`);
       message.success(response.data.message);
     } catch (error) {
       message.error('Error running gear functions');

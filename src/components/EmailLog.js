@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Spin, Alert } from 'antd';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const EmailLog = () => {
   const [emailLogs, setEmailLogs] = useState([]);
@@ -9,7 +10,7 @@ const EmailLog = () => {
   useEffect(() => {
     const fetchEmailLogs = async () => {
       try {
-        const response = await fetch('http://localhost:5001/email-logs');
+        const response = await fetch(`${BACKEND_BASE_URL}/email-logs`);
         if (!response.ok) {
           throw new Error('Failed to fetch email logs.');
         }

@@ -4,6 +4,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment';
 import './TodaysEvents.css';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -23,7 +24,7 @@ const TodaysEvents = () => {
   // Fetch events for the selected date
   const fetchEvents = async (date) => {
     try {
-      const response = await axios.get(`http://localhost:5001/todays-events?date=${date.format('YYYY-MM-DD')}`);
+      const response = await axios.get(`${BACKEND_BASE_URL}todays-events?date=${date.format('YYYY-MM-DD')}`);
       setEvents(response.data);
       //console.log('Events fetched:', response.data);
     } catch (error) {
@@ -34,7 +35,7 @@ const TodaysEvents = () => {
   // Fetch Panchanga details for the selected date
   const fetchPanchanga = async (date) => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/panchanga?date=${date.format('M/D/YYYY')}`);
+      const response = await axios.get(`${BACKEND_BASE_URL}api/panchanga?date=${date.format('M/D/YYYY')}`);
       setPanchanga(response.data);
       //console.log('Panchanga fetched:', response.data);
     } catch (error) {

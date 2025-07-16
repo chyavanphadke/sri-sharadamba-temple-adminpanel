@@ -6,6 +6,7 @@ import moment from 'moment';
 import { jwtDecode } from 'jwt-decode';
 import './Home.css';
 import DevoteeImage from '../assets/Home_image.webp'; // Adjust the path as needed
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -59,7 +60,7 @@ const Home = () => {
   const token = localStorage.getItem('token');
 
   const axiosInstance = useMemo(() => axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: `${BACKEND_BASE_URL}`,
     headers: { Authorization: `Bearer ${token}` },
   }), [token]);
 

@@ -6,6 +6,7 @@ import './Services.css';
 import { TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import BACKEND_BASE_URL from '../ipConfiguration';
 dayjs.extend(customParseFormat);
 
 const ServicesPage = () => {
@@ -34,7 +35,7 @@ const ServicesPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5001/categories');
+      const { data } = await axios.get(`${BACKEND_BASE_URL}/categories`);
       setCategories(data);
     } catch {
       message.error('Failed to load categories');
@@ -43,7 +44,7 @@ const ServicesPage = () => {
 
   const fetchServices = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5001/services');
+      const { data } = await axios.get(`${BACKEND_BASE_URL}/services`);
       setServices(data);
     } catch {
       message.error('Failed to load services');
@@ -72,12 +73,12 @@ const saveCategories = async () => {
 
     // Update existing
     for (const cat of existing) {
-      await axios.put(`http://localhost:5001/categories/${cat.category_id}`, cat);
+      await axios.put(`${BACKEND_BASE_URL}categories/${cat.category_id}`, cat);
     }
 
     // Post new
     for (const newCat of newlyCreated) {
-      await axios.post('http://localhost:5001/categories', newCat);
+      await axios.post(`${BACKEND_BASE_URL}/categories`, newCat);
     }
 
     setEditingCats(false);
@@ -97,7 +98,7 @@ const saveCategories = async () => {
       return;
     }
     try {
-      await axios.delete(`http://localhost:5001/categories/${cat.category_id}`);
+      await axios.delete(`${BACKEND_BASE_URL}categories/${cat.category_id}`);
       setCategories(categories.filter((c) => c.category_id !== cat.category_id));
       if (selectedCatId === cat.category_id) setSelectedCatId(null);
       message.success('Category deleted');
@@ -127,11 +128,11 @@ const updated = services.map((svc) =>
     const newlyCreated = updated.filter(svc => String(svc.ServiceId).startsWith('new'));
 
     // Update existing
-    await axios.put('http://localhost:5001/services', existing);
+    await axios.put(`${BACKEND_BASE_URL}/services`, existing);
 
     // Post new
     for (const newSvc of newlyCreated) {
-      await axios.post('http://localhost:5001/services', newSvc);
+      await axios.post(`${BACKEND_BASE_URL}/services`, newSvc);
     }
 
     setEditingSvcs(false);
@@ -146,7 +147,7 @@ const updated = services.map((svc) =>
 
   const deleteService = async (svc) => {
     try {
-      await axios.delete(`http://localhost:5001/services/${svc.ServiceId}`);
+      await axios.delete(`${BACKEND_BASE_URL}services/${svc.ServiceId}`);
       const remaining = services.filter((s) => s.ServiceId !== svc.ServiceId);
       setServices(remaining);
       message.success('Service deleted');

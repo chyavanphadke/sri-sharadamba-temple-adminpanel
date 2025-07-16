@@ -13,6 +13,7 @@ import sankataHaraChaturthiImage from '../assets/tv_sevas/Sankata_Hara_Chaturthi
 import sarvaSevaImage from '../assets/tv_sevas/sarva_seva.webp';
 import nityaPoojaImage from '../assets/tv_sevas/nitya_pooja.webp';
 import generalImage from '../assets/tv_sevas/general.webp';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const TV1 = () => {
   // State management
@@ -37,7 +38,7 @@ const TV1 = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/events');
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/events`);
         setEvents(response.data);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -46,8 +47,8 @@ const TV1 = () => {
 
     const fetchImages = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/images');
-        const imageUrls = response.data.map(url => `http://localhost:5001${url}`);
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/images`);
+        const imageUrls = response.data.map(url => `${BACKEND_BASE_URL}:5001${url}`);
         setImages(imageUrls);
       } catch (error) {
         console.error('Error fetching images:', error);
@@ -56,7 +57,7 @@ const TV1 = () => {
 
     const fetchActivities = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/today-activities');
+        const response = await axios.get(`${BACKEND_BASE_URL}/api/today-activities`);
         const filteredActivities = response.data.filter(activity => activity.Service.ServiceId !== 2 && activity.Service.ServiceId !== 268);
         setActivities(filteredActivities);
       } catch (error) {

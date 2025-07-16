@@ -5,6 +5,7 @@ import moment from 'moment';
 import { jsPDF } from 'jspdf';
 import './Receipts.css';
 import { jwtDecode } from 'jwt-decode';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Search } = Input;
 const { confirm } = Modal;
@@ -33,7 +34,7 @@ const Receipts = () => {
 
   // Create axios instance with authorization headers
   const axiosInstance = useMemo(() => axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: `${BACKEND_BASE_URL}`,
     headers: {
       Authorization: `Bearer ${token}`,
     },

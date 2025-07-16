@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { startOfYear, endOfYear, subMonths, format } from 'date-fns';
 import './Statistics.css';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -71,7 +72,7 @@ const Statistics = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/statistics', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/statistics`, {
         params: {
           from: startDate.toISOString().split('T')[0],
           to: endDate.toISOString().split('T')[0],
@@ -90,7 +91,7 @@ const Statistics = () => {
   const fetchServiceData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5001/statistics/most-done-services', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/statistics/most-done-services`, {
         params: { from: startDate.toISOString().split('T')[0], to: endDate.toISOString().split('T')[0] },
       });
       setServiceData(response.data);
@@ -103,7 +104,7 @@ const Statistics = () => {
 
   const fetchMaxAmount = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/statistics/max-contribution', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/statistics/max-contribution`, {
         params: { from: startDate.toISOString().split('T')[0], to: endDate.toISOString().split('T')[0] },
       });
       const max = response.data || 10000;
@@ -116,7 +117,7 @@ const Statistics = () => {
 
   const fetchServiceCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/servicecategoriesStat');
+      const response = await axios.get(`${BACKEND_BASE_URL}/servicecategoriesStat`);
       setServiceCategories(response.data);
     } catch (error) {
       console.error('Error fetching service categories:', error);
@@ -125,7 +126,7 @@ const Statistics = () => {
 
   const fetchServices = async (categoryId) => {
     try {
-      const response = await axios.get('http://localhost:5001/servicesStat', { params: { categoryId } });
+      const response = await axios.get(`${BACKEND_BASE_URL}/servicesStat`, { params: { categoryId } });
       setServices(response.data);
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -134,7 +135,7 @@ const Statistics = () => {
 
   const fetchDevotees = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/activitiesStat', {
+      const response = await axios.get(`${BACKEND_BASE_URL}/activitiesStat`, {
         params: { serviceId: selectedService, from: startDate, to: endDate },
       });
       setDevoteeData(response.data);

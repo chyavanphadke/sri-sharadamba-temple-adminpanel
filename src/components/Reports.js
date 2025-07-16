@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import banner from '../assets/banner.webp'; // Adjust the path as needed
 import './Reports.css'; // Import the CSS file
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -38,7 +39,7 @@ const Reports = () => {
 
   const token = localStorage.getItem('token');
   const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5001',
+    baseURL: `${BACKEND_BASE_URL}`,
     headers: {
       Authorization: `Bearer ${token}`,
     },

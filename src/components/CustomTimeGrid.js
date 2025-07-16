@@ -4,6 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import styled from 'styled-components';
 import { Layout } from 'antd';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const localizer = momentLocalizer(moment);
 

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
 import tvImage from '../assets/icons/tv.png';
+import BACKEND_BASE_URL from '../ipConfiguration';
 
 const { Content } = Layout;
 
@@ -43,7 +44,7 @@ const Login = () => {
 
   const onFinish = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5001/login', values);
+      const response = await axios.post(`${BACKEND_BASE_URL}/login`, values);
       localStorage.setItem('token', response.data.token);
       message.success('Login successful');
       console.log('User logged in');
@@ -59,7 +60,7 @@ const Login = () => {
 
   const handleSendOtp = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/forgot-password', { email: forgotPasswordEmail });
+      const response = await axios.post(`${BACKEND_BASE_URL}/forgot-password`, { email: forgotPasswordEmail });
       message.success(response.data.message);
       setTimer(180); // Reset timer to 3 minutes
       setEmailError('');
@@ -76,7 +77,7 @@ const Login = () => {
 
   const handleVerifyOtp = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/verify-otp', { email: forgotPasswordEmail, otp });
+      const response = await axios.post(`${BACKEND_BASE_URL}/verify-otp`, { email: forgotPasswordEmail, otp });
       message.success(response.data.message);
       setStep(3);
       console.log('OTP verified');
@@ -91,7 +92,7 @@ const Login = () => {
 
   const handleResetPassword = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/reset-password', { email: forgotPasswordEmail, otp, newPassword });
+      const response = await axios.post(`${BACKEND_BASE_URL}/reset-password`, { email: forgotPasswordEmail, otp, newPassword });
       message.success(response.data.message);
       handleCancel(); // Clear the form on successful reset
       console.log('Password reset successful');
@@ -128,7 +129,7 @@ const Login = () => {
 
   const handleGearClick = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/run-gear-functions');
+      const response = await axios.post(`${BACKEND_BASE_URL}/run-gear-functions`);
       message.success(response.data.message);
       console.log('Gear functions run successfully');
     } catch (error) {
@@ -138,7 +139,7 @@ const Login = () => {
 
   const handleSignup = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5001/signup', values);
+      const response = await axios.post(`${BACKEND_BASE_URL}/signup`, values);
       message.success(response.data.message, 2, () => {
         setIsSignupVisible(false); // Hide the modal on successful signup
         console.log('User signed up');
@@ -341,8 +342,8 @@ const Login = () => {
           className="gear-button"
           onClick={handleGearClick}
         >
-          <img src={tvImage} alt="TV" className="gear-button-image" />
-        </Button>
+    <img src={tvImage} alt="TV" className="gear-button-image" />
+  </Button>
       </Content>
     </Layout>
   );
